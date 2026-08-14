@@ -1,8 +1,9 @@
-# brige-crm アーキテクチャ構成検討（提案・ドラフト v1）
+# brige-crm アーキテクチャ構成検討（v2・論点確定済み）
 
 - 目的: Laravel実装（01参照）を Rails で再構築するにあたっての技術構成・設計方針の検討
 - 参考: ftlog のアーキテクチャ（02参照）、`jasmin_laravel/requirements/`（機能仕様の正）
-- 状態: **ドラフト。CEOレビューで確定させる（論点は §8）**
+- 状態: **v2 = 論点A〜F CEO決定反映（2026-08-14）。決定録は §8**
+- 補足: 新規サービス名称（プロダクト名）は未定。リポジトリ名 brige-crm を仮称として使う
 
 ---
 
@@ -18,10 +19,10 @@
 | 項目 | 提案 | 根拠 |
 |---|---|---|
 | Ruby / Rails | **Ruby 3.4 / Rails 8.1**（ftlogと同版） | ftlogのコード・規約を最大流用 |
-| DB | **PostgreSQL**（★論点A） | UUID主キー（`gen_random_uuid()`）・全文検索（pg_bigm）・ftlogパターン流用。現Laravel=MySQL 8だが移行はどのみちETL |
+| DB | **PostgreSQL**（決定A） | UUID主キー（`gen_random_uuid()`）・全文検索（pg_bigm）・ftlogパターン流用。現Laravel=MySQL 8だが移行はどのみちETL |
 | 主キー | **UUID**（`id: :uuid`） | Laravel実装を踏襲（全モデルUUID） |
-| フロントエンド | **Inertia Rails + Vue 3 + TypeScript**（★論点B・推奨） | 既存 Vue ページ資産（shadcn-vue・約25エンティティ分のCRUD画面）を概念ごと流用可。対抗案=ftlog式 Hotwire+ERB |
-| CSS / UI | Tailwind CSS v4 + shadcn-vue（論点Bの帰結） | Laravel資産流用 |
+| フロントエンド | **Hotwire + ERB（ftlog式・ビルドレス）**（決定B） | importmap-rails + propshaft + turbo-rails + stimulus-rails。ftlogのビュー資産（マトリクスUI・`can_access_system_action?`ヘルパー・レイアウト）をほぼそのまま流用可。Node/ビルドチェーン不要で運用が軽い。既存Vue画面は「画面仕様の参考」として読む |
+| CSS / UI | **Tailwind CSS v4（tailwindcss-rails・Nodeレス）** | ftlog踏襲。compose に tailwind watch コンテナ |
 | 認証 | **Devise**（複数スコープ: User / Customer）+ ftlog式メールOTP | Q-19（TOTP廃止→メールOTP）を最初から満たす。ftlogに実装・テストあり |
 | 受注入力認証 | Deviseを使わず**独自セッション**（代理店CD＋営業担当者CD） | Laravel現行と同方式（FormAuth相当のconcern） |
 | 認可 | **ftlog式エンドポイントRBAC**（レイヤー1）+ **Pundit**（レイヤー2） | §3参照 |
@@ -34,7 +35,7 @@
 | CSV | Ruby標準csv + 非同期ジョブ（Laravel CsvExport方式踏襲） | |
 | テスト | **RSpec + FactoryBot**、request spec中心 + **ftlogの認可テストハーネス移植**（既定=実認可） | 回帰検出の要 |
 | Lint/CI | rubocop-rails-omakase / brakeman / bundler-audit + **認可スキップ検出grepガード**（ftlog CI流用） | |
-| Docker | db(pg) / web / worker(Solid Queue) / (vite ※論点B次第) / mailpit | ftlog compose + Laravel composeの合成 |
+| Docker | db(pg16+pg_bigm) / web / tailwind(watch) / worker(Solid Queue) / mailpit | ftlog compose 踏襲＋mailpit（Laravel composeから） |
 | デプロイ | 未定（社内インフラ次第。ftlogはKamal） | 本番要件確定後 |
 
 ## 3. 認可設計（本プロジェクトの核）
@@ -65,14 +66,17 @@
 | PermissionScannerService（コントローラ走査） | SystemPermissionSyncService（**ルーティングテーブル**走査・起動時自動） |
 | CheckActionPermission ミドルウェア | ApplicationController before_action（フェイルクローズ） |
 | ロール4種: admin / 実務運用者 / 代理店グループ用 / 代理店用 | 組み込みロールとして再定義（admin=super_admin フラグ）。**名称は維持**（変更禁止指定） |
-| 権限マトリクス画面 matrix.vue | ftlogのマトリクスUIを論点Bのフロント方式で再実装 |
+| 権限マトリクス画面 matrix.vue | ftlogのマトリクスUI（ERB）をほぼそのまま流用（決定Bにより再実装不要） |
 | レコード参照制御（未実装） | Pundit policy_scope で初期実装 |
 
-### section の割当（ftlogの staff/customer を拡張するか）
+### section の割当（決定C: admin / form / mypage の3区分）
 
-- ftlog: `staff` / `customer`（portal） の2区分
-- brige-crm のアクター: 社内（admin・実務運用者）/ 代理店グループ / 代理店 / 営業担当者（受注入力）/ 顧客（マイページ）
-- 提案: section は `admin`（管理画面）/ `form`（受注入力）/ `mypage`（顧客）の3区分とし、代理店・グループの差は**ロール＋Punditスコープ**で表現（★論点C）
+- ftlog: `staff` / `customer`（portal）の2区分。brige-crm は認証系統が3つ（管理画面=User / 受注入力=営業担当者独自セッション / マイページ=顧客）あるため3区分に拡張する
+- **設計意図（CEO確認済み 2026-08-14）**:
+  1. **誤配線防止（フェイルクローズの第一関門）**: 権限チェックの最初に「このユーザ種別が入れる section か」を判定。管理ユーザへform権限の誤割当、顧客の管理画面ルート到達などを section 段階で構造的に遮断する
+  2. **マトリクス画面の見通し**: ロール割当の編集対象は `admin` section のみ。`form` / `mypage` は「その認証系統でログイン済みなら通れる」固定運用（ロール×権限の割当対象にしない）。営業担当者・顧客はロールを持たないアクターのため、この扱いが自然
+  3. **代理店/グループの差は section を増やさず表現**: 同じ admin section 内の違いなので、「見える範囲」=Punditスコープ、「押せる操作」=ロール割当で表現する。section はあくまで認証系統の仕切りに限定する
+- 実装: SyncService がコントローラのネームスペース（`admin/` `form/` `mypage/`）から section を自動判定（ftlogの `portal/`→customer 判定の拡張）
 
 ## 4. 認証設計
 
@@ -93,7 +97,7 @@
   - T-3: `contract_condition_id` は **受注（orders）側**に持たせる
   - T-5相当の残骸（nestedset / organizations画面）は持ち込まない
 - 自動採番（C-xxxxxx / ORD{年}{連番} / INQ-xxxxxx）: `count()+1` を廃し、**採番テーブル＋行ロック or PostgreSQLシーケンス**で競合安全に
-- モデル名は Rails 規約に正規化（例: `JasminCustomer`→`Customer`, `JasminOrder`→`Order` 等。`jasmin_` プレフィックスを外すか ★論点D）
+- モデル名は Rails 規約に正規化（決定D: `jasmin_` プレフィックスを外す。`JasminCustomer`→`Customer`, `JasminOrder`→`Order` 等。将来のサービス別分離は namespace で対応。※プロダクト名は未定・確定後も内部モデル名は汎用名を維持）
 - 決済（PaymentTransaction）は状態機械・ログテーブル含め忠実移植。ネットムーブ連携は `payment-integration.md` 準拠
 - PII: WorkDetail の SNS認証情報等は **`ActiveRecord::Encryption` で暗号化保存**を既定にする（Q-D への先回り提案）
 - フォーム定義（FormTemplate/Step/Field）は **P2拡張後仕様（target_table/target_column＋3次元編集権限）を初期スキーマに採用**
@@ -114,16 +118,16 @@
 
 ---
 
-## 8. 論点（CEO確認したい判断）
+## 8. 決定録（CEO決定 2026-08-14）
 
-| # | 論点 | 選択肢 | 秘書の推奨 |
+| # | 論点 | 決定 | 備考 |
 |---|---|---|---|
-| A | DB | PostgreSQL / MySQL 8（現行Laravel） | **PostgreSQL**。UUID・全文検索・ftlogパターン流用。移行はどのみちETLなのでDB乗換コストは限定的。ただし社内運用標準がMySQLなら再考 |
-| B | フロントエンド | ①Inertia Rails + Vue 3（Laravel資産流用） / ②Hotwire + ERB（ftlog式・ビルドレス） | **①**。25エンティティ分のVue画面・shadcn-vueの設計資産を活かせる。②は運用が軽いが全画面作り直し。※①の場合ftlogのビューヘルパー方式は shared props 方式（Laravel現行と同じ）に読み替え |
-| C | 権限 section 区分 | staff/customer（ftlogそのまま） / admin/form/mypage（3区分） | **3区分**。受注入力（営業担当者）は独自認証でユーザ体系が別のため独立sectionが明快 |
-| D | モデル命名 | `jasmin_` プレフィックス維持 / 外す（Customer, Order, Store…） | **外す**。brige-crm単体で完結する命名に。将来のサービス別分離は namespace で対応 |
-| E | 移植の起点 | ゼロから rails new / ftlog をテンプレートに複製して削る | **rails new + ftlogから該当ファイルを選択移植**。ftlog複製はテナント機構・issue系の削除コストが高い |
-| F | データ移行スコープ | 本設計に含める / 別プロジェクト化 | **別フェーズ切り出し**（legacy-research/ETL設計は流用）。ただしスキーマ設計時にマッピング整合は常時確認 |
+| A | DB | **PostgreSQL** | UUID・pg_bigm全文検索・ftlogパターン流用。移行はどのみちETL |
+| B | フロントエンド | **ftlog式 Hotwire + ERB（ビルドレス）** | 秘書推奨はInertia+Vueだったが、CEO判断でHotwire。ftlogのビュー資産・ヘルパー方式（`can_access_system_action?`）をそのまま流用でき、認可まわりの移植コストはむしろ下がる。既存Vue画面は画面仕様の参考資料として扱う |
+| C | 権限 section 区分 | **admin / form / mypage の3区分** | 設計意図は §3 参照（誤配線防止・マトリクス見通し・代理店差はロール＋Punditで表現）。CEO意図確認済み |
+| D | モデル命名 | **`jasmin_` プレフィックスを外す**（Customer, Order, Store…） | 新規サービス名称（プロダクト名）は未定。名称確定後も内部モデル名は汎用名を維持 |
+| E | 移植の起点 | **rails new + ftlogから選択移植** | ftlog複製はテナント機構・issue系の削除コストが高いため不採用 |
+| F | データ移行スコープ | **別フェーズ切り出し** | legacy-research/ETL設計は流用。スキーマ設計時にマッピング整合を常時確認 |
 
 ---
 

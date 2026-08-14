@@ -1,9 +1,9 @@
-# brige-crm 実装計画（ドラフト v1）
+# brige-crm 実装計画（v2）
 
-- 前提: 03-rails-architecture-proposal.md の構成（論点A〜F確定後に本計画も更新する）
+- 前提: 03-rails-architecture-proposal.md の構成（**論点A〜F はCEO決定済み 2026-08-14**: PostgreSQL / Hotwire+ERB / section3区分 / prefix除去 / rails new+選択移植 / 移行別フェーズ）
 - 方針: Laravel の P0〜P4 フェーズ構成を踏襲しつつ、**認可・参照制御・監査を最初のフェーズに前倒し**する
   （Laravel側で「後付けは手戻り大」と分析された箇所を先に固める）
-- 状態: **ドラフト。CEOレビュー未**
+- 状態: v2（構成確定反映）。次アクション=R0着手
 
 ---
 
@@ -18,15 +18,15 @@
 | R4 | 問い合わせ・通知: Inquiry系・一斉通知・アプリ内通知・CSVエクスポート | P1残 + P4-8 | リアルタイム通知含む |
 | R5 | 契約フロー・決済: 状態機械・ネットムーブ連携・契約書PDF・署名 | P3（新規実装） | 決済サンドボックス疎通・契約状態機械spec |
 | R6 | 運用強化: 名寄せ・一括更新・集計・遅延検知ほか | P4 | 要件ごとに個別判断 |
-| R7 | データ移行: ETL・掲示板アーカイブ | P5相当 | 別プロジェクト切り出し予定（論点F） |
+| R7 | データ移行: ETL・掲示板アーカイブ | P5相当 | 別プロジェクト切り出し（決定F） |
 
 ---
 
 ## R0: 基盤（最重要フェーズ）
 
 1. `rails new`（Rails 8.1 / PostgreSQL / UUID主キー既定 / rubocop-rails-omakase）
-2. Docker整備: db(pg16+pg_bigm) / web / worker(Solid Queue) / vite（論点B=Inertia採用時）/ mailpit
-3. Inertia Rails + Vue 3 + TS + Tailwind v4 + shadcn-vue セットアップ（論点B確定後）
+2. Docker整備: db(pg16+pg_bigm) / web / tailwind(watch) / worker(Solid Queue) / mailpit
+3. フロント基盤: Hotwire（importmap-rails + propshaft + turbo-rails + stimulus-rails）+ Tailwind CSS v4（tailwindcss-rails・Nodeレス）。ftlogのレイアウト・共通パーシャルを流用
 4. 認証: Devise（User）+ ftlog式メールOTP + rack-attack + ログイン履歴
 5. **認可: ftlogエンドポイントRBAC一式を移植**（単一テナント簡素化）
    - 4モデル + SystemPermissionChecker + SystemPermissionSyncService（起動時sync）+ RoleSeeder
@@ -107,6 +107,6 @@
 
 ## 次のアクション
 
-1. CEOレビュー: 03の論点A〜F の確定
-2. 論点確定を反映して 03/04 を v2 に更新
-3. R0 着手（rails new〜認可移植）
+1. ~~CEOレビュー: 03の論点A〜F の確定~~ ✅ 2026-08-14 決定済み（03 §8 決定録）
+2. ~~確定を反映して 03/04 を v2 に更新~~ ✅ 2026-08-14
+3. **R0 着手（rails new〜認可移植）**
