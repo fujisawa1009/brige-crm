@@ -1,0 +1,112 @@
+# brige-crm 実装計画（ドラフト v1）
+
+- 前提: 03-rails-architecture-proposal.md の構成（論点A〜F確定後に本計画も更新する）
+- 方針: Laravel の P0〜P4 フェーズ構成を踏襲しつつ、**認可・参照制御・監査を最初のフェーズに前倒し**する
+  （Laravel側で「後付けは手戻り大」と分析された箇所を先に固める）
+- 状態: **ドラフト。CEOレビュー未**
+
+---
+
+## フェーズ概要
+
+| フェーズ | 内容 | Laravel対応 | 完了条件（要約） |
+|---|---|---|---|
+| R0 | 基盤: rails new・Docker・CI・認証・**認可RBAC移植**・監査ログ | P0 + ftlog移植 | 認可ゲート/テストハーネス/CI が回る |
+| R1 | 組織・アカウント: 代理店G/代理店/営業担当者/契約条件/ユーザ管理 + **Punditスコープ** | P1前半 | 参照制御込みでCRUD一式 |
+| R2 | CRM中核: 顧客/店舗/案件 + 商材マスタ群 | P1後半 | 案件90フィールド・ステータス管理 |
+| R3 | 申込フォーム: 営業ログイン・動的マルチステップ・一括生成 | P2（拡張後仕様） | フォームビルダー含め動的マッピングで動作 |
+| R4 | 問い合わせ・通知: Inquiry系・一斉通知・アプリ内通知・CSVエクスポート | P1残 + P4-8 | リアルタイム通知含む |
+| R5 | 契約フロー・決済: 状態機械・ネットムーブ連携・契約書PDF・署名 | P3（新規実装） | 決済サンドボックス疎通・契約状態機械spec |
+| R6 | 運用強化: 名寄せ・一括更新・集計・遅延検知ほか | P4 | 要件ごとに個別判断 |
+| R7 | データ移行: ETL・掲示板アーカイブ | P5相当 | 別プロジェクト切り出し予定（論点F） |
+
+---
+
+## R0: 基盤（最重要フェーズ）
+
+1. `rails new`（Rails 8.1 / PostgreSQL / UUID主キー既定 / rubocop-rails-omakase）
+2. Docker整備: db(pg16+pg_bigm) / web / worker(Solid Queue) / vite（論点B=Inertia採用時）/ mailpit
+3. Inertia Rails + Vue 3 + TS + Tailwind v4 + shadcn-vue セットアップ（論点B確定後）
+4. 認証: Devise（User）+ ftlog式メールOTP + rack-attack + ログイン履歴
+5. **認可: ftlogエンドポイントRBAC一式を移植**（単一テナント簡素化）
+   - 4モデル + SystemPermissionChecker + SystemPermissionSyncService（起動時sync）+ RoleSeeder
+   - ApplicationController フェイルクローズゲート
+   - 組み込みロール: admin(super_admin) / 実務運用者 / 代理店グループ用 / 代理店用（名称維持）
+   - 権限マトリクスUI・ロール管理UI
+6. Pundit 導入 + ApplicationPolicy 規約（Scope#resolve 必須）
+7. 監査ログ: ftlog Auditable concern 移植（TRACKED_FIELDS / request_id / IP / 差分記録）
+8. `Current`（user/ip/request_id）+ created_by/updated_by 自動セット
+9. テスト基盤: RSpec + FactoryBot + **認可テストハーネス**（既定=実認可）
+10. CI: rubocop / brakeman / bundler-audit / rspec / 認可スキップ検出grep
+
+**R0完了条件**: ダッシュボード1画面が「ログイン→OTP→権限チェック→表示」を通過し、権限を剥奪すると403相当になる request spec がグリーン。
+
+## R1: 組織・アカウント
+
+- AgencyGroup / Agency / SalesRepresentative / ContractCondition / User のCRUD
+- 是正を織り込む: sales_rep_code グローバルユニーク（T-2）、契約条件は受注紐づけ前提のスキーマ（T-3）
+- **Pundit policy_scope で「代理店=自代理店のみ・グループ=配下のみ」を全一覧・詳細に適用**（P4-1先取り。以降の全エンティティで必須）
+- ユーザCSV一括アップロード（非同期ジョブ）
+- 販売許可（Product×Agency/AgencyGroup 中間）はR2でProductと同時に
+
+## R2: CRM中核
+
+- Customer（拡張37カラム込みの完全版スキーマ）/ Store / Order（約90フィールド・Column.md準拠）
+- OrderWorkDetail（SNS認証情報は ActiveRecord::Encryption）
+- Product / Plan / ProductInitialFee / ProductOption / 販売許可
+- OptionGroup / OptionValue（closure_tree等でツリー）/ CustomerStatus / OrderStatus
+- 自動採番の安全化（採番テーブル＋ロック）
+- ProductionCompany / SalesMaterial
+- 検索・ページネーション（pagy）・CSV非同期エクスポート基盤
+
+## R3: 申込フォーム（受注入力）
+
+- 営業担当者の独自セッション認証（代理店CD＋営業CD）
+- FormTemplate / FormStep / FormField — **P2拡張後仕様**（target_table / target_column / editable_by_tier / lock_after_status）を初期実装
+- 動的マルチステップ + 動的バリデーション生成
+- 申込完了トランザクション（Customer + Store + Order + Application 一括生成）+ メール/スタッフ通知
+- フォームビルダーUI
+- **申込トランザクションの request spec 必須**（Laravel側の未カバー教訓）
+
+## R4: 問い合わせ・通知
+
+- Inquiry / InquiryMessage / 添付 / 宛先解決（RecipientResolver移植）
+- 一斉通知（フィルタ・スケジュール送信・テンプレート・宛先グループ）
+- アプリ内通知（SystemNotification + Solid Cable リアルタイム + 30日prune）
+- 顧客マイページ（ログイン+ダッシュボード。Laravel現行と同等の最小構成から）
+
+## R5: 契約フロー・決済（Laravel未実装 → 新規設計実装）
+
+- PaymentTransaction 状態機械の忠実移植（unknown≠failed / mark・confirm分離 / 二重送信防止）+ 決済監査ログ
+- ネットムーブ連携（payment-integration.md 準拠: リダイレクト型・HMAC-SHA256・非保持非通過・突合）
+- 契約ワークフロー状態機械（不備チェック→差戻し→確認コール→契約確定）
+- 契約書PDF生成・版数管理・メール送付、手書き署名
+- 入力チェック設定（3段階必須）・重説チェック・申込確認メール
+
+## R6: 運用強化（P4群・優先度は都度判断）
+
+- 顧客横断統合ビュー / 項目一括更新 / 顧客名寄せ（customer-merge-design.md）
+- メンション / 通知一覧強化（ftlog-port.md）
+- 遅延案件検知・自動キャンセル・集計レポート・外部CSV取込・ガルーン連携 等
+
+## R7: データ移行（別プロジェクト切り出し予定）
+
+- legacy-research/ の ETL設計・238フィールドマッピングを流用
+- 掲示板42万件は参照アーカイブ（Q-C決定済み）
+- **R2のスキーマ設計時点からマッピング整合を常時確認する**（移行を後から考えない）
+
+---
+
+## リスク・注意
+
+1. **フェイルクローズの副作用**（新ルート追加→権限付与漏れ→全員拒否）: 起動時sync + 既定マトリクスのコード宣言 + CIガードをR0でセット導入（ftlogの再発事例に学ぶ）
+2. **決済 unknown 状態の扱い**: 実装者が「わかりやすく」failedに丸めないようspecで遷移表を固定
+3. **参照制御の全面適用**: R1以降の全エンティティで policy_scope 必須をレビュー観点に（CIのgrepガードで機械検出も検討）
+4. Laravel側 P2 の進行と並走する場合、**要件の正は requirements/ で一元管理**し二重管理を避ける（どちらのリポジトリを正とするか運用確認）
+5. PII/認証情報の暗号化方針（Q-D）はR2着手前に確定が必要
+
+## 次のアクション
+
+1. CEOレビュー: 03の論点A〜F の確定
+2. 論点確定を反映して 03/04 を v2 に更新
+3. R0 着手（rails new〜認可移植）
