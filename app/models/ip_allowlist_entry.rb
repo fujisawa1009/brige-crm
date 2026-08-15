@@ -6,6 +6,27 @@ require "ipaddr"
 # 「組織のotp_required設定とのAND判定」は無い＝許可リストは常に効く。
 # 空リスト（未設定）は allows? が常にfalse＝全員OTP必須のフェイルセーフ（設定漏れが
 # 認証を弱める方向に倒れない設計。review-02 ➕4が指摘する歴史的教訓を継承）。
+# == Schema Information
+#
+# Table name: ip_allowlist_entries
+#
+#  id            :uuid             not null, primary key
+#  cidr          :string           not null
+#  note          :string
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  created_by_id :uuid
+#  updated_by_id :uuid
+#
+# Indexes
+#
+#  index_ip_allowlist_entries_on_cidr  (cidr) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (updated_by_id => users.id)
+#
 class IpAllowlistEntry < ApplicationRecord
   include TracksUser
   include Auditable

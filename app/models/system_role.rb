@@ -2,6 +2,33 @@
 # organizationスコープのユニーク制約・portalフラグ（顧客ポータル用ロール）を除去した単一テナント版。
 # mypage/formセクションはロール割当を使わない運用（03§3「ロール割当の編集対象はadmin sectionのみ」）
 # のため、SystemRoleは実質adminセクション専用として扱う。
+# == Schema Information
+#
+# Table name: system_roles
+#
+#  id            :uuid             not null, primary key
+#  description   :text
+#  display_name  :string
+#  name          :string           not null
+#  position      :integer
+#  super_admin   :boolean          default(FALSE), not null
+#  system        :boolean          default(FALSE), not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  created_by_id :uuid
+#  updated_by_id :uuid
+#
+# Indexes
+#
+#  index_system_roles_on_name      (name) UNIQUE
+#  index_system_roles_on_position  (position)
+#  index_system_roles_on_system    (system)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (updated_by_id => users.id)
+#
 class SystemRole < ApplicationRecord
   include TracksUser
   include Auditable
