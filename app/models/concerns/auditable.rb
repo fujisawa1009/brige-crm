@@ -6,9 +6,14 @@ module Auditable
 
   # 監査対象クラス => 記録するフィールド一覧。秘匿値（encrypted_password等）は絶対に含めない。
   TRACKED_FIELDS = {
-    "User"      => %w[name email],
+    "User"       => %w[name email is_active agency_group_id agency_id],
     "SystemRole" => %w[name display_name description super_admin],
-    "IpAllowlistEntry" => %w[cidr note]
+    "IpAllowlistEntry" => %w[cidr note],
+    # 04 R1: 組織・アカウント系（AgencyGroup/Agency/SalesRepresentative/ContractCondition）を追加。
+    "AgencyGroup" => %w[name service_type group_code contact_email bridge_plan_display_type csv_download_visible],
+    "Agency"      => %w[name agency_code agency_group_id contact_person electronic_contract_enabled csv_download_visible],
+    "SalesRepresentative" => %w[name sales_rep_code agency_id email is_active],
+    "ContractCondition"   => %w[name agency_id effective_from effective_until]
   }.freeze
 
   included do
