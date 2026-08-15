@@ -89,6 +89,27 @@ class RoleSeeder
     admin/users
   ].freeze
 
+  # 04 R2: CRM中核（顧客/店舗/案件）。実務運用者は全操作可。代理店/代理店グループは
+  # CustomerPolicy/OrderPolicy/StorePolicyの既定どおりcreate?がstaff_scope?限定のため、
+  # RBACレイヤーでも new/create は渡さず index/show/edit/update/destroy までにする
+  # （AGENCY_SCOPED_FULL_WRITE_CONTROLLERSと同じ「新規作成は内部運用限定」方針。CSVエクスポートは
+  # 全ロール共通でexportアクションのみ、csv_exportsのダウンロードはindex/showを渡す）。
+  R2_CRM_CONTROLLERS = %w[admin/customers admin/stores admin/orders].freeze
+  R2_CRM_AGENCY_ACTIONS = %w[index show edit update destroy export].freeze
+
+  # 04 R2: 商材・ステータス・営業資料マスタ。MasterDataPolicyの既定どおり、代理店/代理店グループは
+  # 参照のみ（index/show）。作成・変更は実務運用者以上に限定する（商材構成・料金・ステータス体系の
+  # 自己申告変更を許すと業務ルールが崩れるため。04 R2タスク8）。
+  R2_MASTER_CONTROLLERS = %w[
+    admin/products admin/plans admin/product_initial_fees admin/product_options
+    admin/option_groups admin/option_values admin/customer_statuses admin/order_statuses
+    admin/production_companies admin/sales_materials
+  ].freeze
+
+  # CSVエクスポート成果物の一覧・ダウンロード。CsvExportPolicyがrequested_by本人のみに絞るため、
+  # RBACレイヤーでは全ロールにindex/showを渡してよい（レコード単位の防御はPundit側で完結する）。
+  CSV_EXPORT_CONTROLLERS = %w[admin/csv_exports].freeze
+
   def assign_default_permissions(roles)
     admin_permissions = SystemPermission.enabled.admin
 
@@ -99,6 +120,10 @@ class RoleSeeder
     end
 
     grant(roles["実務運用者"], admin_permissions.where(controller: R1_ORGANIZATION_CONTROLLERS).pluck(:id))
+    # 04 R2: 実務運用者はCRM中核・マスタ系ともフル操作可（new/createを含む全アクション）。
+    grant(roles["実務運用者"], admin_permissions.where(controller: R2_CRM_CONTROLLERS).pluck(:id))
+    grant(roles["実務運用者"], admin_permissions.where(controller: R2_MASTER_CONTROLLERS).pluck(:id))
+    grant(roles["実務運用者"], admin_permissions.where(controller: CSV_EXPORT_CONTROLLERS).pluck(:id))
 
     %w[代理店グループ用 代理店用].each do |name|
       grant(
@@ -114,6 +139,21 @@ class RoleSeeder
         roles[name],
         admin_permissions.where(controller: AGENCY_SCOPED_FULL_WRITE_CONTROLLERS,
                                  action: %w[index show edit update destroy]).pluck(:id)
+      )
+      # 04 R2: CRM中核は new/create を除く（CustomerPolicy/OrderPolicy/StorePolicyのcreate?が
+      # staff_scope?限定のため、RBACレイヤーでも到達できるアクションを揃える）。
+      grant(
+        roles[name],
+        admin_permissions.where(controller: R2_CRM_CONTROLLERS, action: R2_CRM_AGENCY_ACTIONS).pluck(:id)
+      )
+      # マスタ系は参照のみ（MasterDataPolicyのcreate?/update?/destroy?がstaff_scope?限定のため）。
+      grant(
+        roles[name],
+        admin_permissions.where(controller: R2_MASTER_CONTROLLERS, action: %w[index show]).pluck(:id)
+      )
+      grant(
+        roles[name],
+        admin_permissions.where(controller: CSV_EXPORT_CONTROLLERS, action: %w[index show]).pluck(:id)
       )
     end
   end

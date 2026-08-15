@@ -3,6 +3,7 @@
 # 認可(authorize_system_permission!)はフェイルクローズ（カタログ未登録・ロール未割当は拒否）。
 class ApplicationController < ActionController::Base
   include Pundit::Authorization
+  include Pagy::Backend # 04 R2タスク7: 一覧のページネーション基盤
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern

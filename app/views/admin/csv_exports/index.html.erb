@@ -1,0 +1,29 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">CSVエクスポート</h1>
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">対象</th>
+        <th class="border px-2 py-1 text-left">状態</th>
+        <th class="border px-2 py-1 text-left">件数</th>
+        <th class="border px-2 py-1 text-left">依頼日時</th>
+        <th class="border px-2 py-1"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @csv_exports.each do |export| %>
+        <tr>
+          <td class="border px-2 py-1"><%= export.resource_type %></td>
+          <td class="border px-2 py-1"><%= export.status %></td>
+          <td class="border px-2 py-1"><%= export.row_count %></td>
+          <td class="border px-2 py-1"><%= export.created_at %></td>
+          <td class="border px-2 py-1">
+            <% if export.status == "completed" %>
+              <%= link_to "ダウンロード", admin_csv_export_path(export), class: "underline" %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

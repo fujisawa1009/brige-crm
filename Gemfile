@@ -51,6 +51,11 @@ gem "rack-attack"
 # 04 R1: UserCsvImportJobでCSVパースに使用。Ruby 3.4からdefault gems外（bundled gems）になるため、
 # 今のうちにGemfileへ明記しておく（現行Ruby 3.3.4では無くても動くが、警告が出るため）。
 gem "csv"
+# 04 R2: 一覧のページネーション（03技術スタック表で選定済みの軽量gem）。
+# v9→v43で全く別物のAPI（Pagy::Backend/Frontendモジュールが廃止され、Pagy::Offset等の
+# クラスベースAPIに刷新）に変わっているため、枯れたBackend/Frontend API系列の最終メジャーである
+# 8系に固定する（v43系は破壊的すぎてR2のスコープでの検証コストが見合わない。CTO判断）。
+gem "pagy", "~> 8.6"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
