@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_150006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -66,6 +66,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
     t.datetime "updated_at", null: false
     t.index ["agency_id", "product_id"], name: "index_agency_products_on_agency_id_and_product_id", unique: true
     t.index ["product_id"], name: "index_agency_products_on_product_id"
+  end
+
+  create_table "applications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "agency_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.integer "current_step_number", default: 1, null: false
+    t.uuid "customer_id"
+    t.jsonb "form_data", default: {}, null: false
+    t.uuid "order_id"
+    t.uuid "product_id", null: false
+    t.uuid "sales_representative_id", null: false
+    t.string "status", default: "in_progress", null: false
+    t.uuid "store_id"
+    t.string "token", limit: 64, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["sales_representative_id"], name: "index_applications_on_sales_representative_id"
+    t.index ["status"], name: "index_applications_on_status"
+    t.index ["token"], name: "index_applications_on_token", unique: true
   end
 
   create_table "audit_logs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -194,6 +215,49 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
     t.index ["status"], name: "index_customers_on_status"
   end
 
+  create_table "form_fields", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "editable_by_tier", default: ["sales_representative"], null: false, array: true
+    t.string "field_key", null: false
+    t.string "field_type", null: false
+    t.uuid "form_step_id", null: false
+    t.jsonb "input_options", default: {}, null: false
+    t.string "label", null: false
+    t.string "lock_after_status"
+    t.boolean "required", default: false, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.string "target_column"
+    t.string "target_table", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.jsonb "validation_rules", default: {}, null: false
+    t.index ["editable_by_tier"], name: "index_form_fields_on_editable_by_tier", using: :gin
+    t.index ["form_step_id", "field_key"], name: "index_form_fields_on_form_step_id_and_field_key", unique: true
+  end
+
+  create_table "form_steps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "form_template_id", null: false
+    t.string "name", null: false
+    t.integer "step_number", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["form_template_id", "step_number"], name: "index_form_steps_on_form_template_id_and_step_number", unique: true
+  end
+
+  create_table "form_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.string "name", null: false
+    t.uuid "product_id", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["product_id"], name: "index_form_templates_on_product_id", unique: true
+  end
+
   create_table "ip_allowlist_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "cidr", null: false
     t.datetime "created_at", null: false
@@ -235,6 +299,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
     t.index ["option_group_id", "value"], name: "index_option_values_on_option_group_id_and_value", unique: true
     t.index ["option_group_id"], name: "index_option_values_on_option_group_id"
     t.index ["parent_id"], name: "index_option_values_on_parent_id"
+  end
+
+  create_table "order_options", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "order_id", null: false
+    t.uuid "product_option_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id", "product_option_id"], name: "index_order_options_on_order_id_and_product_option_id", unique: true
+    t.index ["product_option_id"], name: "index_order_options_on_product_option_id"
   end
 
   create_table "order_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -533,6 +606,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
     t.string "email"
     t.boolean "is_active", default: true, null: false
     t.string "name", null: false
+    t.integer "otp_attempts", default: 0, null: false
+    t.string "otp_code_digest"
+    t.datetime "otp_code_expires_at"
     t.string "pdf_address_detail"
     t.string "pdf_city"
     t.string "pdf_fax_number"
@@ -665,6 +741,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
   add_foreign_key "agency_groups", "users", column: "updated_by_id"
   add_foreign_key "agency_products", "agencies", on_delete: :cascade
   add_foreign_key "agency_products", "products", on_delete: :cascade
+  add_foreign_key "applications", "agencies", on_delete: :restrict
+  add_foreign_key "applications", "customers", on_delete: :nullify
+  add_foreign_key "applications", "orders", on_delete: :nullify
+  add_foreign_key "applications", "products", on_delete: :restrict
+  add_foreign_key "applications", "sales_representatives", on_delete: :restrict
+  add_foreign_key "applications", "stores", on_delete: :nullify
+  add_foreign_key "applications", "users", column: "created_by_id"
+  add_foreign_key "applications", "users", column: "updated_by_id"
   add_foreign_key "contract_conditions", "agencies", on_delete: :cascade
   add_foreign_key "contract_conditions", "users", column: "created_by_id"
   add_foreign_key "contract_conditions", "users", column: "updated_by_id"
@@ -675,6 +759,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
   add_foreign_key "customers", "sales_representatives", on_delete: :nullify
   add_foreign_key "customers", "users", column: "created_by_id"
   add_foreign_key "customers", "users", column: "updated_by_id"
+  add_foreign_key "form_fields", "form_steps", on_delete: :cascade
+  add_foreign_key "form_fields", "users", column: "created_by_id"
+  add_foreign_key "form_fields", "users", column: "updated_by_id"
+  add_foreign_key "form_steps", "form_templates", on_delete: :cascade
+  add_foreign_key "form_steps", "users", column: "created_by_id"
+  add_foreign_key "form_steps", "users", column: "updated_by_id"
+  add_foreign_key "form_templates", "products", on_delete: :cascade
+  add_foreign_key "form_templates", "users", column: "created_by_id"
+  add_foreign_key "form_templates", "users", column: "updated_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "created_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "updated_by_id"
   add_foreign_key "option_groups", "users", column: "created_by_id"
@@ -683,6 +776,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
   add_foreign_key "option_values", "option_values", column: "parent_id", on_delete: :cascade
   add_foreign_key "option_values", "users", column: "created_by_id"
   add_foreign_key "option_values", "users", column: "updated_by_id"
+  add_foreign_key "order_options", "orders", on_delete: :cascade
+  add_foreign_key "order_options", "product_options", on_delete: :restrict
   add_foreign_key "order_statuses", "users", column: "created_by_id"
   add_foreign_key "order_statuses", "users", column: "updated_by_id"
   add_foreign_key "order_work_details", "orders", on_delete: :cascade

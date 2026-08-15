@@ -1,0 +1,26 @@
+<div class="max-w-xl mx-auto mt-12 flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @form_step.name %></h1>
+  <p class="text-sm text-gray-600">
+    ステップ <%= @form_step.step_number %> / <%= @application.form_template.form_steps.count %>
+  </p>
+
+  <%# サーバ側の動的バリデーション（Form::DynamicFormValidator）が唯一の可否判定。
+      data-controller="dynamic-form" はブラウザ標準のrequired属性に加えて即時フィードバックを出す
+      クライアント側の二重チェック（app/javascript/controllers/dynamic_form_controller.js）。 %>
+  <%= form_tag form_update_application_step_path(token: @application.token, step_number: @form_step.step_number),
+        method: :patch, class: "flex flex-col gap-4", data: { controller: "dynamic-form" } do %>
+    <% @fields.each do |field| %>
+      <%= render "field_input", field: field, value: @application.form_data[field.field_key],
+            errors: @errors&.dig(field.field_key) %>
+    <% end %>
+
+    <div class="flex gap-3">
+      <% if @form_step.step_number > 1 %>
+        <%= link_to "前のステップに戻る",
+              form_application_step_path(token: @application.token, step_number: @form_step.step_number - 1),
+              class: "underline self-center" %>
+      <% end %>
+      <%= submit_tag "次へ", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+    </div>
+  <% end %>
+</div>

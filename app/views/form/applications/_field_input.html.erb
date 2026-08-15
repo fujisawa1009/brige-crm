@@ -1,0 +1,48 @@
+<%# ローカル変数: field(FormField) / value(保存済み回答。未回答ならnil) / errors(サーバ側検証エラーの配列) %>
+<div>
+  <%= label_tag "answers_#{field.field_key}", field.label %>
+  <% if field.required? %><span class="text-red-600 text-xs">必須</span><% end %>
+
+  <% case field.field_type %>
+  <% when "textarea" %>
+    <%= text_area_tag "answers[#{field.field_key}]", value, id: "answers_#{field.field_key}",
+          class: "border rounded px-2 py-1 w-full", required: field.required?, rows: 3 %>
+  <% when "date" %>
+    <%= date_field_tag "answers[#{field.field_key}]", value, id: "answers_#{field.field_key}",
+          class: "border rounded px-2 py-1 w-full", required: field.required? %>
+  <% when "integer" %>
+    <%= number_field_tag "answers[#{field.field_key}]", value, id: "answers_#{field.field_key}",
+          class: "border rounded px-2 py-1 w-full", required: field.required? %>
+  <% when "boolean" %>
+    <%= check_box_tag "answers[#{field.field_key}]", "1",
+          ActiveModel::Type::Boolean.new.cast(value), id: "answers_#{field.field_key}" %>
+  <% when "select" %>
+    <% choices = Array(field.input_options["choices"]).map { |choice_value, choice_label| [ choice_label, choice_value ] } %>
+    <%= select_tag "answers[#{field.field_key}]", options_for_select(choices, value),
+          id: "answers_#{field.field_key}", include_blank: true,
+          class: "border rounded px-2 py-1 w-full", required: field.required? %>
+  <% when "checkbox_group" %>
+    <%# 未選択のまま送信してもキー自体は届くようにする隠しフィールド（全解除の意図を反映するため）。 %>
+    <%= hidden_field_tag "answers[#{field.field_key}][]", "" %>
+    <% choices  = product_option_field?(field) ? product_option_choices : Array(field.input_options["choices"]) %>
+    <% selected = Array(value).map(&:to_s) %>
+    <div class="flex flex-col gap-1" <%= "data-required-group" if field.required? %>>
+      <% choices.each do |choice_value, choice_label| %>
+        <label class="inline-flex items-center gap-1">
+          <%= check_box_tag "answers[#{field.field_key}][]", choice_value, selected.include?(choice_value.to_s), id: nil %>
+          <%= choice_label %>
+        </label>
+      <% end %>
+      <% if field.required? %>
+        <p class="dynamic-form-error hidden text-red-700 text-sm">1つ以上選択してください</p>
+      <% end %>
+    </div>
+  <% else %>
+    <%= text_field_tag "answers[#{field.field_key}]", value, id: "answers_#{field.field_key}",
+          class: "border rounded px-2 py-1 w-full", required: field.required? %>
+  <% end %>
+
+  <% if errors.present? %>
+    <p class="text-red-700 text-sm"><%= errors.join("、") %></p>
+  <% end %>
+</div>

@@ -1,0 +1,19 @@
+<div class="max-w-xl mx-auto mt-16 flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">お申込み商材の選択</h1>
+  <p><%= current_sales_representative.name %> 様、ようこそ。</p>
+
+  <% if @products.empty? %>
+    <p class="text-gray-600">現在お申込みいただける商材がありません。</p>
+  <% else %>
+    <%= form_tag form_applications_path, method: :post, class: "flex flex-col gap-4" do %>
+      <div>
+        <%= label_tag :product_id, "商材" %>
+        <%= select_tag :product_id, options_from_collection_for_select(@products, :id, :name),
+              include_blank: true, required: true, class: "border rounded px-2 py-1 w-full" %>
+      </div>
+      <%= submit_tag "申込を開始する", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+    <% end %>
+  <% end %>
+
+  <%= button_to "ログアウト", form_destroy_session_path, method: :delete, class: "underline text-left text-sm" %>
+</div>

@@ -34,6 +34,10 @@ class ProductOption < ApplicationRecord
 
   belongs_to :product
 
+  # 04 R3: Order⇄ProductOption中間テーブル（jasmin_order_options相当）。
+  has_many :order_options, dependent: :restrict_with_error
+  has_many :orders, through: :order_options
+
   validates :name, presence: true, length: { maximum: 100 }
   validates :monthly_fee, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 

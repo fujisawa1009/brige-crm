@@ -1,0 +1,27 @@
+<div class="max-w-xl mx-auto mt-12 flex flex-col gap-4">
+  <% if @application.completed? %>
+    <h1 class="text-2xl font-bold">お申込みが完了しました</h1>
+    <p>案件番号: <%= @application.order.order_number %></p>
+    <p>担当者より改めてご連絡いたします。</p>
+    <%= link_to "別の申込を開始する", form_new_application_path, class: "underline w-fit" %>
+  <% else %>
+    <h1 class="text-2xl font-bold">入力内容の確認</h1>
+
+    <% if @submission_errors.present? %>
+      <div class="text-red-700"><%= @submission_errors.values.flatten.join("、") %></div>
+    <% end %>
+
+    <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+      <% @application.form_template.form_steps.each do |step| %>
+        <% step.form_fields.editable_by(FormField::TIER_SALES_REPRESENTATIVE).ordered.each do |field| %>
+          <dt class="font-bold"><%= field.label %></dt>
+          <dd><%= Array(@application.form_data[field.field_key]).join("、") %></dd>
+        <% end %>
+      <% end %>
+    </dl>
+
+    <%= form_tag form_submit_application_path(token: @application.token), method: :post do %>
+      <%= submit_tag "この内容で申し込む", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+    <% end %>
+  <% end %>
+</div>

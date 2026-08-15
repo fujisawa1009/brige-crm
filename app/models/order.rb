@@ -149,6 +149,13 @@ class Order < ApplicationRecord
 
   has_one :order_work_detail, dependent: :destroy
 
+  # 04 R3: 選択オプション（jasmin_order_options相当。04 R2の申し送りをここで解消）。
+  # product_option_ids= はForm::ApplicationSubmissionServiceがFormField(target_table: "order",
+  # target_column: "product_option_ids")経由で呼ぶ、has_many :through が自動生成する集合idsライター。
+  has_many :order_options, dependent: :destroy
+  has_many :product_options, through: :order_options
+  has_many :applications, dependent: :nullify
+
   encrypts :billing_password
 
   # order_numberはpresenceバリデーション対象のため、Customer同様にbefore_validationで採番する。
