@@ -1,0 +1,32 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">ロール管理</h1>
+  <%= link_to "新規ロール作成", new_admin_role_management_path, class: "underline w-fit" %>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">内部名</th>
+        <th class="border px-2 py-1 text-left">表示名</th>
+        <th class="border px-2 py-1">super_admin</th>
+        <th class="border px-2 py-1">組み込み</th>
+        <th class="border px-2 py-1"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @roles.each do |role| %>
+        <tr>
+          <td class="border px-2 py-1"><%= role.name %></td>
+          <td class="border px-2 py-1"><%= link_to role.label, edit_admin_role_management_path(role) %></td>
+          <td class="border px-2 py-1 text-center"><%= role.super_admin? ? "✓" : "" %></td>
+          <td class="border px-2 py-1 text-center"><%= role.system? ? "✓" : "" %></td>
+          <td class="border px-2 py-1 text-center">
+            <% unless role.system? %>
+              <%= button_to "削除", admin_role_management_path(role), method: :delete,
+                    form: { data: { turbo_confirm: "削除しますか？" } } %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

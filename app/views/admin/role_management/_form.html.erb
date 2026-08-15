@@ -1,0 +1,20 @@
+<%= form_with model: role, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if role.errors.any? %>
+    <div class="text-red-700"><%= role.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, "内部名" %>
+    <%= f.text_field :name, disabled: role.system?, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :display_name, "表示名" %>
+    <%= f.text_field :display_name, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :description, "説明" %>
+    <%= f.text_area :description, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

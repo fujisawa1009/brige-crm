@@ -1,0 +1,19 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">ダッシュボード</h1>
+  <p><%= current_user.name %> さん、ようこそ。</p>
+
+  <nav class="flex flex-col gap-2">
+    <% if can_access_system_action?("admin/role_management", "index") %>
+      <%= link_to "ロール管理", admin_role_management_index_path, class: "underline" %>
+    <% end %>
+    <% if can_access_system_action?("admin/permission_management", "show") %>
+      <%= link_to "権限マトリクス", admin_permission_management_path, class: "underline" %>
+    <% end %>
+    <% if can_access_system_action?("admin/login_histories", "index") %>
+      <%= link_to "ログイン履歴", admin_login_histories_path, class: "underline" %>
+    <% end %>
+    <% if can_access_system_action?("admin/ip_allowlist_entries", "index") %>
+      <%= link_to "IP許可リスト", admin_ip_allowlist_entries_path, class: "underline" %>
+    <% end %>
+  </nav>
+</div>

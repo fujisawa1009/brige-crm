@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+# If running the rails server then create or migrate existing database
+if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  ./bin/rails db:prepare
+  # 権限カタログをルート定義から同期する（04 R0-5・ftlog踏襲）。冪等・非破壊のため毎起動で実行してよい。
+  # 新ルート追加時のカタログ未登録（＝フェイルクローズで全員拒否）を構造的に防ぐ。
+  # 注意（review-02 ➕7）: この同期は `./bin/rails server` 起動時限定。`rails console`/`rails runner`
+  # 単発実行では走らないため、それらの経路で新ルートを追加した直後は手動で `rails permissions:sync` を実行すること。
+  ./bin/rails permissions:sync
+  rm -f tmp/pids/server.pid
+fi
+
+exec "${@}"

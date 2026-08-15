@@ -1,0 +1,8 @@
+# SystemPermissionChecker.allowed? を常にtrueへスタブする「フェイルオープン」を据え置く
+# request specファイルの許可リスト（04 R0-9・ftlog移植）。
+#
+# brige-crmはR0が最初のrequest specであり、既存のフェイルオープン依存specは存在しないため
+# このリストは空で始まる。今後もshrink専用（新規追加は原則禁止。CIの
+# "Detect fail-open allowlist growth" ジョブが新規追加をブロックする）。
+# 一時的なバイパスが必要な場合はファイル単位のこのリストではなく、example単位の
+# :skip_system_authorization タグを使い、理由をコメントで残すこと（spec/support/system_permission_authorization.rb）。

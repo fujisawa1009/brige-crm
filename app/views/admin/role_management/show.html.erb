@@ -1,0 +1,5 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @role.label %></h1>
+  <p><%= @role.description %></p>
+  <%= link_to "編集", edit_admin_role_management_path(@role), class: "underline w-fit" %>
+</div>

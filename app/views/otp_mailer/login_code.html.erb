@@ -1,0 +1,9 @@
+<p><%= @user.name %> さん、</p>
+
+<p>ログインを完了するには、以下の認証コードを入力してください。</p>
+
+<p style="font-size:28px; font-weight:bold; letter-spacing:4px; margin:24px 0;"><%= @code %></p>
+
+<p>このコードの有効期限は発行から<%= @valid_minutes %>分です。</p>
+
+<p>心当たりのないログインの場合は、このメールを破棄し、パスワードの変更をご検討ください。</p>

@@ -1,0 +1,41 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">IP許可リスト</h1>
+  <p class="text-sm text-gray-500">空リストの間は全員がメールOTP必須です（フェイルセーフ。P4-17）。</p>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">CIDR</th>
+        <th class="border px-2 py-1 text-left">メモ</th>
+        <th class="border px-2 py-1"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @entries.each do |entry| %>
+        <tr>
+          <td class="border px-2 py-1"><%= entry.cidr %></td>
+          <td class="border px-2 py-1"><%= entry.note %></td>
+          <td class="border px-2 py-1">
+            <%= button_to "削除", admin_ip_allowlist_entry_path(entry), method: :delete,
+                  form: { data: { turbo_confirm: "削除しますか？" } } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= form_with model: @entry, url: admin_ip_allowlist_entries_path, class: "flex flex-col gap-3 max-w-md" do |f| %>
+    <% if @entry.errors.any? %>
+      <div class="text-red-700"><%= @entry.errors.full_messages.to_sentence %></div>
+    <% end %>
+    <div>
+      <%= f.label :cidr, "CIDR" %>
+      <%= f.text_field :cidr, placeholder: "192.0.2.0/24", class: "border rounded px-2 py-1 w-full" %>
+    </div>
+    <div>
+      <%= f.label :note, "メモ" %>
+      <%= f.text_field :note, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+    <%= f.submit "追加", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+  <% end %>
+</div>

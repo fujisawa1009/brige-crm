@@ -1,0 +1,20 @@
+<div class="max-w-md mx-auto mt-16 p-6 border rounded">
+  <h1 class="text-xl font-bold mb-4">認証コードの入力</h1>
+  <p class="mb-4">登録済みのメールアドレスに認証コードを送信しました。メールに記載のコードを入力してください。</p>
+
+  <%= form_tag user_otp_path, method: :post, class: "flex flex-col gap-3" do %>
+    <div>
+      <%= label_tag :code, "認証コード" %>
+      <%= text_field_tag :code, nil,
+            autofocus: true, autocomplete: "one-time-code", inputmode: "numeric",
+            maxlength: 6, required: true, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+
+    <%= submit_tag "ログイン", class: "bg-blue-600 text-white rounded px-4 py-2" %>
+  <% end %>
+
+  <div class="mt-4 flex flex-col gap-2">
+    <%= button_to "コードを再送信する", resend_user_otp_path, method: :post, class: "underline text-left" %>
+    <%= link_to "ログイン画面に戻る", new_user_session_path %>
+  </div>
+</div>

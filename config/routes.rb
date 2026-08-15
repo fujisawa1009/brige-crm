@@ -1,0 +1,42 @@
+Rails.application.routes.draw do
+  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+
+  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
+  # Can be used by load balancers and uptime monitors to verify that the app is live.
+  get "up" => "rails/health#show", as: :rails_health_check
+
+  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
+  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+
+  # 管理画面ユーザー（社内/代理店グループ/代理店）専用Deviseスコープ（03§4）。
+  devise_for :users, controllers: { sessions: "users/sessions" }
+
+  # メールOTP（二要素認証）。Devise標準ルートに乗らない独自コントローラのため個別に定義する（ftlog踏襲）。
+  devise_scope :user do
+    get  "users/otp",        to: "users/otps#new",    as: :new_user_otp
+    post "users/otp",        to: "users/otps#create", as: :user_otp
+    post "users/otp/resend", to: "users/otps#resend",  as: :resend_user_otp
+  end
+
+  # admin section（決定C）。SystemPermissionSyncServiceがネームスペースから section: "admin" を自動判定する。
+  namespace :admin do
+    get "dashboard", to: "dashboard#index", as: :dashboard
+
+    resource :permission_management, only: [:show, :update], controller: "permission_management" do
+      post :sync, on: :collection
+    end
+
+    # 組み込みロールは削除不可（SystemRole#prevent_system_role_destroy がモデル層で防御する）が、
+    # カスタムロールの削除は許可するため destroy もルーティングに含める。
+    resources :role_management do
+      collection { post :reorder }
+    end
+
+    resources :login_histories, only: [:index]
+    resources :ip_allowlist_entries, only: [:index, :create, :destroy]
+  end
+
+  # Defines the root path route ("/")
+  root to: redirect("/admin/dashboard")
+end
