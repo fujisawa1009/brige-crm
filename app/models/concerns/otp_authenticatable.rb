@@ -15,11 +15,17 @@
 module OtpAuthenticatable
   extend ActiveSupport::Concern
 
-  included do
-    OTP_CODE_LENGTH  = 6
-    OTP_VALID_FOR    = 10.minutes
-    OTP_MAX_ATTEMPTS = 5
-  end
+  # 04 R3タスク1・2でSalesRepresentativeにも横展開した際に判明した点を修正: 定数代入をincluded do
+  # ブロックの中に書くと、ブロックの実行時selfはincludeしたクラス（User/SalesRepresentative）に
+  # なるものの、定数代入のスコープはRubyの仕様上「ブロックが字句的に書かれた場所」（＝この
+  # OtpAuthenticatableモジュール自身）に決まる。そのため複数クラスがincludeすると同じ定数へ
+  # 複数回代入することになり "already initialized constant" 警告が出ていた（値は同じなので実害は
+  # 無いが、再利用を前提にした設計であるR3で顕在化したため、意図どおりモジュール直下の定数として
+  # 一度だけ定義する形に直す）。self.class::OTP_CODE_LENGTH 系の参照はancestorチェーン経由で
+  # 引き続き解決できるため呼び出し側の変更は不要。
+  OTP_CODE_LENGTH  = 6
+  OTP_VALID_FOR    = 10.minutes
+  OTP_MAX_ATTEMPTS = 5
 
   # ログイン用ワンタイムコードを発行し、DBにはハッシュのみ保存する。平文コードは
   # メール送信用に戻り値として返すのみでモデルには残さない（ftlog踏襲）。

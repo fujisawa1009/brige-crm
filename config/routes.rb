@@ -68,6 +68,28 @@ Rails.application.routes.draw do
     resources :order_statuses
     resources :production_companies
     resources :sales_materials
+
+    # 04 R3タスク6: フォームビルダー（FormTemplate 1─* FormStep 1─* FormField をネスト属性で一括編集）。
+    resources :form_templates
+  end
+
+  # form section（決定C）。営業担当者の独自セッション認証（03§8-2決定b: authorize_system_permission!を
+  # 完全スキップし、この名前空間はFormAuthenticatable concernのみで保護する）。
+  namespace :form do
+    get    "login",  to: "sessions#new",     as: "new_session"
+    post   "login",  to: "sessions#create",  as: "sessions"
+    delete "logout", to: "sessions#destroy", as: "destroy_session"
+
+    get  "otp",        to: "otps#new",    as: "new_otp"
+    post "otp",        to: "otps#create", as: "otp"
+    post "otp/resend", to: "otps#resend", as: "resend_otp"
+
+    get   "applications/new",                      to: "applications#new",       as: "new_application"
+    post  "applications",                          to: "applications#create",    as: "applications"
+    get   "applications/:token/steps/:step_number", to: "applications#show_step", as: "application_step"
+    patch "applications/:token/steps/:step_number", to: "applications#update_step", as: "update_application_step"
+    get   "applications/:token/complete",          to: "applications#complete",  as: "application_complete"
+    post  "applications/:token/complete",          to: "applications#submit",    as: "submit_application"
   end
 
   # Defines the root path route ("/")

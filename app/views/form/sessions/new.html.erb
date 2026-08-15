@@ -1,0 +1,17 @@
+<div class="max-w-md mx-auto mt-16 p-6 border rounded">
+  <h1 class="text-xl font-bold mb-4">受注入力ログイン</h1>
+  <p class="mb-4 text-sm text-gray-600">代理店CDと営業担当者CDを入力してください。</p>
+
+  <%= form_tag form_sessions_path, method: :post, class: "flex flex-col gap-3" do %>
+    <div>
+      <%= label_tag :agency_code, "代理店CD" %>
+      <%= text_field_tag :agency_code, nil, autofocus: true, required: true, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+    <div>
+      <%= label_tag :sales_rep_code, "営業担当者CD" %>
+      <%= text_field_tag :sales_rep_code, nil, required: true, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+
+    <%= submit_tag "次へ", class: "bg-blue-600 text-white rounded px-4 py-2" %>
+  <% end %>
+</div>
