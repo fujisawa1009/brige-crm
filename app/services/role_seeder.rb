@@ -52,9 +52,43 @@ class RoleSeeder
     admin/dashboard
   ].freeze
 
-  # R0時点では業務エンティティ（Customer/Order等）がまだ存在しないため、既定マトリクスは
-  # 「adminロール専有機能」と「ダッシュボード」だけを宣言する。R1以降、エンティティ追加のたびに
-  # ここへ実務運用者/代理店グループ用/代理店用の権限方針を追記していく。
+  # 04 R1: 組織・アカウント5コントローラ。実務運用者（内部スタッフ）は全操作可。
+  # AgencyScoped（app/policies/concerns/agency_scoped.rb）のPundit判定と対になる方針:
+  #   - create（new含む）は原則スタッフのみ。組織構造・契約条件・アカウント発行は内部運用の管轄とし、
+  #     代理店側からの新規作成パラメータによる権限昇格の経路を作らない（04 R1本文には明記が無いため、
+  #     CEO不在下のCTO判断。理由はcommit message参照）。
+  #   - AgencyScopedがupdate?/destroy?をstaff_scope?のみに縮める AgencyGroup/ContractCondition は
+  #     RBACレイヤーでも「そもそも到達できるアクション」を index/show に絞り、意図を明示する
+  #     （Pundit側の二重防御と揃える）。
+  R1_ORGANIZATION_CONTROLLERS = %w[
+    admin/agency_groups
+    admin/agencies
+    admin/sales_representatives
+    admin/contract_conditions
+    admin/users
+  ].freeze
+
+  # 代理店グループ用/代理店用が参照のみ許可されるコントローラー（AgencyGroup/ContractConditionは
+  # AgencyScoped側でupdate?/destroy?もstaff_scope?限定にしているため、書き込みアクションは渡さない）。
+  AGENCY_SCOPED_READ_ONLY_CONTROLLERS = %w[
+    admin/agency_groups
+    admin/contract_conditions
+  ].freeze
+
+  # 代理店グループ用/代理店用が自スコープ内で参照・更新できるが、destroy?はstaff_scope?限定
+  # （AgencyPolicy#destroy?がstaff_scope?のみに上書きされているため、RBACレイヤーでも
+  # destroyアクションは渡さずPunditの制限と揃える）。
+  AGENCY_SCOPED_READ_WRITE_CONTROLLERS = %w[
+    admin/agencies
+  ].freeze
+
+  # 代理店グループ用/代理店用が自スコープ内で参照・更新・削除まで行えるコントローラー
+  # （SalesRepresentativePolicy/UserPolicyはAgencyScoped既定のまま＝update?/destroy?ともaccessible?）。
+  AGENCY_SCOPED_FULL_WRITE_CONTROLLERS = %w[
+    admin/sales_representatives
+    admin/users
+  ].freeze
+
   def assign_default_permissions(roles)
     admin_permissions = SystemPermission.enabled.admin
 
@@ -62,6 +96,25 @@ class RoleSeeder
     non_admin_role_names = SystemRole::BUILT_IN_ROLE_NAMES - [ "admin" ]
     non_admin_role_names.each do |name|
       grant(roles[name], admin_permissions.where(controller: SELF_SERVICE_CONTROLLERS).pluck(:id))
+    end
+
+    grant(roles["実務運用者"], admin_permissions.where(controller: R1_ORGANIZATION_CONTROLLERS).pluck(:id))
+
+    %w[代理店グループ用 代理店用].each do |name|
+      grant(
+        roles[name],
+        admin_permissions.where(controller: AGENCY_SCOPED_READ_ONLY_CONTROLLERS, action: %w[index show]).pluck(:id)
+      )
+      grant(
+        roles[name],
+        admin_permissions.where(controller: AGENCY_SCOPED_READ_WRITE_CONTROLLERS, action: %w[index show edit update])
+                          .pluck(:id)
+      )
+      grant(
+        roles[name],
+        admin_permissions.where(controller: AGENCY_SCOPED_FULL_WRITE_CONTROLLERS,
+                                 action: %w[index show edit update destroy]).pluck(:id)
+      )
     end
   end
 

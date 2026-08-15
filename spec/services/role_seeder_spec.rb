@@ -29,7 +29,9 @@ RSpec.describe RoleSeeder do
   it "grantは追加のみで、既存の割当を剥奪しない" do
     described_class.call
     role = SystemRole.find_by!(name: "実務運用者")
-    extra_permission = SystemPermission.enabled.admin.where.not(controller: "admin/dashboard").first
+    # 04 R1でR1_ORGANIZATION_CONTROLLERSが既定付与されたため、「admin/dashboard以外」だけでは
+    # 既に付与済みの権限を拾ってしまう可能性がある。まだ付与されていない権限を明示的に選ぶ。
+    extra_permission = SystemPermission.enabled.admin.where.not(id: role.system_permissions.select(:id)).first
     SystemRolePermission.create!(system_role: role, system_permission: extra_permission)
 
     described_class.call
