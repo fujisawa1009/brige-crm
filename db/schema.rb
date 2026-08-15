@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_130005) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_140018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,6 +35,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_130005) do
     t.index ["name"], name: "index_agencies_on_name"
   end
 
+  create_table "agency_group_products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "agency_group_id", null: false
+    t.datetime "created_at", null: false
+    t.uuid "product_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_group_id", "product_id"], name: "index_agency_group_products_on_group_and_product", unique: true
+    t.index ["product_id"], name: "index_agency_group_products_on_product_id"
+  end
+
   create_table "agency_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "bridge_plan_display_type"
     t.string "contact_email"
@@ -48,6 +57,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_130005) do
     t.uuid "updated_by_id"
     t.index ["group_code"], name: "index_agency_groups_on_group_code", unique: true
     t.index ["name"], name: "index_agency_groups_on_name"
+  end
+
+  create_table "agency_products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "agency_id", null: false
+    t.datetime "created_at", null: false
+    t.uuid "product_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id", "product_id"], name: "index_agency_products_on_agency_id_and_product_id", unique: true
+    t.index ["product_id"], name: "index_agency_products_on_product_id"
   end
 
   create_table "audit_logs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -83,6 +101,99 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_130005) do
     t.index ["effective_until"], name: "index_contract_conditions_on_effective_until"
   end
 
+  create_table "csv_exports", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.text "file_data"
+    t.uuid "requested_by_id", null: false
+    t.string "resource_type", null: false
+    t.integer "row_count"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["requested_by_id"], name: "index_csv_exports_on_requested_by_id"
+    t.index ["status"], name: "index_csv_exports_on_status"
+  end
+
+  create_table "customer_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.boolean "is_system", default: false, null: false
+    t.string "label", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["code"], name: "index_customer_statuses_on_code", unique: true
+    t.index ["is_active", "sort_order"], name: "index_customer_statuses_on_is_active_and_sort_order"
+  end
+
+  create_table "customers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "address_detail", limit: 200
+    t.string "agency_customer_code", limit: 50
+    t.uuid "agency_id", null: false
+    t.string "applicant_type", limit: 20
+    t.date "applied_at"
+    t.string "appointer_code", limit: 20
+    t.string "appointer_name", limit: 50
+    t.string "city", limit: 50
+    t.string "confirm_staff_code", limit: 20
+    t.string "confirm_staff_name", limit: 50
+    t.boolean "consolidated_billing"
+    t.string "contact2_dept_phone", limit: 20
+    t.string "contact2_name", limit: 100
+    t.string "contact2_name_kana", limit: 100
+    t.string "contact2_title", limit: 50
+    t.string "contact_dept_phone", limit: 20
+    t.string "contact_name", limit: 100
+    t.string "contact_name_kana", limit: 100
+    t.string "contact_title", limit: 50
+    t.date "contracted_at"
+    t.string "contractor_name_kana", limit: 255
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "customer_number", limit: 20, null: false
+    t.string "email", limit: 255
+    t.string "fax_number", limit: 20
+    t.string "industry", limit: 50
+    t.string "industry_sub", limit: 50
+    t.string "inventory_type", limit: 50
+    t.string "invoice_address", limit: 500
+    t.string "invoice_destination", limit: 50
+    t.string "invoice_name", limit: 255
+    t.string "invoice_name_kana", limit: 255
+    t.string "invoice_other_phone", limit: 20
+    t.string "invoice_phone", limit: 20
+    t.string "invoice_postal_code", limit: 8
+    t.string "lbc_code", limit: 20
+    t.string "mobile_contact_person", limit: 50
+    t.string "mobile_phone", limit: 20
+    t.string "name", limit: 255, null: false
+    t.string "netmove_member_id", limit: 50
+    t.date "netmove_registered_at"
+    t.integer "num_employees"
+    t.integer "num_offices"
+    t.string "phone", limit: 20
+    t.string "postal_code", limit: 8
+    t.string "prefecture", limit: 20
+    t.string "representative_name", limit: 100
+    t.string "representative_name_kana", limit: 100
+    t.string "sales_mgmt_customer_code", limit: 20
+    t.uuid "sales_representative_id"
+    t.string "sms_mobile_number", limit: 20
+    t.string "status", limit: 50, default: "applied", null: false
+    t.string "town", limit: 100
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.string "years_in_business", limit: 20
+    t.index ["agency_id"], name: "index_customers_on_agency_id"
+    t.index ["applied_at"], name: "index_customers_on_applied_at"
+    t.index ["customer_number"], name: "index_customers_on_customer_number", unique: true
+    t.index ["name"], name: "index_customers_on_name"
+    t.index ["sales_representative_id"], name: "index_customers_on_sales_representative_id"
+    t.index ["status"], name: "index_customers_on_status"
+  end
+
   create_table "ip_allowlist_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "cidr", null: false
     t.datetime "created_at", null: false
@@ -91,6 +202,328 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_130005) do
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
     t.index ["cidr"], name: "index_ip_allowlist_entries_on_cidr", unique: true
+  end
+
+  create_table "option_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.text "description"
+    t.boolean "is_active", default: true, null: false
+    t.string "key", null: false
+    t.string "label", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["is_active"], name: "index_option_groups_on_is_active"
+    t.index ["key"], name: "index_option_groups_on_key", unique: true
+    t.index ["sort_order"], name: "index_option_groups_on_sort_order"
+  end
+
+  create_table "option_values", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.integer "depth", default: 0, null: false
+    t.boolean "is_active", default: true, null: false
+    t.string "label", null: false
+    t.uuid "option_group_id", null: false
+    t.uuid "parent_id"
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.string "value", null: false
+    t.index ["is_active"], name: "index_option_values_on_is_active"
+    t.index ["option_group_id", "value"], name: "index_option_values_on_option_group_id_and_value", unique: true
+    t.index ["option_group_id"], name: "index_option_values_on_option_group_id"
+    t.index ["parent_id"], name: "index_option_values_on_parent_id"
+  end
+
+  create_table "order_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.boolean "is_system", default: false, null: false
+    t.string "label", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["code"], name: "index_order_statuses_on_code", unique: true
+    t.index ["is_active", "sort_order"], name: "index_order_statuses_on_is_active_and_sort_order"
+  end
+
+  create_table "order_work_details", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "accepted_cards", limit: 200
+    t.string "attribute_1", limit: 100
+    t.string "attribute_10", limit: 100
+    t.string "attribute_11", limit: 100
+    t.string "attribute_2", limit: 100
+    t.string "attribute_3", limit: 100
+    t.string "attribute_4", limit: 100
+    t.string "attribute_5", limit: 100
+    t.string "attribute_6", limit: 100
+    t.string "attribute_7", limit: 100
+    t.string "attribute_8", limit: 100
+    t.string "attribute_9", limit: 100
+    t.string "available_from", limit: 30
+    t.string "barrier_free", limit: 10
+    t.string "business_account_name", limit: 100
+    t.string "business_category_keyword", limit: 200
+    t.string "business_type", limit: 30
+    t.string "capital", limit: 50
+    t.string "contact_easy_day", limit: 100
+    t.string "contact_easy_day_note", limit: 200
+    t.string "contact_easy_time", limit: 100
+    t.string "contact_easy_time_note", limit: 200
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "dinner_hours", limit: 30
+    t.string "directions", limit: 500
+    t.text "facebook_id"
+    t.text "facebook_pass"
+    t.string "gbp_delete_new", limit: 10
+    t.string "gbp_owner_contact", limit: 100
+    t.string "gbp_owner_name", limit: 100
+    t.string "gbp_owner_permission", limit: 20
+    t.string "gbp_owner_permission_granted", limit: 20
+    t.string "gbp_permission", limit: 30
+    t.string "gbp_site_url", limit: 500
+    t.string "gbp_url", limit: 500
+    t.text "google_account_id"
+    t.text "google_account_pass"
+    t.string "has_facebook", limit: 10
+    t.string "has_google_business", limit: 10
+    t.string "has_instagram", limit: 10
+    t.string "hearing_system", limit: 50
+    t.string "industry_keyword", limit: 200
+    t.string "instagram_account", limit: 20
+    t.text "instagram_id"
+    t.string "instagram_login_confirmed", limit: 20
+    t.text "instagram_pass"
+    t.string "keyword_area_1", limit: 50
+    t.string "keyword_area_2", limit: 50
+    t.string "keyword_area_3", limit: 50
+    t.string "keyword_city", limit: 50
+    t.string "keyword_industry_main", limit: 50
+    t.string "keyword_industry_sub1", limit: 50
+    t.string "keyword_industry_sub2", limit: 50
+    t.string "keyword_industry_sub3", limit: 50
+    t.string "keyword_industry_sub4", limit: 50
+    t.string "keyword_prefecture", limit: 20
+    t.string "keyword_region_industry", limit: 200
+    t.text "keyword_remarks"
+    t.string "logo_photo", limit: 100
+    t.string "lunch_hours", limit: 30
+    t.string "nearest_station", limit: 100
+    t.integer "num_employees"
+    t.integer "num_stores"
+    t.date "opening_date"
+    t.text "operation_history"
+    t.uuid "order_id", null: false
+    t.string "order_time", limit: 30
+    t.string "parking", limit: 20
+    t.integer "parking_capacity"
+    t.string "reference_url", limit: 500
+    t.text "system_account_id"
+    t.text "system_account_pass"
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.string "wifi_available", limit: 30
+    t.text "work_progress_notes"
+    t.index ["order_id"], name: "index_order_work_details_on_order_id", unique: true
+  end
+
+  create_table "orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.date "account_issued_at"
+    t.string "accounting_month", limit: 6
+    t.uuid "agency_id", null: false
+    t.text "billing_password"
+    t.string "bridge_accounting_month", limit: 6
+    t.string "bridge_agency_name", limit: 100
+    t.string "bridge_migration", limit: 5
+    t.string "bridge_migration_order_number", limit: 20
+    t.string "bridge_sales_rep_name", limit: 50
+    t.string "bundle_target_order_number", limit: 20
+    t.string "bundled_billing", limit: 5
+    t.string "business_auth_doc", limit: 5
+    t.date "business_auth_doc_collected_at"
+    t.string "business_proof", limit: 200
+    t.date "cancelled_at"
+    t.string "citation_applied", limit: 5
+    t.integer "citation_count"
+    t.string "citation_existing_serial", limit: 50
+    t.string "citation_plan", limit: 50
+    t.string "confirm_call_contact_name", limit: 50
+    t.text "confirm_call_notes"
+    t.string "confirm_call_preferred_date", limit: 50
+    t.text "confirm_call_remarks"
+    t.string "confirm_call_staff_name", limit: 50
+    t.string "confirm_call_time", limit: 100
+    t.integer "consent_contact_age"
+    t.integer "consent_rep_age"
+    t.string "consent_status", limit: 20
+    t.uuid "contract_condition_id", null: false
+    t.date "contract_sent_at"
+    t.date "contract_start_date"
+    t.string "contract_status", limit: 10
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "customer_id", null: false
+    t.string "domestic_citation_plan", limit: 50
+    t.string "elderly_consent", limit: 5
+    t.date "elderly_consent_collected_at"
+    t.string "external_link_applied", limit: 5
+    t.integer "external_link_count"
+    t.string "external_link_type", limit: 20
+    t.string "factor_notes", limit: 200
+    t.string "finance_address_detail", limit: 100
+    t.string "finance_building", limit: 100
+    t.string "finance_city", limit: 50
+    t.string "finance_division", limit: 20
+    t.string "finance_installer", limit: 100
+    t.string "finance_phone", limit: 20
+    t.string "finance_postal_code", limit: 8
+    t.string "finance_prefecture", limit: 20
+    t.string "finance_town", limit: 100
+    t.string "gbp_multilingual", limit: 5
+    t.string "google_ads_applied", limit: 5
+    t.integer "google_ads_count"
+    t.string "google_review_display", limit: 5
+    t.string "infobiz_applied", limit: 5
+    t.date "inspection_call_completed_at"
+    t.text "inspection_call_history"
+    t.string "inspection_call_ng_time", limit: 100
+    t.date "issued_at"
+    t.string "language_selection", limit: 100
+    t.string "member_id", limit: 20
+    t.string "meo_existing_serial", limit: 50
+    t.string "meo_mgmt_number", limit: 20
+    t.string "meo_premium_applied", limit: 5
+    t.string "onerank_cms", limit: 5
+    t.string "order_number", limit: 20, null: false
+    t.date "ordered_at"
+    t.string "owlet_cms", limit: 5
+    t.string "paper_address_note", limit: 200
+    t.date "payment_collected_at"
+    t.date "payment_doc_confirmed_at"
+    t.string "payment_method", limit: 50
+    t.uuid "plan_id"
+    t.string "plus_applied", limit: 5
+    t.string "portal_site_applied", limit: 5
+    t.uuid "product_initial_fee_id"
+    t.text "remarks"
+    t.string "reservation_system", limit: 50
+    t.string "review_heading", limit: 100
+    t.string "s_plan_cms", limit: 5
+    t.string "sales_mgmt_slip_number", limit: 20
+    t.uuid "sales_representative_id"
+    t.string "serial_id", limit: 20
+    t.text "shared_notes"
+    t.string "status", limit: 50, default: "0:受注", null: false
+    t.uuid "store_id"
+    t.date "terminated_at"
+    t.string "termination_reason", limit: 200
+    t.string "toss_up_code", limit: 20
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.date "work_completed_at"
+    t.index ["agency_id"], name: "index_orders_on_agency_id"
+    t.index ["contract_condition_id"], name: "index_orders_on_contract_condition_id"
+    t.index ["customer_id"], name: "index_orders_on_customer_id"
+    t.index ["order_number"], name: "index_orders_on_order_number", unique: true
+    t.index ["plan_id"], name: "index_orders_on_plan_id"
+    t.index ["product_initial_fee_id"], name: "index_orders_on_product_initial_fee_id"
+    t.index ["sales_representative_id"], name: "index_orders_on_sales_representative_id"
+    t.index ["status"], name: "index_orders_on_status"
+    t.index ["store_id"], name: "index_orders_on_store_id"
+  end
+
+  create_table "plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", limit: 20
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.integer "monthly_fee"
+    t.string "name", limit: 100, null: false
+    t.uuid "product_id", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["is_active"], name: "index_plans_on_is_active"
+    t.index ["product_id"], name: "index_plans_on_product_id"
+  end
+
+  create_table "product_initial_fees", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "amount", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.string "name", limit: 100, null: false
+    t.uuid "product_id", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["is_active"], name: "index_product_initial_fees_on_is_active"
+    t.index ["product_id", "sort_order"], name: "index_product_initial_fees_on_product_id_and_sort_order"
+  end
+
+  create_table "product_options", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.text "description"
+    t.boolean "is_active", default: true, null: false
+    t.integer "monthly_fee"
+    t.string "name", limit: 100, null: false
+    t.uuid "product_id", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["is_active"], name: "index_product_options_on_is_active"
+    t.index ["product_id", "sort_order"], name: "index_product_options_on_product_id_and_sort_order"
+  end
+
+  create_table "production_companies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "contact_name", limit: 50
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "email", limit: 255
+    t.boolean "is_active", default: true, null: false
+    t.string "name", limit: 100, null: false
+    t.text "notes"
+    t.string "phone", limit: 20
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["is_active"], name: "index_production_companies_on_is_active"
+  end
+
+  create_table "products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", limit: 20, null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.text "description"
+    t.boolean "is_active", default: true, null: false
+    t.string "name", limit: 100, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["code"], name: "index_products_on_code", unique: true
+    t.index ["is_active"], name: "index_products_on_is_active"
+  end
+
+  create_table "sales_materials", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "category", limit: 50
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.text "description"
+    t.string "file_path", limit: 500, null: false
+    t.bigint "file_size", null: false
+    t.boolean "is_published", default: false, null: false
+    t.string "mime_type", limit: 100, null: false
+    t.string "original_file_name", limit: 255, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.string "title", limit: 255, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["category"], name: "index_sales_materials_on_category"
+    t.index ["is_published"], name: "index_sales_materials_on_is_published"
   end
 
   create_table "sales_representatives", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -115,6 +548,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_130005) do
     t.index ["email"], name: "index_sales_representatives_on_email"
     t.index ["is_active"], name: "index_sales_representatives_on_is_active"
     t.index ["sales_rep_code"], name: "index_sales_representatives_on_sales_rep_code", unique: true
+  end
+
+  create_table "sequence_counters", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "value", default: 0, null: false
+    t.index ["key"], name: "index_sequence_counters_on_key", unique: true
+  end
+
+  create_table "stores", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "address_detail", limit: 200
+    t.string "business_hours_1", limit: 50
+    t.string "business_hours_2", limit: 50
+    t.string "city", limit: 50
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "customer_id", null: false
+    t.string "fax_number", limit: 20
+    t.boolean "is_active", default: true, null: false
+    t.string "phone_number", limit: 20
+    t.string "postal_code", limit: 8
+    t.string "prefecture", limit: 20
+    t.string "regular_holiday", limit: 100
+    t.string "store_code", limit: 20
+    t.string "store_name", limit: 255, null: false
+    t.string "store_name_kana", limit: 255
+    t.string "town", limit: 100
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["customer_id"], name: "index_stores_on_customer_id"
+    t.index ["is_active"], name: "index_stores_on_is_active"
+    t.index ["store_code"], name: "index_stores_on_store_code"
   end
 
   create_table "system_permissions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -193,16 +659,65 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_130005) do
   add_foreign_key "agencies", "agency_groups", on_delete: :restrict
   add_foreign_key "agencies", "users", column: "created_by_id"
   add_foreign_key "agencies", "users", column: "updated_by_id"
+  add_foreign_key "agency_group_products", "agency_groups", on_delete: :cascade
+  add_foreign_key "agency_group_products", "products", on_delete: :cascade
   add_foreign_key "agency_groups", "users", column: "created_by_id"
   add_foreign_key "agency_groups", "users", column: "updated_by_id"
+  add_foreign_key "agency_products", "agencies", on_delete: :cascade
+  add_foreign_key "agency_products", "products", on_delete: :cascade
   add_foreign_key "contract_conditions", "agencies", on_delete: :cascade
   add_foreign_key "contract_conditions", "users", column: "created_by_id"
   add_foreign_key "contract_conditions", "users", column: "updated_by_id"
+  add_foreign_key "csv_exports", "users", column: "requested_by_id"
+  add_foreign_key "customer_statuses", "users", column: "created_by_id"
+  add_foreign_key "customer_statuses", "users", column: "updated_by_id"
+  add_foreign_key "customers", "agencies", on_delete: :restrict
+  add_foreign_key "customers", "sales_representatives", on_delete: :nullify
+  add_foreign_key "customers", "users", column: "created_by_id"
+  add_foreign_key "customers", "users", column: "updated_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "created_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "updated_by_id"
+  add_foreign_key "option_groups", "users", column: "created_by_id"
+  add_foreign_key "option_groups", "users", column: "updated_by_id"
+  add_foreign_key "option_values", "option_groups", on_delete: :cascade
+  add_foreign_key "option_values", "option_values", column: "parent_id", on_delete: :cascade
+  add_foreign_key "option_values", "users", column: "created_by_id"
+  add_foreign_key "option_values", "users", column: "updated_by_id"
+  add_foreign_key "order_statuses", "users", column: "created_by_id"
+  add_foreign_key "order_statuses", "users", column: "updated_by_id"
+  add_foreign_key "order_work_details", "orders", on_delete: :cascade
+  add_foreign_key "order_work_details", "users", column: "created_by_id"
+  add_foreign_key "order_work_details", "users", column: "updated_by_id"
+  add_foreign_key "orders", "agencies", on_delete: :restrict
+  add_foreign_key "orders", "contract_conditions", on_delete: :restrict
+  add_foreign_key "orders", "customers", on_delete: :restrict
+  add_foreign_key "orders", "plans", on_delete: :nullify
+  add_foreign_key "orders", "product_initial_fees", on_delete: :nullify
+  add_foreign_key "orders", "sales_representatives", on_delete: :nullify
+  add_foreign_key "orders", "stores", on_delete: :nullify
+  add_foreign_key "orders", "users", column: "created_by_id"
+  add_foreign_key "orders", "users", column: "updated_by_id"
+  add_foreign_key "plans", "products", on_delete: :restrict
+  add_foreign_key "plans", "users", column: "created_by_id"
+  add_foreign_key "plans", "users", column: "updated_by_id"
+  add_foreign_key "product_initial_fees", "products", on_delete: :cascade
+  add_foreign_key "product_initial_fees", "users", column: "created_by_id"
+  add_foreign_key "product_initial_fees", "users", column: "updated_by_id"
+  add_foreign_key "product_options", "products", on_delete: :cascade
+  add_foreign_key "product_options", "users", column: "created_by_id"
+  add_foreign_key "product_options", "users", column: "updated_by_id"
+  add_foreign_key "production_companies", "users", column: "created_by_id"
+  add_foreign_key "production_companies", "users", column: "updated_by_id"
+  add_foreign_key "products", "users", column: "created_by_id"
+  add_foreign_key "products", "users", column: "updated_by_id"
+  add_foreign_key "sales_materials", "users", column: "created_by_id"
+  add_foreign_key "sales_materials", "users", column: "updated_by_id"
   add_foreign_key "sales_representatives", "agencies", on_delete: :restrict
   add_foreign_key "sales_representatives", "users", column: "created_by_id"
   add_foreign_key "sales_representatives", "users", column: "updated_by_id"
+  add_foreign_key "stores", "customers", on_delete: :cascade
+  add_foreign_key "stores", "users", column: "created_by_id"
+  add_foreign_key "stores", "users", column: "updated_by_id"
   add_foreign_key "system_role_permissions", "system_permissions"
   add_foreign_key "system_role_permissions", "system_roles"
   add_foreign_key "system_roles", "users", column: "created_by_id"
