@@ -14,10 +14,10 @@ class SystemPermission < ApplicationRecord
 
   validates :controller, :action, :http_method, :path, presence: true
   validates :section, inclusion: { in: SECTIONS }
-  validates :controller, uniqueness: { scope: [:action, :http_method, :path] }
+  validates :controller, uniqueness: { scope: [ :action, :http_method, :path ] }
 
   def route_signature
-    [controller, action, http_method, path]
+    [ controller, action, http_method, path ]
   end
 
   def display_name

@@ -44,7 +44,7 @@ class SystemPermissionChecker
     SystemPermission.enabled.where(
       controller:  controller,
       action:      action,
-      http_method: [http_method, "ALL"]
+      http_method: [ http_method, "ALL" ]
     )
   end
 end

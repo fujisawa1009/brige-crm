@@ -8,7 +8,7 @@ class CreateUserSystemRoles < ActiveRecord::Migration[8.1]
       t.timestamps null: false
     end
 
-    add_index :user_system_roles, [:user_id, :system_role_id], unique: true
+    add_index :user_system_roles, [ :user_id, :system_role_id ], unique: true
     add_index :user_system_roles, :system_role_id
 
     add_foreign_key :user_system_roles, :users

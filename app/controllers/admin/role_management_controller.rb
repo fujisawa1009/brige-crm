@@ -1,6 +1,6 @@
 # ロール管理UI（04 R0-5）。ftlogのRoleManagementControllerを単一テナント化して移植。
 class Admin::RoleManagementController < Admin::BaseController
-  before_action :set_role, only: [:show, :edit, :update, :destroy]
+  before_action :set_role, only: [ :show, :edit, :update, :destroy ]
 
   def index
     @roles = SystemRole.order(Arel.sql("COALESCE(position, 99999), system DESC, name ASC"))

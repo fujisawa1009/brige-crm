@@ -17,7 +17,7 @@ class CreateSystemPermissions < ActiveRecord::Migration[8.1]
       t.timestamps null: false
     end
 
-    add_index :system_permissions, [:controller, :action, :http_method, :path],
+    add_index :system_permissions, [ :controller, :action, :http_method, :path ],
               unique: true, name: "index_system_permissions_on_route_signature"
     add_index :system_permissions, :enabled
     add_index :system_permissions, :section

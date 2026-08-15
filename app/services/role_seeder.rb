@@ -59,7 +59,7 @@ class RoleSeeder
     admin_permissions = SystemPermission.enabled.admin
 
     # admin(super_admin) は SystemPermissionChecker のバイパスで全許可されるため個別割当は不要。
-    non_admin_role_names = SystemRole::BUILT_IN_ROLE_NAMES - ["admin"]
+    non_admin_role_names = SystemRole::BUILT_IN_ROLE_NAMES - [ "admin" ]
     non_admin_role_names.each do |name|
       grant(roles[name], admin_permissions.where(controller: SELF_SERVICE_CONTROLLERS).pluck(:id))
     end

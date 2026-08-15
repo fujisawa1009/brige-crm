@@ -23,7 +23,7 @@ Rails.application.routes.draw do
   namespace :admin do
     get "dashboard", to: "dashboard#index", as: :dashboard
 
-    resource :permission_management, only: [:show, :update], controller: "permission_management" do
+    resource :permission_management, only: [ :show, :update ], controller: "permission_management" do
       post :sync, on: :collection
     end
 
@@ -33,8 +33,8 @@ Rails.application.routes.draw do
       collection { post :reorder }
     end
 
-    resources :login_histories, only: [:index]
-    resources :ip_allowlist_entries, only: [:index, :create, :destroy]
+    resources :login_histories, only: [ :index ]
+    resources :ip_allowlist_entries, only: [ :index, :create, :destroy ]
   end
 
   # Defines the root path route ("/")

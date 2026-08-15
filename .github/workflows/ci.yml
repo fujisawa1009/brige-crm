@@ -65,3 +65,127 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  # 04 R0-10: rspec本体。schema.rbがpg_bigm拡張の有無に依存しないR0時点でも、将来のR2以降との
+  # 差分を避けるためdb/Dockerfile（pg_bigm同梱）を使う（ftlog踏襲）。
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build PostgreSQL image with pg_bigm
+        run: docker build -t brige_crm-db ./db
+
+      - name: Start PostgreSQL
+        run: |
+          docker run -d --name brige_crm-db \
+            -e POSTGRES_USER=brige_crm \
+            -e POSTGRES_PASSWORD=brige_crm_password \
+            -e POSTGRES_DB=brige_crm_test \
+            -p 5432:5432 \
+            brige_crm-db
+          for i in $(seq 1 30); do
+            docker exec brige_crm-db pg_isready -U brige_crm -d brige_crm_test && exit 0
+            sleep 1
+          done
+          echo "::error::PostgreSQL が起動しませんでした"
+          docker logs brige_crm-db
+          exit 1
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Load schema
+        env:
+          RAILS_ENV: test
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: brige_crm
+          POSTGRES_PASSWORD: brige_crm_password
+        run: bin/rails db:schema:load
+
+      # レイアウトが参照するTailwindのビルド成果物はgitignore対象のためCIには存在しない。
+      # ビルドしないと画面を描画する全テストがActionView::Template::Errorで落ちる（ftlog踏襲）。
+      - name: Build Tailwind CSS
+        env:
+          RAILS_ENV: test
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: brige_crm
+          POSTGRES_PASSWORD: brige_crm_password
+        run: bin/rails tailwindcss:build
+
+      - name: Run RSpec
+        env:
+          RAILS_ENV: test
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: brige_crm
+          POSTGRES_PASSWORD: brige_crm_password
+        run: bundle exec rspec
+
+  # 04 R0-10「認可スキップ検出grep相当のジョブ」。ftlogのtenant_isolationジョブから
+  # brige-crm（単一テナント）に不要なチェック（.unscoped/without_tenant/組織スコープ検証）を除き、
+  # 認可フェイルクローズ違反の検出2種のみを移植する。
+  authorization_guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # authorize_system_permission! を action名スキップ等で無効化していないか、
+      # skip_system_permission_authorization? を安易にオーバーライドしていないかを検出する
+      # （review-02が移植必須と指摘した2点セットの1つ目。04 R0-10）。
+      - name: Detect authorization skip outside allowlist
+        run: |
+          cat > /tmp/authz_skip_allowlist <<'EOF'
+          app/controllers/application_controller.rb
+          EOF
+          # 許可理由:
+          # - application_controller: skip_system_permission_authorization? の既定定義（基底）。
+          #   将来form/名前空間の実装（R3）でこのファイル内の判定条件を拡張する分には問題ない。
+          HITS=$(grep -rlE "skip_before_action :authorize_system_permission!|def skip_system_permission_authorization\?" app/controllers/ \
+                 | grep -vxFf /tmp/authz_skip_allowlist || true)
+          if [ -n "$HITS" ]; then
+            echo "$HITS"
+            echo "::error::許可リスト外で認可（authorize_system_permission!）をスキップしています。正当な理由があればワークフローの許可リストに追記してください"
+            exit 1
+          fi
+          echo "OK: 認可スキップは許可リスト内のみ"
+
+      # request specのフェイルオープン許可リスト監視（review-02が移植必須と指摘した2点セットの2つ目）。
+      # spec/support/fail_open_request_specs.txt は「認可スタブ（フェイルオープン）を据え置く既存spec」の
+      # 段階移行用リストで、shrink（削除）のみ許される。
+      - name: Detect fail-open allowlist growth
+        run: |
+          LIST=spec/support/fail_open_request_specs.txt
+          if [ ! -f "$LIST" ]; then
+            echo "OK: 許可リスト未導入（チェック対象なし）"
+            exit 0
+          fi
+
+          STALE=$(grep -vE '^\s*(#|$)' "$LIST" | while read -r f; do
+            [ -f "$f" ] || echo "$f"
+          done)
+          if [ -n "$STALE" ]; then
+            echo "$STALE"
+            echo "::error::フェイルオープン許可リストに存在しないspecファイルが載っています。該当行を削除してください"
+            exit 1
+          fi
+
+          if [ -n "${GITHUB_BASE_REF:-}" ]; then
+            git fetch --depth=1 origin "$GITHUB_BASE_REF"
+            if git cat-file -e "origin/${GITHUB_BASE_REF}:${LIST}" 2>/dev/null; then
+              git show "origin/${GITHUB_BASE_REF}:${LIST}" | grep -vE '^\s*(#|$)' | sort > /tmp/fail_open_base
+              grep -vE '^\s*(#|$)' "$LIST" | sort > /tmp/fail_open_head
+              ADDED=$(comm -13 /tmp/fail_open_base /tmp/fail_open_head)
+              if [ -n "$ADDED" ]; then
+                echo "$ADDED"
+                echo "::error::フェイルオープン許可リストへの追記を検出しました。新規request specは実認可（既定）で書いてください。一時的なバイパスが必要な場合は :skip_system_authorization タグを使い、理由をコメントで残してください"
+                exit 1
+              fi
+            fi
+          fi
+          echo "OK: フェイルオープン許可リストはshrinkのみ"
+

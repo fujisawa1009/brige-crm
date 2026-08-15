@@ -23,7 +23,7 @@ class CreateAuditLogs < ActiveRecord::Migration[8.1]
     end
 
     add_index :audit_logs, :user_id
-    add_index :audit_logs, [:resource_type, :resource_id, :created_at], order: { created_at: :desc },
+    add_index :audit_logs, [ :resource_type, :resource_id, :created_at ], order: { created_at: :desc },
               name: "index_audit_logs_on_resource_and_created_at"
     add_index :audit_logs, :action
     add_index :audit_logs, :created_at
