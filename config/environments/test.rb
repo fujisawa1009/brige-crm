@@ -31,6 +31,11 @@ Rails.application.configure do
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test
 
+  # 04 R1: UserCsvImportJob等をhave_enqueued_job/perform_enqueued_jobsで検証するため、
+  # テスト環境ではSolid Queueへ実際に投入せずインメモリのtestアダプタを使う（rails newの既定に
+  # このapplication.rbでは含まれていなかったため明示的に追加）。
+  config.active_job.queue_adapter = :test
+
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.

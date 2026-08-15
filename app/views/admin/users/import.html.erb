@@ -1,0 +1,15 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">ユーザーCSV一括アップロード</h1>
+  <p class="text-sm text-gray-500">
+    ヘッダー行必須: name,email,password,agency_group_id,agency_id,is_active
+    （password省略時はランダムな一時パスワードを発行します）。非同期ジョブで処理します。
+  </p>
+
+  <%= form_with url: import_upload_admin_users_path, method: :post,
+        multipart: true, class: "flex flex-col gap-3 max-w-md" do |f| %>
+    <%= f.file_field :csv_file, accept: "text/csv" %>
+    <%= f.submit "アップロード", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+  <% end %>
+
+  <%= link_to "一覧に戻る", admin_users_path, class: "underline w-fit" %>
+</div>

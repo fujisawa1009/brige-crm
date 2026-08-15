@@ -1,0 +1,70 @@
+# 営業担当者管理（04 R1・Column.md §7）。作成は staff（admin/実務運用者）のみ
+# （SalesRepresentativePolicy参照）。更新・削除は自代理店・配下代理店のユーザーも可能だが、
+# agency_id（所属代理店の付け替え）は staff以外のパラメータから除去する（権限昇格防止）。
+class Admin::SalesRepresentativesController < Admin::BaseController
+  before_action :set_sales_representative, only: [ :show, :edit, :update, :destroy ]
+
+  def index
+    @sales_representatives = policy_scope(SalesRepresentative).order(:sales_rep_code)
+  end
+
+  def show
+    authorize @sales_representative
+  end
+
+  def new
+    @sales_representative = SalesRepresentative.new
+    authorize @sales_representative
+  end
+
+  def edit
+    authorize @sales_representative
+  end
+
+  def create
+    @sales_representative = SalesRepresentative.new(sales_representative_params)
+    authorize @sales_representative
+
+    if @sales_representative.save
+      redirect_to admin_sales_representative_path(@sales_representative), notice: "営業担当者を作成しました。"
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def update
+    authorize @sales_representative
+    permitted = strip_ownership_params!(sales_representative_params, :agency_id, policy_record: @sales_representative)
+
+    if @sales_representative.update(permitted)
+      redirect_to admin_sales_representative_path(@sales_representative), notice: "営業担当者を更新しました。"
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    authorize @sales_representative
+
+    if @sales_representative.destroy
+      redirect_to admin_sales_representatives_path, notice: "営業担当者を削除しました。"
+    else
+      redirect_to admin_sales_representative_path(@sales_representative),
+        alert: @sales_representative.errors.full_messages.to_sentence
+    end
+  end
+
+  private
+
+  def set_sales_representative
+    @sales_representative = SalesRepresentative.find(params[:id])
+  end
+
+  def sales_representative_params
+    params.require(:sales_representative).permit(
+      :agency_id, :sales_rep_code, :name, :email, :is_active,
+      :pdf_store_name, :pdf_postal_code, :pdf_prefecture, :pdf_city, :pdf_town,
+      :pdf_address_detail, :pdf_phone_number, :pdf_fax_number
+    )
+  end
+end

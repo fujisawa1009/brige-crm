@@ -1,0 +1,33 @@
+<%= form_with model: agency_group, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if agency_group.errors.any? %>
+    <div class="text-red-700"><%= agency_group.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, "グループ名" %>
+    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :service_type, "サービス種別" %>
+    <%= f.select :service_type, AgencyGroup::SERVICE_TYPES, {}, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :group_code, "グループCD" %>
+    <%= f.text_field :group_code, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :contact_email, "連絡先メール" %>
+    <%= f.text_field :contact_email, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :bridge_plan_display_type, "Bridgeプラン表示区分" %>
+    <%= f.select :bridge_plan_display_type, [ "ハイブリッド", "プラン全表示" ], { include_blank: true },
+          class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :csv_download_visible, "CSVダウンロード表示" %>
+    <%= f.check_box :csv_download_visible %>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

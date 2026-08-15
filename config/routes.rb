@@ -35,6 +35,18 @@ Rails.application.routes.draw do
 
     resources :login_histories, only: [ :index ]
     resources :ip_allowlist_entries, only: [ :index, :create, :destroy ]
+
+    # 04 R1: 組織・アカウント（AgencyGroup/Agency/SalesRepresentative/ContractCondition/User）のCRUD。
+    resources :agency_groups
+    resources :agencies
+    resources :sales_representatives
+    resources :contract_conditions
+    resources :users do
+      collection do
+        get  :import        # CSV一括アップロードのフォーム
+        post :import_upload # 非同期ジョブ（UserCsvImportJob）を投入
+      end
+    end
   end
 
   # Defines the root path route ("/")

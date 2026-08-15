@@ -1,0 +1,21 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @agency.name %></h1>
+  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+    <dt class="font-bold">代理店CD</dt><dd><%= @agency.agency_code %></dd>
+    <dt class="font-bold">所属グループ</dt><dd><%= @agency.agency_group.name %></dd>
+    <dt class="font-bold">店所担当者</dt><dd><%= @agency.contact_person %></dd>
+    <dt class="font-bold">通知先メール1</dt><dd><%= @agency.email_1 %></dd>
+    <dt class="font-bold">電子契約</dt><dd><%= @agency.electronic_contract_enabled %></dd>
+  </dl>
+
+  <div class="flex gap-3">
+    <%= link_to "一覧に戻る", admin_agencies_path, class: "underline" %>
+    <% if policy(@agency).update? %>
+      <%= link_to "編集", edit_admin_agency_path(@agency), class: "underline" %>
+    <% end %>
+    <% if policy(@agency).destroy? %>
+      <%= button_to "削除", admin_agency_path(@agency), method: :delete,
+            form: { data: { turbo_confirm: "削除しますか？" } } %>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">営業担当者</h1>
+  <% if policy(SalesRepresentative).create? %>
+    <%= link_to "新規作成", new_admin_sales_representative_path, class: "underline w-fit" %>
+  <% end %>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">営業CD</th>
+        <th class="border px-2 py-1 text-left">氏名</th>
+        <th class="border px-2 py-1 text-left">所属代理店</th>
+        <th class="border px-2 py-1">有効</th>
+        <th class="border px-2 py-1"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sales_representatives.each do |sales_representative| %>
+        <tr>
+          <td class="border px-2 py-1"><%= sales_representative.sales_rep_code %></td>
+          <td class="border px-2 py-1">
+            <%= link_to sales_representative.name, admin_sales_representative_path(sales_representative) %>
+          </td>
+          <td class="border px-2 py-1"><%= sales_representative.agency.name %></td>
+          <td class="border px-2 py-1 text-center"><%= sales_representative.is_active? ? "✓" : "" %></td>
+          <td class="border px-2 py-1"></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

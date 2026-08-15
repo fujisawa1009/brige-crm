@@ -1,0 +1,25 @@
+<%= form_with model: contract_condition, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if contract_condition.errors.any? %>
+    <div class="text-red-700"><%= contract_condition.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div>
+    <%= f.label :agency_id, "代理店" %>
+    <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :name, "契約条件名" %>
+    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :effective_from, "適用開始日" %>
+    <%= f.date_field :effective_from, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :effective_until, "適用終了日（現行はNULL）" %>
+    <%= f.date_field :effective_until, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

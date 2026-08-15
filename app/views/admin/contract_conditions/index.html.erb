@@ -1,0 +1,31 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">契約条件</h1>
+  <% if policy(ContractCondition).create? %>
+    <%= link_to "新規作成", new_admin_contract_condition_path, class: "underline w-fit" %>
+  <% end %>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">代理店</th>
+        <th class="border px-2 py-1 text-left">名称</th>
+        <th class="border px-2 py-1">適用開始</th>
+        <th class="border px-2 py-1">適用終了</th>
+        <th class="border px-2 py-1"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @contract_conditions.each do |contract_condition| %>
+        <tr>
+          <td class="border px-2 py-1"><%= contract_condition.agency.name %></td>
+          <td class="border px-2 py-1">
+            <%= link_to contract_condition.name, admin_contract_condition_path(contract_condition) %>
+          </td>
+          <td class="border px-2 py-1"><%= contract_condition.effective_from %></td>
+          <td class="border px-2 py-1"><%= contract_condition.effective_until || "現行" %></td>
+          <td class="border px-2 py-1"></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

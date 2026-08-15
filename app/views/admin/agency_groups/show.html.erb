@@ -1,0 +1,21 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @agency_group.name %></h1>
+  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+    <dt class="font-bold">グループCD</dt><dd><%= @agency_group.group_code %></dd>
+    <dt class="font-bold">サービス種別</dt><dd><%= @agency_group.service_type %></dd>
+    <dt class="font-bold">連絡先メール</dt><dd><%= @agency_group.contact_email %></dd>
+    <dt class="font-bold">Bridgeプラン表示区分</dt><dd><%= @agency_group.bridge_plan_display_type %></dd>
+    <dt class="font-bold">CSVダウンロード表示</dt><dd><%= @agency_group.csv_download_visible %></dd>
+  </dl>
+
+  <div class="flex gap-3">
+    <%= link_to "一覧に戻る", admin_agency_groups_path, class: "underline" %>
+    <% if policy(@agency_group).update? %>
+      <%= link_to "編集", edit_admin_agency_group_path(@agency_group), class: "underline" %>
+    <% end %>
+    <% if policy(@agency_group).destroy? %>
+      <%= button_to "削除", admin_agency_group_path(@agency_group), method: :delete,
+            form: { data: { turbo_confirm: "削除しますか？" } } %>
+    <% end %>
+  </div>
+</div>

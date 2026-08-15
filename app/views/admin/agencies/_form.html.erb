@@ -1,0 +1,35 @@
+<%= form_with model: agency, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if agency.errors.any? %>
+    <div class="text-red-700"><%= agency.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <% if policy(agency).staff_scope? %>
+    <div>
+      <%= f.label :agency_group_id, "所属グループ" %>
+      <%= f.collection_select :agency_group_id, AgencyGroup.order(:name), :id, :name,
+            { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+  <% end %>
+  <div>
+    <%= f.label :name, "代理店名" %>
+    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :agency_code, "代理店CD" %>
+    <%= f.text_field :agency_code, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :contact_person, "店所担当者" %>
+    <%= f.text_field :contact_person, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :email_1, "通知先メール1" %>
+    <%= f.text_field :email_1, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :electronic_contract_enabled, "電子契約フラグ" %>
+    <%= f.check_box :electronic_contract_enabled %>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

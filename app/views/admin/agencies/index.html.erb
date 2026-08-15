@@ -1,0 +1,27 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">代理店</h1>
+  <% if policy(Agency).create? %>
+    <%= link_to "新規作成", new_admin_agency_path, class: "underline w-fit" %>
+  <% end %>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">代理店CD</th>
+        <th class="border px-2 py-1 text-left">名称</th>
+        <th class="border px-2 py-1 text-left">所属グループ</th>
+        <th class="border px-2 py-1"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @agencies.each do |agency| %>
+        <tr>
+          <td class="border px-2 py-1"><%= agency.agency_code %></td>
+          <td class="border px-2 py-1"><%= link_to agency.name, admin_agency_path(agency) %></td>
+          <td class="border px-2 py-1"><%= agency.agency_group.name %></td>
+          <td class="border px-2 py-1"></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

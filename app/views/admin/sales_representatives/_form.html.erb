@@ -1,0 +1,31 @@
+<%= form_with model: sales_representative, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if sales_representative.errors.any? %>
+    <div class="text-red-700"><%= sales_representative.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <% if policy(sales_representative).staff_scope? %>
+    <div>
+      <%= f.label :agency_id, "所属代理店" %>
+      <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
+            { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+  <% end %>
+  <div>
+    <%= f.label :sales_rep_code, "営業CD" %>
+    <%= f.text_field :sales_rep_code, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :name, "氏名" %>
+    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :email, "メール" %>
+    <%= f.text_field :email, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :is_active, "有効" %>
+    <%= f.check_box :is_active %>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

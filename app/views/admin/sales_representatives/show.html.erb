@@ -1,0 +1,20 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @sales_representative.name %></h1>
+  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+    <dt class="font-bold">営業CD</dt><dd><%= @sales_representative.sales_rep_code %></dd>
+    <dt class="font-bold">所属代理店</dt><dd><%= @sales_representative.agency.name %></dd>
+    <dt class="font-bold">メール</dt><dd><%= @sales_representative.email %></dd>
+    <dt class="font-bold">有効</dt><dd><%= @sales_representative.is_active? ? "有効" : "無効" %></dd>
+  </dl>
+
+  <div class="flex gap-3">
+    <%= link_to "一覧に戻る", admin_sales_representatives_path, class: "underline" %>
+    <% if policy(@sales_representative).update? %>
+      <%= link_to "編集", edit_admin_sales_representative_path(@sales_representative), class: "underline" %>
+    <% end %>
+    <% if policy(@sales_representative).destroy? %>
+      <%= button_to "削除", admin_sales_representative_path(@sales_representative), method: :delete,
+            form: { data: { turbo_confirm: "削除しますか？" } } %>
+    <% end %>
+  </div>
+</div>

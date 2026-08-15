@@ -48,6 +48,9 @@ gem "devise"
 gem "pundit"
 # レート制限: OTP照合・ログイン試行の総当たり対策（ftlog踏襲）
 gem "rack-attack"
+# 04 R1: UserCsvImportJobでCSVパースに使用。Ruby 3.4からdefault gems外（bundled gems）になるため、
+# 今のうちにGemfileへ明記しておく（現行Ruby 3.3.4では無くても動くが、警告が出るため）。
+gem "csv"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
