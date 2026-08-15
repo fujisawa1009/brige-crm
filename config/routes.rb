@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # 管理画面ユーザー（社内/代理店グループ/代理店）専用Deviseスコープ（03§4）。
-  devise_for :users, controllers: { sessions: "users/sessions" }
+  devise_for :users, controllers: { sessions: "users/sessions", registrations: "users/registrations" }
 
   # メールOTP（二要素認証）。Devise標準ルートに乗らない独自コントローラのため個別に定義する（ftlog踏襲）。
   devise_scope :user do
