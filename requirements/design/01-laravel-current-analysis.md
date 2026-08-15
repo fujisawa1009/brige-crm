@@ -38,7 +38,7 @@
 
 ---
 
-## 2. ドメインモデル（全41モデル）
+## 2. ドメインモデル（全39モデル・2026-08-15洗い直しで訂正）
 
 共通トレイト: `HasUuids`（UUID主キー）/ `TracksUser`（created_by/updated_by自動セット）/ spatie `LogsActivity`
 

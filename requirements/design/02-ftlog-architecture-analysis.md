@@ -189,7 +189,8 @@ end
 - テナント境界 = `organizations`（slug/domain でテナント解決、default_system_role_id、otp_required 等）
 - RBAC 4テーブル（前述）
 - User STI（Staff/Customer）、UNIQUE(organization_id, email)、ソフトデリート
-- 業務系: projects / project_members / issues / comments / issue_types・categories・statuses / custom_field_definitions・values / project_files・folders / wiki_pages / customers / notifications / audit_logs / login_histories / ip_allowlist_entries
+- 業務系: projects / project_members / issues / comments / issue_types・categories・statuses / custom_field_definitions・values / project_files・folders / wiki_pages / notifications / audit_logs / ip_allowlist_entries
+  - ⚠️2026-08-15洗い直しで訂正: `customers`という独立テーブルは存在しない（Customerは`users`テーブルのUser STIサブクラス。`app/models/customer.rb`参照）。`login_histories`も独立テーブルではなく、`LoginHistoriesController`が`AuditLog`を`AuthAuditable::AUTH_ACTIONS`で絞り込んで表示する画面（専用テーブルなし）
 - マスタは「システムプリセット → 組織マスタ → プロジェクト個別」の3層継承
 - ERD: `erd.mmd` / `erd.pdf`（rails-erd 生成）
 

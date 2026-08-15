@@ -87,7 +87,7 @@
 | 受注入力（営業担当者） | 独自セッション認証（代理店CD＋営業担当者CD）。SalesRepresentative は Devise 対象外 |
 
 - 招待制/公開登録ブロック、ソフトデリート対応、Devise通知は deliver_later — ftlog踏襲
-- ログイン履歴（login_histories）・IP許可リストも ftlog から移植可（Laravel側 P4-14〜16 の要件を先取り）
+- ログイン履歴（`login_histories`は独立テーブルではなく`AuditLog`をログイン系アクションで絞り込む画面。2026-08-15訂正）・IP許可リストも ftlog から移植可（Laravel側 P4-14〜16 の要件を先取り）
 
 ## 5. ドメインモデル方針
 
@@ -95,7 +95,7 @@
 - Laravel側の負債を**最初から是正**:
   - T-2: `sales_representatives.sales_rep_code` をグローバルユニークに
   - T-3: `contract_condition_id` は **受注（orders）側**に持たせる
-  - T-5相当の残骸（nestedset / organizations画面）は持ち込まない
+  - Laravel現行の未使用残骸（nestedset / organizations画面。T番号なし。2026-08-15訂正: development-plan.mdの実T-5は「composer.jsonのnameがstarter-kitのまま」で無関係）は持ち込まない
 - 自動採番（C-xxxxxx / ORD{年}{連番} / INQ-xxxxxx）: `count()+1` を廃し、**採番テーブル＋行ロック or PostgreSQLシーケンス**で競合安全に
 - モデル名は Rails 規約に正規化（決定D: `jasmin_` プレフィックスを外す。`JasminCustomer`→`Customer`, `JasminOrder`→`Order` 等。将来のサービス別分離は namespace で対応。※プロダクト名は未定・確定後も内部モデル名は汎用名を維持）
 - 決済（PaymentTransaction）は状態機械・ログテーブル含め忠実移植。ネットムーブ連携は `payment-integration.md` 準拠
@@ -128,6 +128,18 @@
 | D | モデル命名 | **`jasmin_` プレフィックスを外す**（Customer, Order, Store…） | 新規サービス名称（プロダクト名）は未定。名称確定後も内部モデル名は汎用名を維持 |
 | E | 移植の起点 | **rails new + ftlogから選択移植** | ftlog複製はテナント機構・issue系の削除コストが高いため不採用 |
 | F | データ移行スコープ | **別フェーズ切り出し** | legacy-research/ETL設計は流用。スキーマ設計時にマッピング整合を常時確認 |
+
+---
+
+## 8-2. R0/R2着手前ブロッカーのCTO自律決定（2026-08-15・CEO不在のため質問せず決定。事後修正歓迎）
+
+2026-08-15の洗い直しレビュー（review-03参照）でR0/R2着手のブロッカーと判定された3論点を、CEO不在の制約下でCTO判断により決定し実装を進める。いずれも根拠を明記し、誤りがあればCEO確認後に訂正する。
+
+| # | 論点 | CTO決定 | 根拠 |
+|---|---|---|---|
+| D-補足 | JasminCustomer→Customerのリネーム衝突 | **決定Dの通りCustomerで進める**（再分割はしない） | `01-laravel-current-analysis.md`§2-2で実コード確認済み: `JasminCustomer`は既に`Authenticatable`＋`customer`ガードでマイページログイン主体を兼ねている。Inquiry-email.mdの分離懸念は「契約とログインを分けるべき」という将来TODOであり、現在の実装は既に統合済みの姿。決定D（CEO決定2026-08-14）は実態と矛盾しない。T-4（命名の曖昧さ）は「別モデルに分割すべきだったのに分割していない」という設計負債として認識し、R2完了後にCEOへ再分割要否を提案する形で持ち越す |
+| Q-23 | 全画面2要素認証（マイページ・受注入力） | **マイページ=Devise Customerスコープに同型メールOTPを追加。受注入力（form）=独自セッション内に同じOTP機構（メール送信→コード照合）を追加ステップとして組み込む** | development-plan.md Q-23（D-5・CEO決定2026-07-26）「全画面必須」に準拠。実装方式はR0のメールOTP実装（User向け）を横展開する形でR3のform認証・R4のmypage認証に組み込む |
+| 認可統合 | formセクションのRBAC統合方式 | **(b) 採用: form名前空間は`authorize_system_permission!`を完全スキップし、独自FormAuthミドルウェアのみで保護** | SalesRepresentativeはDevise対象外（03§4）でSTI判定（`user.staff?`/`customer?`）に乗らないため、(a)のchecker拡張は不自然な特別分岐を増やす。(b)はftlogの`skip_system_permission_authorization?`と同じパターンを踏襲でき、責務分離も明快 |
 
 ---
 

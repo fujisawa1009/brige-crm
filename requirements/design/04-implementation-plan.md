@@ -4,6 +4,7 @@
 - 方針: Laravel の P0〜P4 フェーズ構成を踏襲しつつ、**認可・参照制御・監査を最初のフェーズに前倒し**する
   （Laravel側で「後付けは手戻り大」と分析された箇所を先に固める）
 - 状態: v2（構成確定反映）。次アクション=R0着手
+- **2026-08-15 CTO洗い直し反映**: 01/02/03との突合レビュー（`review/review-01〜04-*.md`）を受け、網羅性の漏れ（P3-11・掲示板Inquiry拡張・IP許可リスト）とR8新設を本文に反映。決定D（Customer命名）衝突・Q-23（全画面2FA）・formセクションのRBAC統合方式は、CEO不在のためCTO自律決定（03§8-2参照）で解消しR0〜R4着手。誤りがあれば事後にCEO確認・訂正する。
 
 ---
 
@@ -19,6 +20,7 @@
 | R5 | 契約フロー・決済: 状態機械・ネットムーブ連携・契約書PDF・署名 | P3（新規実装） | 決済サンドボックス疎通・契約状態機械spec |
 | R6 | 運用強化: 名寄せ・一括更新・集計・遅延検知ほか | P4 | 要件ごとに個別判断 |
 | R7 | データ移行: ETL・掲示板アーカイブ | P5相当 | 別プロジェクト切り出し（決定F） |
+| R8 | 品質保証・リリース準備: デプロイ/CI-CD・カットオーバー計画・監視ログ・法務・本番接続審査・運用教育・UAT/性能診断 | P5（release-readiness.md A〜J） | release-readiness.md A〜Jが着手済み、少なくとも法務(G)・ネットムーブ本番審査(D)は着手済み |
 
 ---
 
@@ -27,19 +29,21 @@
 1. `rails new`（Rails 8.1 / PostgreSQL / UUID主キー既定 / rubocop-rails-omakase）
 2. Docker整備: db(pg16+pg_bigm) / web / tailwind(watch) / worker(Solid Queue) / mailpit
 3. フロント基盤: Hotwire（importmap-rails + propshaft + turbo-rails + stimulus-rails）+ Tailwind CSS v4（tailwindcss-rails・Nodeレス）。ftlogのレイアウト・共通パーシャルを流用
-4. 認証: Devise（User）+ ftlog式メールOTP + rack-attack + ログイン履歴
+4. 認証: Devise（User）+ ftlog式メールOTP + rack-attack + ログイン履歴（AuditLogの絞り込みビュー。専用テーブルではない） + **IP許可リスト**（P4-17。空リスト=全員OTP必須のフェイルセーフをftlog-port.md D-1から踏襲）
+   - 2026-08-15 CTO決定（03§8-2）: Q-23（D-5・全画面2FA必須）に準拠し、mypage/formにもUser向けと同型のメールOTPを組み込む
 5. **認可: ftlogエンドポイントRBAC一式を移植**（単一テナント簡素化）
    - 4モデル + SystemPermissionChecker + SystemPermissionSyncService（起動時sync）+ RoleSeeder
    - ApplicationController フェイルクローズゲート
    - 組み込みロール: admin(super_admin) / 実務運用者 / 代理店グループ用 / 代理店用（名称維持）
    - 権限マトリクスUI・ロール管理UI
+   - 2026-08-15 CTO決定（03§8-2）: 受注入力（form）はDevise/STI対象外につき`authorize_system_permission!`を完全スキップし、独自FormAuthミドルウェアのみで保護する方式(b)を採用
 6. Pundit 導入 + ApplicationPolicy 規約（Scope#resolve 必須）
 7. 監査ログ: ftlog Auditable concern 移植（TRACKED_FIELDS / request_id / IP / 差分記録）
 8. `Current`（user/ip/request_id）+ created_by/updated_by 自動セット
 9. テスト基盤: RSpec + FactoryBot + **認可テストハーネス**（既定=実認可）
 10. CI: rubocop / brakeman / bundler-audit / rspec / 認可スキップ検出grep
 
-**R0完了条件**: ダッシュボード1画面が「ログイン→OTP→権限チェック→表示」を通過し、権限を剥奪すると403相当になる request spec がグリーン。
+**R0完了条件**: ダッシュボード1画面が「ログイン→OTP→権限チェック→表示」を通過し、権限を剥奪すると403相当になる request spec がグリーン。**加えて、このログイン・権限チェックイベントが監査ログ（Auditable concern）に記録されていることをspecで確認**（2026-08-15追記: 項目7監査ログが完了条件から漏れていたため）。
 
 ## R1: 組織・アカウント
 
@@ -51,6 +55,7 @@
 
 ## R2: CRM中核
 
+- 2026-08-15 CTO決定（03§8-2）: 決定Dの通り`Customer`で進める（現行JasminCustomerは既にAuthenticatable+customerガードでマイページログインを兼ねており、決定Dは実態と矛盾しないため）。T-4は設計負債として記録しR2完了後にCEOへ再分割要否を提案する
 - Customer（拡張37カラム込みの完全版スキーマ）/ Store / Order（約90フィールド・Column.md準拠）
 - OrderWorkDetail（SNS認証情報は ActiveRecord::Encryption）
 - Product / Plan / ProductInitialFee / ProductOption / 販売許可
@@ -58,6 +63,10 @@
 - 自動採番の安全化（採番テーブル＋ロック）
 - ProductionCompany / SalesMaterial
 - 検索・ページネーション（pagy）・CSV非同期エクスポート基盤
+- **R1で確立したPundit policy_scope（代理店=自代理店のみ・グループ=配下のみ）をCustomer/Store/Orderにも適用**（2026-08-15追記: 「以降の全エンティティで必須」の原則がR2本文に明記されていなかったため。R2完了条件に含める）
+- 自動採番（count()+1脆弱性の是正）の並行処理挙動をrequest specでカバーする（2026-08-15追記: T-1負債対策がR3以外に広がっていなかったため）
+
+**R2完了条件（2026-08-15追記）**: 案件90フィールド・ステータス管理に加え、代理店ユーザで他代理店のCustomer/Order一覧・詳細・更新に到達できないことをrequest specで確認。
 
 ## R3: 申込フォーム（受注入力）
 
@@ -71,6 +80,7 @@
 ## R4: 問い合わせ・通知
 
 - Inquiry / InquiryMessage / 添付 / 宛先解決（RecipientResolver移植）
+- **掲示板4種→問い合わせ統合（決定D-11・board-implementation-options.md）**: Inquiryモデルの種別別ステータスマスタ化・enum撤廃・種別×ステータス→宛先ルーティング・アフター固有列追加（2026-08-15追記: 過去データのアーカイブ投入＝R7とは別に、Inquiry拡張本体がR4に漏れていたため）
 - 一斉通知（フィルタ・スケジュール送信・テンプレート・宛先グループ）
 - アプリ内通知（SystemNotification + Solid Cable リアルタイム + 30日prune）
 - 顧客マイページ（ログイン+ダッシュボード。Laravel現行と同等の最小構成から）
@@ -78,14 +88,20 @@
 ## R5: 契約フロー・決済（Laravel未実装 → 新規設計実装）
 
 - PaymentTransaction 状態機械の忠実移植（unknown≠failed / mark・confirm分離 / 二重送信防止）+ 決済監査ログ
+- **決済専用キュー＋自動リトライ無効化**（payment-integration.md §4-2: デフォルト再試行のまま流すと二重課金を自動で起こす。2026-08-15追記）
 - ネットムーブ連携（payment-integration.md 準拠: リダイレクト型・HMAC-SHA256・非保持非通過・突合）
 - 契約ワークフロー状態機械（不備チェック→差戻し→確認コール→契約確定）
 - 契約書PDF生成・版数管理・メール送付、手書き署名
-- 入力チェック設定（3段階必須）・重説チェック・申込確認メール
+- 入力チェック設定（3段階必須）・**キーワード自動選定（P3-11。2026-08-15追記: 01§5未実装一覧にあったが計画から脱落していたため復元）**・重説チェック・申込確認メール
+  - 実装順の知見（p3-12-13-confirmation-docs.md）: 重説チェックは契約ワークフロー状態機械（P3-4）より先に単独実装すると「重説未実施の案件を不備チェックへ進めてよいか」が状態機械側の論点になり手戻る。**状態機械の設計を先に固めてから重説チェックへ着手する**
+- **決済状態機械（PaymentTransaction）のrequest spec必須**（2026-08-15追記: payment-integration.md §6「省略しない。タイムアウト・二重送信・改ざんは手動再現不可」の要求が完了条件に反映されていなかったため）
+
+**R5着手前チェックリスト（2026-08-15追記）**: Q-D（PII暗号化方針）に加え、development-plan.md未確認のQ-25（返金・キャンセル業務要件）/Q-26（信販をフローに含めるか）/Q-27（決済障害時の縮退運用）の確定が必要。
 
 ## R6: 運用強化（P4群・優先度は都度判断）
 
 - 顧客横断統合ビュー / 項目一括更新 / 顧客名寄せ（customer-merge-design.md）
+  - **customer-merge-design.mdが列挙する高リスク並行処理（lockForUpdate・TOCTOU再検証・ワンタイム消費・代理店またぎ検知）はrequest spec必須**（2026-08-15追記: T-1負債対策の範囲にR6が含まれていなかったため）
 - メンション / 通知一覧強化（ftlog-port.md）
 - 遅延案件検知・自動キャンセル・集計レポート・外部CSV取込・ガルーン連携 等
 
