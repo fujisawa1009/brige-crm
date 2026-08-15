@@ -110,6 +110,11 @@ class RoleSeeder
   # RBACレイヤーでは全ロールにindex/showを渡してよい（レコード単位の防御はPundit側で完結する）。
   CSV_EXPORT_CONTROLLERS = %w[admin/csv_exports].freeze
 
+  # 04 R3タスク6: フォームビルダー。商材の申込フォーム定義は代理店データではなく内部運用の設定物
+  # （R2_MASTER_CONTROLLERSの商材マスタ以上に「営業フローの設計」に近い）ため、参照権限すら
+  # 代理店/代理店グループロールへは渡さない（実務運用者専有。admin/role_management等と同じ扱い）。
+  R3_FORM_BUILDER_CONTROLLERS = %w[admin/form_templates].freeze
+
   def assign_default_permissions(roles)
     admin_permissions = SystemPermission.enabled.admin
 
@@ -124,6 +129,7 @@ class RoleSeeder
     grant(roles["実務運用者"], admin_permissions.where(controller: R2_CRM_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: R2_MASTER_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: CSV_EXPORT_CONTROLLERS).pluck(:id))
+    grant(roles["実務運用者"], admin_permissions.where(controller: R3_FORM_BUILDER_CONTROLLERS).pluck(:id))
 
     %w[代理店グループ用 代理店用].each do |name|
       grant(

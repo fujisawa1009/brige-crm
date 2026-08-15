@@ -1,0 +1,41 @@
+<%= form_with model: form_template, url: url, scope: :form_template, class: "flex flex-col gap-4 max-w-4xl" do |f| %>
+  <% if form_template.errors.any? %>
+    <div class="text-red-700"><%= form_template.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div>
+    <%= f.label :product_id, "対象商材" %>
+    <%= f.collection_select :product_id, Product.order(:name), :id, :name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :name, "テンプレート名" %>
+    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.check_box :is_active %>
+    <%= f.label :is_active, "有効" %>
+  </div>
+
+  <%# 04 R3タスク6: ステップの動的追加・削除（nested-form Stimulusコントローラ）。 %>
+  <div data-controller="nested-form" data-nested-form-placeholder-value="NEW_STEP_RECORD"
+       class="flex flex-col gap-4 border-t pt-4">
+    <h2 class="font-bold">ステップ</h2>
+
+    <div data-nested-form-target="container" class="flex flex-col gap-4">
+      <%= f.fields_for :form_steps do |step_f| %>
+        <%= render "step_fields", f: step_f %>
+      <% end %>
+    </div>
+
+    <template data-nested-form-target="template">
+      <%= f.fields_for :form_steps, FormStep.new, child_index: "NEW_STEP_RECORD" do |step_f| %>
+        <%= render "step_fields", f: step_f %>
+      <% end %>
+    </template>
+
+    <button type="button" data-action="nested-form#add" class="underline w-fit">ステップを追加</button>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

@@ -1,0 +1,24 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">申込フォームテンプレート</h1>
+  <% if policy(FormTemplate).create? %>
+    <%= link_to "新規作成", new_admin_form_template_path, class: "underline w-fit" %>
+  <% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">商材</th>
+        <th class="border px-2 py-1 text-left">テンプレート名</th>
+        <th class="border px-2 py-1 text-left">有効</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @form_templates.each do |form_template| %>
+        <tr>
+          <td class="border px-2 py-1"><%= form_template.product.name %></td>
+          <td class="border px-2 py-1"><%= link_to form_template.name, admin_form_template_path(form_template) %></td>
+          <td class="border px-2 py-1"><%= form_template.is_active? ? "有効" : "無効" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
