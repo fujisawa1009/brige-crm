@@ -38,6 +38,9 @@ RSpec.configure do |config|
   # 04 R0-9: FactoryBot + 認可テストハーネス（spec/support/system_permission_authorization.rb）
   config.include FactoryBot::Syntax::Methods
   config.include Devise::Test::IntegrationHelpers, type: :request
+  # 04 R1: UserCsvImportJob（Solid Queue）を perform_enqueued_jobs / have_enqueued_job で検証するため。
+  config.include ActiveJob::TestHelper, type: :request
+  config.include ActiveJob::TestHelper, type: :job
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
