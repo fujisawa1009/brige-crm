@@ -1,0 +1,16 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">制作会社</h1>
+  <% if policy(ProductionCompany).create? %><%= link_to "新規作成", new_admin_production_company_path, class: "underline w-fit" %><% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">会社名</th><th class="border px-2 py-1 text-left">担当者名</th></tr></thead>
+    <tbody>
+      <% @production_companies.each do |company| %>
+        <tr>
+          <td class="border px-2 py-1"><%= link_to company.name, admin_production_company_path(company) %></td>
+          <td class="border px-2 py-1"><%= company.contact_name %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

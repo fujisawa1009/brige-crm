@@ -1,0 +1,17 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">営業資料</h1>
+  <% if policy(SalesMaterial).create? %><%= link_to "新規作成", new_admin_sales_material_path, class: "underline w-fit" %><% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">タイトル</th><th class="border px-2 py-1 text-left">カテゴリ</th><th class="border px-2 py-1 text-left">公開</th></tr></thead>
+    <tbody>
+      <% @sales_materials.each do |material| %>
+        <tr>
+          <td class="border px-2 py-1"><%= link_to material.title, admin_sales_material_path(material) %></td>
+          <td class="border px-2 py-1"><%= material.category %></td>
+          <td class="border px-2 py-1"><%= material.is_published %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

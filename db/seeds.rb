@@ -1,6 +1,8 @@
 # 04 R0-5・02§2-6踏襲: 権限カタログ同期 → 既定ロール作成/権限付与、の順で単一の入口から冪等に実行する。
 SystemPermissionSyncService.call
 RoleSeeder.call
+# 04 R2タスク4: 顧客/案件ステータスマスタの既定値。
+StatusSeeder.call
 
 if Rails.env.development?
   admin_email = "admin@example.com"

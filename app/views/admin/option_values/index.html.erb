@@ -1,0 +1,16 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">選択肢</h1>
+  <% if policy(OptionValue).create? %><%= link_to "新規作成", new_admin_option_value_path, class: "underline w-fit" %><% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">グループ</th><th class="border px-2 py-1 text-left">表示名</th></tr></thead>
+    <tbody>
+      <% @option_values.each do |value| %>
+        <tr>
+          <td class="border px-2 py-1"><%= value.option_group.label %></td>
+          <td class="border px-2 py-1"><%= link_to value.label, admin_option_value_path(value) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

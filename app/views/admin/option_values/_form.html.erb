@@ -1,0 +1,16 @@
+<%= form_with model: option_value, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if option_value.errors.any? %><div class="text-red-700"><%= option_value.errors.full_messages.to_sentence %></div><% end %>
+  <div>
+    <%= f.label :option_group_id, "所属グループ" %>
+    <%= f.collection_select :option_group_id, OptionGroup.order(:label), :id, :label, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :parent_id, "親選択肢" %>
+    <%= f.collection_select :parent_id, OptionValue.order(:label), :id, :label, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div><%= f.label :value, "内部値" %><%= f.text_field :value, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :label, "表示名" %><%= f.text_field :label, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :sort_order, "表示順" %><%= f.number_field :sort_order, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :is_active, "有効" %><%= f.check_box :is_active %></div>
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

@@ -13,7 +13,23 @@ module Auditable
     "AgencyGroup" => %w[name service_type group_code contact_email bridge_plan_display_type csv_download_visible],
     "Agency"      => %w[name agency_code agency_group_id contact_person electronic_contract_enabled csv_download_visible],
     "SalesRepresentative" => %w[name sales_rep_code agency_id email is_active],
-    "ContractCondition"   => %w[name agency_id effective_from effective_until]
+    "ContractCondition"   => %w[name agency_id effective_from effective_until],
+    # 04 R2: CRM中核。billing_password（Order）・system_account_id等（OrderWorkDetail）はPII暗号化対象の
+    # ため絶対に含めない（Auditable冒頭コメントの原則どおり。差分は業務上重要な列のみ追跡する）。
+    "Customer" => %w[name status agency_id sales_representative_id applied_at contracted_at],
+    "Store"    => %w[store_name customer_id is_active],
+    "Order"    => %w[status contract_status agency_id customer_id store_id plan_id contract_condition_id
+                      ordered_at contract_start_date cancelled_at terminated_at],
+    "Product"             => %w[name code is_active],
+    "Plan"                => %w[name code product_id monthly_fee is_active],
+    "ProductInitialFee"   => %w[name amount product_id is_active],
+    "ProductOption"       => %w[name monthly_fee product_id is_active],
+    "OptionGroup"         => %w[key label is_active],
+    "OptionValue"         => %w[value label option_group_id parent_id is_active],
+    "CustomerStatus"      => %w[code label is_active is_system],
+    "OrderStatus"         => %w[code label is_active is_system],
+    "ProductionCompany"   => %w[name email phone is_active],
+    "SalesMaterial"       => %w[title category is_published]
   }.freeze
 
   included do

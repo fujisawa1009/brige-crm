@@ -47,6 +47,27 @@ Rails.application.routes.draw do
         post :import_upload # 非同期ジョブ（UserCsvImportJob）を投入
       end
     end
+
+    # 04 R2: CRM中核（顧客/店舗/案件）+ 商材マスタ群。
+    resources :customers do
+      resources :stores
+      collection { post :export } # CSV非同期エクスポート基盤（UserCsvImportJobと対）
+    end
+    resources :orders do
+      collection { post :export }
+    end
+    resources :csv_exports, only: %i[index show]
+
+    resources :products
+    resources :plans
+    resources :product_initial_fees
+    resources :product_options
+    resources :option_groups
+    resources :option_values
+    resources :customer_statuses
+    resources :order_statuses
+    resources :production_companies
+    resources :sales_materials
   end
 
   # Defines the root path route ("/")
