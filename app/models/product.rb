@@ -36,6 +36,9 @@ class Product < ApplicationRecord
   has_many :agencies, through: :agency_products
   has_many :agency_group_products, dependent: :destroy
   has_many :agency_groups, through: :agency_group_products
+  # 04 R3: 申込フォーム定義（03§5「Product 1─1 FormTemplate」）。
+  has_one :form_template, dependent: :destroy
+  has_many :applications, dependent: :restrict_with_error
 
   validates :name, presence: true, length: { maximum: 100 }
   validates :code, presence: true, uniqueness: true, length: { maximum: 20 }

@@ -29,7 +29,13 @@ module Auditable
     "CustomerStatus"      => %w[code label is_active is_system],
     "OrderStatus"         => %w[code label is_active is_system],
     "ProductionCompany"   => %w[name email phone is_active],
-    "SalesMaterial"       => %w[title category is_published]
+    "SalesMaterial"       => %w[title category is_published],
+    # 04 R3: フォームビルダー（管理画面）で編集される定義データ。form_fieldsのinput_options等は
+    # 動的な選択肢データでノイズが大きいため追跡対象から外し、構造を特定する列のみ追う。
+    "FormTemplate" => %w[product_id name is_active],
+    "FormStep"     => %w[form_template_id step_number name],
+    "FormField"    => %w[form_step_id field_key label field_type target_table target_column required
+                          editable_by_tier lock_after_status]
   }.freeze
 
   included do
