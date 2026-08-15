@@ -1,0 +1,39 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">顧客</h1>
+  <div class="flex gap-3">
+    <% if policy(Customer).create? %>
+      <%= link_to "新規作成", new_admin_customer_path, class: "underline w-fit" %>
+    <% end %>
+    <% if policy(Customer).index? %>
+      <%= button_to "CSVエクスポート", export_admin_customers_path, method: :post, class: "underline w-fit" %>
+    <% end %>
+  </div>
+
+  <%= form_with url: admin_customers_path, method: :get, class: "flex gap-2" do %>
+    <%= text_field_tag :q, params[:q], placeholder: "顧客番号・氏名で検索", class: "border rounded px-2 py-1" %>
+    <%= submit_tag "検索", class: "border rounded px-3 py-1" %>
+  <% end %>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">顧客番号</th>
+        <th class="border px-2 py-1 text-left">氏名・法人名</th>
+        <th class="border px-2 py-1 text-left">所属代理店</th>
+        <th class="border px-2 py-1 text-left">ステータス</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @customers.each do |customer| %>
+        <tr>
+          <td class="border px-2 py-1"><%= link_to customer.customer_number, admin_customer_path(customer) %></td>
+          <td class="border px-2 py-1"><%= customer.name %></td>
+          <td class="border px-2 py-1"><%= customer.agency.name %></td>
+          <td class="border px-2 py-1"><%= customer.status %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

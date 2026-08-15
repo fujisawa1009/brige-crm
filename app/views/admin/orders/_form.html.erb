@@ -1,0 +1,118 @@
+<%= form_with model: order, url: url, class: "flex flex-col gap-3 max-w-2xl" do |f| %>
+  <% if order.errors.any? %>
+    <div class="text-red-700"><%= order.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div>
+    <%= f.label :customer_id, "契約顧客" %>
+    <%= f.collection_select :customer_id, Customer.order(:customer_number), :id, :name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :store_id, "設置先店舗" %>
+    <%= f.collection_select :store_id, Store.order(:store_name), :id, :store_name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <% if policy(order).staff_scope? %>
+    <div>
+      <%= f.label :agency_id, "販売代理店" %>
+      <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
+            { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+  <% end %>
+  <div>
+    <%= f.label :contract_condition_id, "契約条件" %>
+    <%= f.collection_select :contract_condition_id, ContractCondition.order(:name), :id, :name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :sales_representative_id, "担当営業担当者" %>
+    <%= f.collection_select :sales_representative_id, SalesRepresentative.order(:name), :id, :name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :plan_id, "プラン" %>
+    <%= f.collection_select :plan_id, Plan.order(:name), :id, :name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :product_initial_fee_id, "初期費用" %>
+    <%= f.collection_select :product_initial_fee_id, ProductInitialFee.order(:name), :id, :name,
+          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :status, "ステータス" %>
+    <%= f.collection_select :status, OrderStatus.ordered, :code, :label,
+          {}, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+
+  <% [
+       [:serial_id, "シリアルID"], [:payment_method, "支払方法"], [:plus_applied, "Plus申込有無"],
+       [:contract_status, "契約ステータス"],
+       [:accounting_month, "計上月"], [:bridge_accounting_month, "Bridge計上月"],
+       [:termination_reason, "解約理由"],
+       [:confirm_call_staff_name, "確認コール架電担当名"], [:confirm_call_preferred_date, "確認コール連絡希望日"],
+       [:confirm_call_time, "確認コール架電時間"], [:confirm_call_contact_name, "確認コール担当者名"],
+       [:inspection_call_ng_time, "検収コールNG時間帯"],
+       [:elderly_consent, "高齢者同意書"], [:business_auth_doc, "業務権限証明書"], [:business_proof, "個人事業主事業証明"],
+       [:consent_status, "同意状況"], [:consent_rep_age, "同意時代表者年齢"], [:consent_contact_age, "同意時担当者年齢"],
+       [:paper_address_note, "用紙の送付先住所記載"],
+       [:sales_mgmt_slip_number, "販管売上伝票番号"], [:factor_notes, "ファクター回収備考"],
+       [:bundled_billing, "おまとめ請求"], [:bundle_target_order_number, "おまとめ先案件番号"],
+       [:finance_division, "信販区分"], [:finance_installer, "設置先（信販）"],
+       [:finance_postal_code, "設置先郵便番号"], [:finance_prefecture, "設置先_都道府県"],
+       [:finance_city, "設置先_市区町村"], [:finance_town, "設置先_町名"],
+       [:finance_address_detail, "設置先_番地"], [:finance_building, "設置先_ビル名"], [:finance_phone, "設置先電話番号"],
+       [:member_id, "会員管理ID"], [:meo_mgmt_number, "MEO施策管理番号"], [:toss_up_code, "トスアップCD"],
+       [:bridge_migration, "Bridge移行フラグ"], [:bridge_migration_order_number, "Bridge移行案件番号"],
+       [:bridge_agency_name, "Bridge販売店名"], [:bridge_sales_rep_name, "Bridge営業担当者名"],
+       [:citation_applied, "サイテーション申し込み"], [:citation_count, "サイテーション申し込み数"],
+       [:citation_existing_serial, "サイテーション既存シリアル"], [:domestic_citation_plan, "国内サイテーションプラン"],
+       [:citation_plan, "サイテーションプラン"], [:s_plan_cms, "SプランCMS申込"],
+       [:owlet_cms, "OwletCMS申込"], [:onerank_cms, "OnerankCMS申込"],
+       [:external_link_applied, "外部リンク申し込み"], [:external_link_count, "外部リンク申し込み数"],
+       [:external_link_type, "外部リンクの型"], [:gbp_multilingual, "GBPインバウンド多言語対策"],
+       [:language_selection, "言語選択"], [:meo_existing_serial, "MEO既存シリアル"],
+       [:infobiz_applied, "infoBiz申し込み"], [:meo_premium_applied, "MEOプレミアム申し込み"],
+       [:google_ads_applied, "Google広告申し込み"], [:google_ads_count, "Google広告申し込み数"],
+       [:google_review_display, "Google口コミ表示"], [:review_heading, "口コミ表示の見出し名"],
+       [:reservation_system, "予約システム"], [:portal_site_applied, "ポータルサイト掲載の申し込み"]
+     ].each do |field, label| %>
+    <div>
+      <%= f.label field, label %>
+      <%= f.text_field field, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+  <% end %>
+
+  <% [
+       [:ordered_at, "受注日"], [:contract_start_date, "契約開始日"], [:contract_sent_at, "契約書送付日"],
+       [:issued_at, "発注日"], [:account_issued_at, "アカウント発行日"], [:work_completed_at, "作業完了日"],
+       [:payment_collected_at, "決済回収日"], [:payment_doc_confirmed_at, "決済書類確認日"],
+       [:cancelled_at, "キャンセル日"], [:terminated_at, "解約日"],
+       [:elderly_consent_collected_at, "高齢者同意書回収日"], [:business_auth_doc_collected_at, "業務権限証明書回収日"],
+       [:inspection_call_completed_at, "検収確認コール完了日"]
+     ].each do |field, label| %>
+    <div>
+      <%= f.label field, label %>
+      <%= f.date_field field, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+  <% end %>
+
+  <% [
+       [:confirm_call_notes, "確認コール詳細"], [:confirm_call_remarks, "確認コール備考"],
+       [:inspection_call_history, "検収コール履歴"], [:remarks, "備考"], [:shared_notes, "共有事項"]
+     ].each do |field, label| %>
+    <div>
+      <%= f.label field, label %>
+      <%= f.text_area field, class: "border rounded px-2 py-1 w-full", rows: 3 %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :billing_password, "請求パスワード（PII暗号化対象）" %>
+    <%= f.password_field :billing_password, value: nil, autocomplete: "new-password",
+          class: "border rounded px-2 py-1 w-full" %>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

@@ -1,0 +1,39 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">案件</h1>
+  <div class="flex gap-3">
+    <% if policy(Order).create? %>
+      <%= link_to "新規作成", new_admin_order_path, class: "underline w-fit" %>
+    <% end %>
+    <% if policy(Order).index? %>
+      <%= button_to "CSVエクスポート", export_admin_orders_path, method: :post, class: "underline w-fit" %>
+    <% end %>
+  </div>
+
+  <%= form_with url: admin_orders_path, method: :get, class: "flex gap-2" do %>
+    <%= text_field_tag :q, params[:q], placeholder: "案件番号で検索", class: "border rounded px-2 py-1" %>
+    <%= submit_tag "検索", class: "border rounded px-3 py-1" %>
+  <% end %>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">案件番号</th>
+        <th class="border px-2 py-1 text-left">契約顧客</th>
+        <th class="border px-2 py-1 text-left">販売代理店</th>
+        <th class="border px-2 py-1 text-left">ステータス</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr>
+          <td class="border px-2 py-1"><%= link_to order.order_number, admin_order_path(order) %></td>
+          <td class="border px-2 py-1"><%= order.customer.name %></td>
+          <td class="border px-2 py-1"><%= order.agency.name %></td>
+          <td class="border px-2 py-1"><%= order.status %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

@@ -1,0 +1,42 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @customer.name %>（<%= @customer.customer_number %>）</h1>
+  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+    <dt class="font-bold">所属代理店</dt><dd><%= @customer.agency.name %></dd>
+    <dt class="font-bold">担当営業担当者</dt><dd><%= @customer.sales_representative&.name %></dd>
+    <dt class="font-bold">ステータス</dt><dd><%= @customer.status %></dd>
+    <dt class="font-bold">お申込日</dt><dd><%= @customer.applied_at %></dd>
+    <dt class="font-bold">契約日</dt><dd><%= @customer.contracted_at %></dd>
+    <dt class="font-bold">連絡先電話番号</dt><dd><%= @customer.phone %></dd>
+    <dt class="font-bold">メールアドレス</dt><dd><%= @customer.email %></dd>
+    <dt class="font-bold">住所</dt>
+    <dd><%= [@customer.prefecture, @customer.city, @customer.town, @customer.address_detail].join %></dd>
+  </dl>
+
+  <h2 class="text-lg font-bold">店舗</h2>
+  <ul class="list-disc list-inside">
+    <% @customer.stores.each do |store| %>
+      <li><%= link_to store.store_name, admin_customer_store_path(@customer, store) %></li>
+    <% end %>
+  </ul>
+  <% if policy(Store.new(customer: @customer)).create? %>
+    <%= link_to "店舗を追加", new_admin_customer_store_path(@customer), class: "underline w-fit" %>
+  <% end %>
+
+  <h2 class="text-lg font-bold">案件</h2>
+  <ul class="list-disc list-inside">
+    <% @customer.orders.each do |order| %>
+      <li><%= link_to order.order_number, admin_order_path(order) %></li>
+    <% end %>
+  </ul>
+
+  <div class="flex gap-3">
+    <%= link_to "一覧に戻る", admin_customers_path, class: "underline" %>
+    <% if policy(@customer).update? %>
+      <%= link_to "編集", edit_admin_customer_path(@customer), class: "underline" %>
+    <% end %>
+    <% if policy(@customer).destroy? %>
+      <%= button_to "削除", admin_customer_path(@customer), method: :delete,
+            form: { data: { turbo_confirm: "削除しますか？" } } %>
+    <% end %>
+  </div>
+</div>

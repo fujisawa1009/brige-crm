@@ -1,0 +1,23 @@
+<%= form_with model: store, url: url, class: "flex flex-col gap-3 max-w-xl" do |f| %>
+  <% if store.errors.any? %>
+    <div class="text-red-700"><%= store.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <% [
+       [:store_code, "店舗CD"], [:store_name, "ご利用施設名称"], [:store_name_kana, "ご利用施設名称（カナ）"],
+       [:postal_code, "郵便番号"], [:prefecture, "都道府県"], [:city, "市区郡"], [:town, "町名"],
+       [:address_detail, "番地・ビル・建物名"], [:phone_number, "ご連絡先電話番号"], [:fax_number, "ご連絡先FAX番号"],
+       [:business_hours_1, "営業時間1"], [:business_hours_2, "営業時間2"], [:regular_holiday, "定休日"]
+     ].each do |field, label| %>
+    <div>
+      <%= f.label field, label %>
+      <%= f.text_field field, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+  <% end %>
+  <div>
+    <%= f.label :is_active, "有効フラグ" %>
+    <%= f.check_box :is_active %>
+  </div>
+
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

@@ -1,0 +1,29 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @customer.name %>の店舗</h1>
+  <% if policy(Store.new(customer: @customer)).create? %>
+    <%= link_to "新規作成", new_admin_customer_store_path(@customer), class: "underline w-fit" %>
+  <% end %>
+
+  <table class="border-collapse w-full text-sm">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1 text-left">店舗CD</th>
+        <th class="border px-2 py-1 text-left">ご利用施設名称</th>
+        <th class="border px-2 py-1 text-left">有効</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @stores.each do |store| %>
+        <tr>
+          <td class="border px-2 py-1"><%= store.store_code %></td>
+          <td class="border px-2 py-1">
+            <%= link_to store.store_name, admin_customer_store_path(@customer, store) %>
+          </td>
+          <td class="border px-2 py-1"><%= store.is_active %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= link_to "顧客に戻る", admin_customer_path(@customer), class: "underline w-fit" %>
+</div>

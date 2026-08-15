@@ -1,0 +1,127 @@
+# 案件作業詳細（GBP/SNS。04 R2タスク2。Column.md §11 jasmin_order_work_details が正）。Orderと1:1。
+#
+# PII暗号化（pii-handling-rules.md §1 分類B: SNSアカウントID/PASS・システムアカウントID/PASS）。
+# 対象8カラムに ActiveRecord::Encryption の encrypts を適用する。deterministic: false（既定の
+# ランダム化暗号）で保存し、等価検索（WHERE system_account_id = ...）はこのモデルでは行わない前提
+# （運用上、これらのカラムを検索キーに使うことは無いため）。
+# == Schema Information
+#
+# Table name: order_work_details
+#
+#  id                           :uuid             not null, primary key
+#  accepted_cards               :string(200)
+#  attribute_1                  :string(100)
+#  attribute_10                 :string(100)
+#  attribute_11                 :string(100)
+#  attribute_2                  :string(100)
+#  attribute_3                  :string(100)
+#  attribute_4                  :string(100)
+#  attribute_5                  :string(100)
+#  attribute_6                  :string(100)
+#  attribute_7                  :string(100)
+#  attribute_8                  :string(100)
+#  attribute_9                  :string(100)
+#  available_from               :string(30)
+#  barrier_free                 :string(10)
+#  business_account_name        :string(100)
+#  business_category_keyword    :string(200)
+#  business_type                :string(30)
+#  capital                      :string(50)
+#  contact_easy_day             :string(100)
+#  contact_easy_day_note        :string(200)
+#  contact_easy_time            :string(100)
+#  contact_easy_time_note       :string(200)
+#  dinner_hours                 :string(30)
+#  directions                   :string(500)
+#  facebook_pass                :text
+#  gbp_delete_new               :string(10)
+#  gbp_owner_contact            :string(100)
+#  gbp_owner_name               :string(100)
+#  gbp_owner_permission         :string(20)
+#  gbp_owner_permission_granted :string(20)
+#  gbp_permission               :string(30)
+#  gbp_site_url                 :string(500)
+#  gbp_url                      :string(500)
+#  google_account_pass          :text
+#  has_facebook                 :string(10)
+#  has_google_business          :string(10)
+#  has_instagram                :string(10)
+#  hearing_system               :string(50)
+#  industry_keyword             :string(200)
+#  instagram_account            :string(20)
+#  instagram_login_confirmed    :string(20)
+#  instagram_pass               :text
+#  keyword_area_1               :string(50)
+#  keyword_area_2               :string(50)
+#  keyword_area_3               :string(50)
+#  keyword_city                 :string(50)
+#  keyword_industry_main        :string(50)
+#  keyword_industry_sub1        :string(50)
+#  keyword_industry_sub2        :string(50)
+#  keyword_industry_sub3        :string(50)
+#  keyword_industry_sub4        :string(50)
+#  keyword_prefecture           :string(20)
+#  keyword_region_industry      :string(200)
+#  keyword_remarks              :text
+#  logo_photo                   :string(100)
+#  lunch_hours                  :string(30)
+#  nearest_station              :string(100)
+#  num_employees                :integer
+#  num_stores                   :integer
+#  opening_date                 :date
+#  operation_history            :text
+#  order_time                   :string(30)
+#  parking                      :string(20)
+#  parking_capacity             :integer
+#  reference_url                :string(500)
+#  system_account_pass          :text
+#  wifi_available               :string(30)
+#  work_progress_notes          :text
+#  created_at                   :datetime         not null
+#  updated_at                   :datetime         not null
+#  created_by_id                :uuid
+#  facebook_id                  :text
+#  google_account_id            :text
+#  instagram_id                 :text
+#  order_id                     :uuid             not null
+#  system_account_id            :text
+#  updated_by_id                :uuid
+#
+# Indexes
+#
+#  index_order_work_details_on_order_id  (order_id) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (order_id => orders.id) ON DELETE => cascade
+#  fk_rails_...  (updated_by_id => users.id)
+#
+class OrderWorkDetail < ApplicationRecord
+  include TracksUser
+  include Auditable
+
+  belongs_to :order
+
+  encrypts :system_account_id
+  encrypts :system_account_pass
+  encrypts :google_account_id
+  encrypts :google_account_pass
+  encrypts :instagram_id
+  encrypts :instagram_pass
+  encrypts :facebook_id
+  encrypts :facebook_pass
+
+  validates :instagram_account, length: { maximum: 20 }
+  validates :instagram_login_confirmed, length: { maximum: 20 }
+  validates :has_facebook, :has_instagram, :has_google_business, length: { maximum: 10 }
+  validates :gbp_permission, length: { maximum: 30 }
+  validates :gbp_owner_permission, :gbp_owner_permission_granted, length: { maximum: 20 }
+  validates :gbp_owner_name, :gbp_owner_contact, length: { maximum: 100 }
+  validates :gbp_url, :gbp_site_url, :reference_url, length: { maximum: 500 }
+  validates :gbp_delete_new, length: { maximum: 10 }
+  validates :keyword_region_industry, :business_category_keyword, :industry_keyword, length: { maximum: 200 }
+  validates :keyword_prefecture, length: { maximum: 20 }
+  validates :num_employees, :parking_capacity, :num_stores,
+            numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
+end

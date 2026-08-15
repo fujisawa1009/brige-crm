@@ -43,6 +43,10 @@ class SalesRepresentative < ApplicationRecord
 
   belongs_to :agency
 
+  # 04 R2: 担当顧客・案件（Column.md §8/§10）。destroy時はnullify（顧客・案件データ自体は残す）。
+  has_many :customers, dependent: :nullify
+  has_many :orders, dependent: :nullify
+
   validates :sales_rep_code, presence: true, uniqueness: true, length: { maximum: 50 } # T-2: グローバルユニーク
   validates :name, presence: true, length: { maximum: 100 }
   validates :email, length: { maximum: 255 }

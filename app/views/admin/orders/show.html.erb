@@ -1,0 +1,35 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @order.order_number %></h1>
+  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+    <dt class="font-bold">契約顧客</dt><dd><%= link_to @order.customer.name, admin_customer_path(@order.customer) %></dd>
+    <dt class="font-bold">設置先店舗</dt><dd><%= @order.store&.store_name %></dd>
+    <dt class="font-bold">販売代理店</dt><dd><%= @order.agency.name %></dd>
+    <dt class="font-bold">契約条件</dt><dd><%= @order.contract_condition.name %></dd>
+    <dt class="font-bold">プラン</dt><dd><%= @order.plan&.name %></dd>
+    <dt class="font-bold">ステータス</dt><dd><%= @order.status %></dd>
+    <dt class="font-bold">受注日</dt><dd><%= @order.ordered_at %></dd>
+    <dt class="font-bold">契約開始日</dt><dd><%= @order.contract_start_date %></dd>
+  </dl>
+
+  <h2 class="text-lg font-bold">GBP/SNS作業詳細</h2>
+  <% if @order.order_work_detail %>
+    <%= link_to "作業詳細を見る", "#", class: "underline w-fit" %>
+    <p class="text-xs text-gray-500">
+      システムアカウント/SNSアカウントのID・PASSはPII暗号化済みのためこの一覧・詳細画面には表示しない
+      （pii-handling-rules.md §1 分類B。参照が必要な運用フローはR3以降で個別に設計する）。
+    </p>
+  <% else %>
+    <p class="text-gray-500">作業詳細は未登録です。</p>
+  <% end %>
+
+  <div class="flex gap-3">
+    <%= link_to "一覧に戻る", admin_orders_path, class: "underline" %>
+    <% if policy(@order).update? %>
+      <%= link_to "編集", edit_admin_order_path(@order), class: "underline" %>
+    <% end %>
+    <% if policy(@order).destroy? %>
+      <%= button_to "削除", admin_order_path(@order), method: :delete,
+            form: { data: { turbo_confirm: "削除しますか？" } } %>
+    <% end %>
+  </div>
+</div>

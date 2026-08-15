@@ -35,6 +35,9 @@ class ContractCondition < ApplicationRecord
 
   belongs_to :agency
 
+  # 04 R2: T-3是正どおりOrder側がcontract_condition_idを保持する（このモデルからの逆参照）。
+  has_many :orders, dependent: :restrict_with_error
+
   validates :name, presence: true, length: { maximum: 255 }
   validates :effective_from, presence: true
   validate :effective_until_after_effective_from
