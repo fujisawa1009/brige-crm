@@ -30,7 +30,7 @@
 2. Docker整備: db(pg16+pg_bigm) / web / tailwind(watch) / worker(Solid Queue) / mailpit
 3. フロント基盤: Hotwire（importmap-rails + propshaft + turbo-rails + stimulus-rails）+ Tailwind CSS v4（tailwindcss-rails・Nodeレス）。ftlogのレイアウト・共通パーシャルを流用
 4. 認証: Devise（User）+ ftlog式メールOTP + rack-attack + ログイン履歴（AuditLogの絞り込みビュー。専用テーブルではない） + **IP許可リスト**（P4-17。空リスト=全員OTP必須のフェイルセーフをftlog-port.md D-1から踏襲）
-   - 2026-08-15 CTO決定（03§8-2）: Q-23（D-5・全画面2FA必須）に準拠し、mypage/formにもUser向けと同型のメールOTPを組み込む
+   - 2026-08-15 CTO決定（03§8-2）: Q-23（D-5・全画面2FA必須）に準拠する。R0時点ではCustomer/SalesRepresentativeモデルが存在しないため、**メールOTPロジックをUser専用実装ではなく再利用可能なconcern/serviceとして切り出し**、R3(form)・R4(mypage)がそれぞれの認証フローに組み込めるようにしておく
 5. **認可: ftlogエンドポイントRBAC一式を移植**（単一テナント簡素化）
    - 4モデル + SystemPermissionChecker + SystemPermissionSyncService（起動時sync）+ RoleSeeder
    - ApplicationController フェイルクローズゲート
