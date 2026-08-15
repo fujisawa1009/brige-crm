@@ -1,0 +1,17 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">商材オプション</h1>
+  <% if policy(ProductOption).create? %><%= link_to "新規作成", new_admin_product_option_path, class: "underline w-fit" %><% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">商材</th><th class="border px-2 py-1 text-left">名称</th><th class="border px-2 py-1 text-left">月額料金</th></tr></thead>
+    <tbody>
+      <% @product_options.each do |option| %>
+        <tr>
+          <td class="border px-2 py-1"><%= option.product.name %></td>
+          <td class="border px-2 py-1"><%= link_to option.name, admin_product_option_path(option) %></td>
+          <td class="border px-2 py-1"><%= option.monthly_fee %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

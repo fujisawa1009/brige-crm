@@ -43,6 +43,11 @@ class Agency < ApplicationRecord
   has_many :contract_conditions, dependent: :destroy
   # 代理店担当者アカウント（agency_id のみ設定されたUser。Column.md §2「代理店アカウント」）。
   has_many :users, dependent: :nullify
+  # 04 R2: 顧客・案件（Column.md §8/§10）と 販売許可（同タスク3）。
+  has_many :customers, dependent: :restrict_with_error
+  has_many :orders, dependent: :restrict_with_error
+  has_many :agency_products, dependent: :destroy
+  has_many :products, through: :agency_products
 
   validates :name, presence: true, length: { maximum: 255 }
   validates :agency_code, presence: true, uniqueness: true, length: { maximum: 255 }

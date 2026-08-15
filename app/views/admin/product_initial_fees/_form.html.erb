@@ -1,0 +1,12 @@
+<%= form_with model: product_initial_fee, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if product_initial_fee.errors.any? %><div class="text-red-700"><%= product_initial_fee.errors.full_messages.to_sentence %></div><% end %>
+  <div>
+    <%= f.label :product_id, "商材" %>
+    <%= f.collection_select :product_id, Product.order(:name), :id, :name, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div><%= f.label :name, "名称" %><%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :amount, "金額" %><%= f.number_field :amount, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :sort_order, "表示順" %><%= f.number_field :sort_order, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :is_active, "有効" %><%= f.check_box :is_active %></div>
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

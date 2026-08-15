@@ -36,6 +36,9 @@ class AgencyGroup < ApplicationRecord
   has_many :agencies, dependent: :restrict_with_error
   # グループ担当者アカウント（agency_group_id のみ設定されたUser。Column.md §1「グループアカウント」）。
   has_many :users, dependent: :nullify
+  # 販売許可（04 R2タスク3。グループ単位で許可された商材）。
+  has_many :agency_group_products, dependent: :destroy
+  has_many :products, through: :agency_group_products
 
   validates :name, presence: true, length: { maximum: 255 }
   validates :service_type, presence: true, inclusion: { in: SERVICE_TYPES }

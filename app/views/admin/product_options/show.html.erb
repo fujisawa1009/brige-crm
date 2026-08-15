@@ -1,0 +1,15 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @product_option.name %></h1>
+  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+    <dt class="font-bold">商材</dt><dd><%= @product_option.product.name %></dd>
+    <dt class="font-bold">月額料金</dt><dd><%= @product_option.monthly_fee %></dd>
+    <dt class="font-bold">有効</dt><dd><%= @product_option.is_active %></dd>
+  </dl>
+  <div class="flex gap-3">
+    <%= link_to "一覧に戻る", admin_product_options_path, class: "underline" %>
+    <% if policy(@product_option).update? %><%= link_to "編集", edit_admin_product_option_path(@product_option), class: "underline" %><% end %>
+    <% if policy(@product_option).destroy? %>
+      <%= button_to "削除", admin_product_option_path(@product_option), method: :delete, form: { data: { turbo_confirm: "削除しますか？" } } %>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">商材</h1>
+  <% if policy(Product).create? %>
+    <%= link_to "新規作成", new_admin_product_path, class: "underline w-fit" %>
+  <% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">コード</th><th class="border px-2 py-1 text-left">名称</th></tr></thead>
+    <tbody>
+      <% @products.each do |product| %>
+        <tr>
+          <td class="border px-2 py-1"><%= product.code %></td>
+          <td class="border px-2 py-1"><%= link_to product.name, admin_product_path(product) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>
