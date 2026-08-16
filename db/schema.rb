@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_150006) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_150007) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -76,14 +76,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_150006) do
     t.integer "current_step_number", default: 1, null: false
     t.uuid "customer_id"
     t.jsonb "form_data", default: {}, null: false
+    t.text "hearing_content"
     t.uuid "order_id"
+    t.uuid "plan_id"
     t.uuid "product_id", null: false
+    t.uuid "product_initial_fee_id"
     t.uuid "sales_representative_id", null: false
     t.string "status", default: "in_progress", null: false
     t.uuid "store_id"
     t.string "token", limit: 64, null: false
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
+    t.index ["plan_id"], name: "index_applications_on_plan_id"
+    t.index ["product_initial_fee_id"], name: "index_applications_on_product_initial_fee_id"
     t.index ["sales_representative_id"], name: "index_applications_on_sales_representative_id"
     t.index ["status"], name: "index_applications_on_status"
     t.index ["token"], name: "index_applications_on_token", unique: true
@@ -744,6 +749,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_150006) do
   add_foreign_key "applications", "agencies", on_delete: :restrict
   add_foreign_key "applications", "customers", on_delete: :nullify
   add_foreign_key "applications", "orders", on_delete: :nullify
+  add_foreign_key "applications", "plans", on_delete: :nullify
+  add_foreign_key "applications", "product_initial_fees", on_delete: :nullify
   add_foreign_key "applications", "products", on_delete: :restrict
   add_foreign_key "applications", "sales_representatives", on_delete: :restrict
   add_foreign_key "applications", "stores", on_delete: :nullify

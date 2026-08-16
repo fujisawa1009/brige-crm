@@ -14,6 +14,7 @@ module AuthAuditable
     otp_issued
     otp_verified
     otp_failed
+    permission_denied
   ].freeze
 
   # ログイン成功（セッション確立）。Users::SessionsController#create から明示的に呼ぶ
@@ -49,6 +50,30 @@ module AuthAuditable
   def after_otp_event(event)
     super
     log_auth_event(event)
+  end
+
+  # 権限チェック拒否（403）をAuditLogに記録する。ApplicationController#authorize_system_permission!が
+  # SystemPermissionChecker.allowed?をfalseと判定した際に呼ぶ（R0完了条件「権限チェックイベントが
+  # 監査ログに記録されていること」）。対象は「ユーザー」ではなく「拒否されたエンドポイント」なので、
+  # resource_type/resource_idはSystemPermissionカタログの該当行（存在すれば）を指す。カタログ未登録
+  # ルートへのアクセス（フェイルクローズで到達しうる）ではresource_idはnilのまま記録する。
+  # route_signatureはSystemPermissionChecker/SystemPermissionSyncServiceと同じ
+  # [controller, action, http_method, path]の形式でmetadataにも残す。
+  def log_permission_denied!(controller:, action:, http_method:, path:, ip_address: nil, request_id: nil)
+    permission = SystemPermission.find_by(controller: controller, action: action, http_method: [ http_method, "ALL" ])
+
+    AuditLog.create!(
+      user_id:        id,
+      user_type:      self.class.name,
+      action:         "permission_denied",
+      resource_type:  "SystemPermission",
+      resource_id:    permission&.id,
+      resource_label: "#{controller}##{action}",
+      metadata:       { route_signature: [ controller, action, http_method, path ] },
+      ip_address:     ip_address || Current.ip_address,
+      source:         "web",
+      request_id:     request_id || Current.request_id
+    )
   end
 
   private

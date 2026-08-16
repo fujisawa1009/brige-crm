@@ -1,7 +1,19 @@
 #!/bin/bash -e
 
+# rails server起動判定: 「./bin/rails」の直後に「server」が連続して現れるかを走査する。
+# 末尾一致（Dockerfile既定CMD `./bin/thrust ./bin/rails server`）だけでなく、
+# docker-compose.ymlのweb serviceが指定する `./bin/rails server -b 0.0.0.0` のように
+# 末尾に追加引数が付くケースでも判定できるよう、位置に依存しないロジックにしている。
+is_rails_server=false
+for ((i = 1; i < $#; i++)); do
+  if [ "${@:i:1}" == "./bin/rails" ] && [ "${@:i+1:1}" == "server" ]; then
+    is_rails_server=true
+    break
+  fi
+done
+
 # If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+if [ "$is_rails_server" == "true" ]; then
   ./bin/rails db:prepare
   # 権限カタログをルート定義から同期する（04 R0-5・ftlog踏襲）。冪等・非破壊のため毎起動で実行してよい。
   # 新ルート追加時のカタログ未登録（＝フェイルクローズで全員拒否）を構造的に防ぐ。

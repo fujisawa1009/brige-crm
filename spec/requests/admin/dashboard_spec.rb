@@ -47,14 +47,17 @@ RSpec.describe "Admin::Dashboard", type: :request, seed_permission_catalog: true
     expect(events).to include("otp_issued", "otp_verified", "login_succeeded")
   end
 
-  it "権限チェックのイベント自体はSystemPermissionCheckerが実認可で判定している（403 spec が保証）" do
-    # このexampleは type: :request 既定の実認可（フェイルクローズ）で動いていることの明示的な確認。
-    # spec/support/system_permission_authorization.rb の既定挙動そのものをテストする。
+  it "権限チェックの拒否イベントが監査ログ(AuditLog)にpermission_deniedとして記録される" do
     sign_in_with_otp!
     revoke_system_permissions!(role, "admin/dashboard")
 
-    expect(SystemPermissionChecker.allowed?(
-      user: user, controller: "admin/dashboard", action: "index", http_method: "GET"
-    )).to eq(false)
+    get admin_dashboard_path
+    expect(response).to have_http_status(:forbidden)
+
+    denied_logs = AuditLog.where(user_id: user.id, action: "permission_denied")
+    expect(denied_logs.count).to eq(1)
+    expect(denied_logs.first.metadata["route_signature"]).to eq(
+      [ "admin/dashboard", "index", "GET", admin_dashboard_path ]
+    )
   end
 end

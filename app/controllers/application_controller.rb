@@ -50,6 +50,16 @@ class ApplicationController < ActionController::Base
       http_method: request.request_method
     )
 
+    # 拒否イベントを監査ログに記録する（R0完了条件）。set_current_attributesが本メソッドより先に
+    # 走るためCurrent.user/ip_address/request_idは既に確定しており、log_permission_denied!の
+    # デフォルト引数がそれらを使う。
+    current_user.log_permission_denied!(
+      controller:  controller_path,
+      action:      action_name,
+      http_method: request.request_method,
+      path:        request.path
+    )
+
     raise Pundit::NotAuthorizedError
   end
 
