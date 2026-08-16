@@ -42,7 +42,11 @@ class Agency < ApplicationRecord
   has_many :sales_representatives, dependent: :restrict_with_error
   has_many :contract_conditions, dependent: :destroy
   # 代理店担当者アカウント（agency_id のみ設定されたUser。Column.md §2「代理店アカウント」）。
-  has_many :users, dependent: :nullify
+  # dependent: :nullifyだと配下Userのagency_idがNULL化され、AgencyScoped#staff_scope?の判定
+  # （agency_id・agency_group_idが両方nil=staff）に一致してしまい、削除の瞬間に全件アクセス権限へ
+  # 昇格する権限昇格バグになる。他の関連（sales_representatives等）と同じくrestrict_with_errorとし、
+  # 配下にUserがいる限りAgency自体を削除できないようにする。
+  has_many :users, dependent: :restrict_with_error
   # 04 R2: 顧客・案件（Column.md §8/§10）と 販売許可（同タスク3）。
   has_many :customers, dependent: :restrict_with_error
   has_many :orders, dependent: :restrict_with_error

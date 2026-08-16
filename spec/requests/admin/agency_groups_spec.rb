@@ -35,6 +35,17 @@ RSpec.describe "Admin::AgencyGroups", type: :request, seed_permission_catalog: t
       delete admin_agency_group_path(group_b)
       expect(AgencyGroup.exists?(group_b.id)).to eq(false)
     end
+
+    it "配下にユーザーがいる代理店グループは削除できない（R1修正: 削除でagency_group_idがNULL化され" \
+       "配下ユーザーがstaff権限に昇格する権限昇格バグの防止）" do
+      sub_user = create(:user, agency_group: group_b)
+
+      delete admin_agency_group_path(group_b)
+
+      expect(response).to redirect_to(admin_agency_group_path(group_b))
+      expect(AgencyGroup.exists?(group_b.id)).to eq(true)
+      expect(sub_user.reload.agency_group_id).to eq(group_b.id)
+    end
   end
 
   describe "代理店グループユーザーは自グループのみ閲覧可・更新/削除は不可" do

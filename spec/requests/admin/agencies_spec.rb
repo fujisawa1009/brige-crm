@@ -43,6 +43,17 @@ RSpec.describe "Admin::Agencies", type: :request, seed_permission_catalog: true,
       delete admin_agency_path(agency_b)
       expect(Agency.exists?(agency_b.id)).to eq(false)
     end
+
+    it "配下にユーザーがいる代理店は削除できない（R1修正: 削除でagency_idがNULL化され配下ユーザーが" \
+       "staff権限に昇格する権限昇格バグの防止）" do
+      sub_user = create(:user, agency: agency_b)
+
+      delete admin_agency_path(agency_b)
+
+      expect(response).to redirect_to(admin_agency_path(agency_b))
+      expect(Agency.exists?(agency_b.id)).to eq(true)
+      expect(sub_user.reload.agency_id).to eq(agency_b.id)
+    end
   end
 
   describe "代理店ユーザーは自代理店のみ" do

@@ -30,8 +30,8 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (agency_group_id => agency_groups.id) ON DELETE => nullify
-#  fk_rails_...  (agency_id => agencies.id) ON DELETE => nullify
+#  fk_rails_...  (agency_group_id => agency_groups.id) ON DELETE => restrict
+#  fk_rails_...  (agency_id => agencies.id) ON DELETE => restrict
 #
 FactoryBot.define do
   factory :user do

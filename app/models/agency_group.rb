@@ -35,7 +35,11 @@ class AgencyGroup < ApplicationRecord
 
   has_many :agencies, dependent: :restrict_with_error
   # グループ担当者アカウント（agency_group_id のみ設定されたUser。Column.md §1「グループアカウント」）。
-  has_many :users, dependent: :nullify
+  # dependent: :nullifyだと配下Userのagency_group_idがNULL化され、AgencyScoped#staff_scope?の判定
+  # （agency_id・agency_group_idが両方nil=staff）に一致してしまい、削除の瞬間に全件アクセス権限へ
+  # 昇格する権限昇格バグになる。agenciesと同じくrestrict_with_errorとし、配下にUserがいる限り
+  # AgencyGroup自体を削除できないようにする。
+  has_many :users, dependent: :restrict_with_error
   # 販売許可（04 R2タスク3。グループ単位で許可された商材）。
   has_many :agency_group_products, dependent: :destroy
   has_many :products, through: :agency_group_products

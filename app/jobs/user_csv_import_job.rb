@@ -22,8 +22,20 @@ class UserCsvImportJob < ApplicationJob
 
     result = Result.new(created: 0, failed: [])
 
-    CSV.parse(csv_content, headers: true) do |row|
-      import_row(row, result)
+    begin
+      CSV.parse(csv_content, headers: true) do |row|
+        import_row(row, result)
+      end
+    rescue CSV::MalformedCSVError, ArgumentError => e
+      # 行単位のrescue（import_row内）はCSV自体のパース失敗を捕捉できない。ヘッダー行の引用符が
+      # 閉じていない・文字コードが壊れている等でCSV.parseそのものが例外を投げると、ここで捕まえず
+      # ジョブが素通しで失敗扱いになるだけで管理者からは何が起きたか見えなくなるため、明示的にログへ
+      # 残した上で created: 0, failed: [] のResultを返す（戻り値の型・呼び出し側との互換性は変えない）。
+      Rails.logger.error(
+        "UserCsvImportJob: CSVファイル全体のパースに失敗しました requested_by=#{requested_by_user_id} " \
+        "error=#{e.class}: #{e.message}"
+      )
+      return result
     end
 
     Rails.logger.info(

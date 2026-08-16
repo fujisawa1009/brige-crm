@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_150007) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -826,6 +826,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_150007) do
   add_foreign_key "system_roles", "users", column: "updated_by_id"
   add_foreign_key "user_system_roles", "system_roles"
   add_foreign_key "user_system_roles", "users"
-  add_foreign_key "users", "agencies", on_delete: :nullify
-  add_foreign_key "users", "agency_groups", on_delete: :nullify
+  add_foreign_key "users", "agencies", on_delete: :restrict
+  add_foreign_key "users", "agency_groups", on_delete: :restrict
 end
