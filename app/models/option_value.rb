@@ -42,7 +42,43 @@ class OptionValue < ApplicationRecord
 
   validates :value, presence: true, uniqueness: { scope: :option_group_id }, length: { maximum: 255 }
   validates :label, presence: true, length: { maximum: 255 }
+  # 循環参照・グループ越境バグ修正: 自己参照/祖先方向の循環と、親子で所属グループが食い違う
+  # 状態を保存させない（フォームからの不正なparent_id指定・自己申告depthの両方を防ぐ）。
+  validate :parent_must_be_same_option_group
+  validate :parent_must_not_create_cycle
+
+  # depthは常にparentから導出する（フォーム入力値やparams由来のdepthは無視する）。
+  before_validation :assign_depth_from_parent
 
   scope :active, -> { where(is_active: true) }
   scope :roots, -> { where(parent_id: nil) }
+
+  private
+
+  def assign_depth_from_parent
+    self.depth = parent ? parent.depth + 1 : 0
+  end
+
+  def parent_must_be_same_option_group
+    return if parent.nil?
+    return if parent.option_group_id == option_group_id
+
+    errors.add(:parent_id, "所属グループが異なる選択肢は親にできません")
+  end
+
+  # 親をたどって自分自身に戻る経路（自己参照を含む）が無いことを検証する。
+  def parent_must_not_create_cycle
+    return if parent_id.blank?
+
+    visited = Set.new
+    ancestor = parent
+    while ancestor
+      if ancestor.id == id || visited.include?(ancestor.id)
+        errors.add(:parent_id, "自分自身または子孫を親にはできません（循環参照）")
+        return
+      end
+      visited << ancestor.id
+      ancestor = ancestor.parent
+    end
+  end
 end

@@ -56,8 +56,9 @@ class Admin::OptionValuesController < Admin::BaseController
     @option_value = OptionValue.find(params[:id])
   end
 
+  # depthはOptionValue#assign_depth_from_parentがparentから自動算出するため許可しない
+  # （paramsから直接指定できると、ツリー構造と矛盾するdepthを自己申告で書き込めてしまうバグになる）。
   def option_value_params
-    params.require(:option_value).permit(:option_group_id, :parent_id, :value, :label, :depth, :sort_order,
-                                          :is_active)
+    params.require(:option_value).permit(:option_group_id, :parent_id, :value, :label, :sort_order, :is_active)
   end
 end

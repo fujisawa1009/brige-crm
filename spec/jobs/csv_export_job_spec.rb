@@ -43,4 +43,20 @@ RSpec.describe CsvExportJob, type: :job, seed_status_catalog: true do
     expect(export.file_data).not_to include("secret-pass")
     expect(export.file_data).not_to include("billing_password")
   end
+
+  it "代理店ユーザーがリクエストしたOrderエクスポートには自代理店の案件のみ含まれる" do
+    contract_condition_a = create(:contract_condition, agency: agency_a)
+    contract_condition_b = create(:contract_condition, agency: agency_b)
+    order_a = create(:order, agency: agency_a, customer: customer_a, contract_condition: contract_condition_a)
+    order_b = create(:order, agency: agency_b, customer: customer_b, contract_condition: contract_condition_b)
+    export = CsvExport.create!(resource_type: "Order", requested_by: agency_user, status: "pending")
+
+    described_class.perform_now(export.id)
+    export.reload
+
+    expect(export.status).to eq("completed")
+    expect(export.file_data).to include(order_a.order_number)
+    expect(export.file_data).not_to include(order_b.order_number)
+    expect(export.row_count).to eq(1)
+  end
 end

@@ -86,6 +86,18 @@ RSpec.describe "Admin::Orders", type: :request, seed_permission_catalog: true, s
       patch admin_order_path(order_a1), params: { order: { remarks: "x", agency_id: agency_b.id } }
       expect(order_a1.reload.agency_id).to eq(agency_a1.id)
     end
+
+    it "customer_id/store_idパラメータを他代理店のレコードへ書き換えても無視される（04 R2追補バグ修正）" do
+      store_b = create(:store, customer: customer_b)
+
+      patch admin_order_path(order_a1), params: {
+        order: { remarks: "x", customer_id: customer_b.id, store_id: store_b.id }
+      }
+
+      order_a1.reload
+      expect(order_a1.customer_id).to eq(customer_a1.id)
+      expect(order_a1.store_id).not_to eq(store_b.id)
+    end
   end
 
   describe "代理店グループユーザーは配下代理店の案件のみ" do

@@ -36,7 +36,9 @@ class Admin::OrdersController < Admin::BaseController
 
   def update
     authorize @order
-    permitted = strip_ownership_params!(order_params, :agency_id, policy_record: @order)
+    # customer_id/store_idもagency_idと同じ権限昇格経路になるため除去対象に含める（04 R2追補バグ修正。
+    # 詳細はAdmin::BaseController#strip_ownership_params!のコメント参照）。
+    permitted = strip_ownership_params!(order_params, :agency_id, :customer_id, :store_id, policy_record: @order)
 
     if @order.update(permitted)
       redirect_to admin_order_path(@order), notice: "案件を更新しました。"

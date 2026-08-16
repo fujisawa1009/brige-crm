@@ -6,7 +6,10 @@
   </div>
   <div>
     <%= f.label :parent_id, "親選択肢" %>
-    <%= f.collection_select :parent_id, OptionValue.order(:label), :id, :label, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+    <%# 循環参照・グループ越境バグ修正: 親候補は同一option_group_id内かつ自分自身を除く選択肢のみに絞る
+        （異なるグループの値を親にできてしまうと、OptionValueのグループ越境バリデーションで弾かれるだけの
+        無効な選択肢が延々と一覧に出てしまうため）。%>
+    <%= f.collection_select :parent_id, OptionValue.where(option_group_id: option_value.option_group_id).where.not(id: option_value.id).order(:label), :id, :label, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <div><%= f.label :value, "内部値" %><%= f.text_field :value, class: "border rounded px-2 py-1 w-full" %></div>
   <div><%= f.label :label, "表示名" %><%= f.text_field :label, class: "border rounded px-2 py-1 w-full" %></div>
