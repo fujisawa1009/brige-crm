@@ -83,6 +83,12 @@ class FormField < ApplicationRecord
   # 主キー・タイムスタンプ・TracksUser由来の追跡列は、どのtarget_tableでもフォーム入力対象にしない。
   SYSTEM_COLUMNS = %w[id created_at updated_at created_by_id updated_by_id lock_version].freeze
 
+  # ワークフロー制御用の業務ステータス列（Order#status/Customer#status）。新規作成時のデフォルトは
+  # assign_default_status等で自動設定される前提で、フォーム入力者が直接指定できてしまうと
+  # 「0:受注」等の初期ステータスを飛び越えて任意のOrderStatus/CustomerStatusを自己申告できてしまう
+  # （lock_after_statusが本来ガードしたいR4/R5の状態遷移を、新規作成の一撃で迂回できる抜け穴になる）。
+  WORKFLOW_STATUS_COLUMNS = %w[status].freeze
+
   # target_columnホワイトリスト検証（R3レビュー指摘・セキュリティ）: FormField#target_columnは
   # 任意の文字列を許容していたため、フォームビルダー操作者が誤ってagency_id等の所属・紐付け外部キーや
   # OrderWorkDetailのSNS認証情報カラムをtarget_columnに指定すると、申込フォーム経由で
@@ -98,6 +104,7 @@ class FormField < ApplicationRecord
   #   - 暗号化列（Model.encrypted_attributes。OrderWorkDetailのSNS認証情報8カラムに加え、
   #     Order#billing_passwordのような同種の暗号化列も一律で対象にする）
   #   - 自動採番列（AUTO_ASSIGNED_COLUMNS）
+  #   - ワークフロー制御用の業務ステータス列（WORKFLOW_STATUS_COLUMNS）
   # に、product_option_idsのような実カラムでない正規の書き込み先（EXTRA_ALLOWED_COLUMNS）を加える。
   def self.allowed_target_columns_for(target_table)
     model = TARGET_MODELS[target_table]
@@ -105,7 +112,8 @@ class FormField < ApplicationRecord
 
     foreign_keys       = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
     encrypted_columns   = model.encrypted_attributes.to_a.map(&:to_s)
-    disallowed_columns = SYSTEM_COLUMNS + foreign_keys + encrypted_columns + Array(AUTO_ASSIGNED_COLUMNS[target_table])
+    disallowed_columns = SYSTEM_COLUMNS + foreign_keys + encrypted_columns +
+                          Array(AUTO_ASSIGNED_COLUMNS[target_table]) + WORKFLOW_STATUS_COLUMNS
 
     (model.column_names - disallowed_columns + Array(EXTRA_ALLOWED_COLUMNS[target_table])).freeze
   end

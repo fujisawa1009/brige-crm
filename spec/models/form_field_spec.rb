@@ -100,6 +100,11 @@ RSpec.describe FormField, type: :model, seed_status_catalog: true do
         expect(field).not_to be_valid
       end
 
+      it "ワークフロー制御用の業務ステータス列（status）は許可しない" do
+        expect(build(:form_field, target_table: "order", target_column: "status")).not_to be_valid
+        expect(build(:form_field, target_table: "customer", target_column: "status")).not_to be_valid
+      end
+
       it "通常の業務カラム（name/phone_number等）は許可する" do
         expect(build(:form_field, target_table: "customer", target_column: "name")).to be_valid
         expect(build(:form_field, target_table: "store", target_column: "phone_number")).to be_valid
