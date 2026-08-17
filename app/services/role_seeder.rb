@@ -115,6 +115,21 @@ class RoleSeeder
   # 代理店/代理店グループロールへは渡さない（実務運用者専有。admin/role_management等と同じ扱い）。
   R3_FORM_BUILDER_CONTROLLERS = %w[admin/form_templates].freeze
 
+  # 04 R4タスク1: 問い合わせ（Inquiry）。実務運用者は起票（new/create）含めフル操作可。
+  # 代理店/代理店グループは自スコープの問い合わせを参照（index/show）でき、可視な問い合わせへ
+  # 返信（inquiry_messages#create）できるが、起票はできない（InquiryPolicy#create?がstaff_scope?
+  # 限定＝R2_CRM_CONTROLLERSと同じ「新規作成は内部運用限定」方針。Punditの制限とRBACを揃える）。
+  R4_INQUIRY_CONTROLLERS = %w[admin/inquiries].freeze
+  R4_INQUIRY_MESSAGE_CONTROLLERS = %w[admin/inquiry_messages].freeze
+
+  # 04 R4タスク3: 一斉通知・宛先グループ・通知テンプレート・問い合わせステータス/ルーティングマスタ。
+  # いずれもMasterDataPolicy（書き込みはstaff_scope?限定）または内部運用ツールのため、参照権限すら
+  # 代理店/代理店グループロールへは渡さず実務運用者専有にする（admin/form_templatesと同じ扱い）。
+  R4_INTERNAL_CONTROLLERS = %w[
+    admin/inquiry_statuses admin/inquiry_recipient_routes
+    admin/recipient_groups admin/notification_templates admin/notifications
+  ].freeze
+
   def assign_default_permissions(roles)
     admin_permissions = SystemPermission.enabled.admin
 
@@ -130,6 +145,10 @@ class RoleSeeder
     grant(roles["実務運用者"], admin_permissions.where(controller: R2_MASTER_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: CSV_EXPORT_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: R3_FORM_BUILDER_CONTROLLERS).pluck(:id))
+    # 04 R4: 問い合わせは起票含めフル、通知・宛先グループ・テンプレート・ルーティングマスタは内部運用専有。
+    grant(roles["実務運用者"], admin_permissions.where(controller: R4_INQUIRY_CONTROLLERS).pluck(:id))
+    grant(roles["実務運用者"], admin_permissions.where(controller: R4_INQUIRY_MESSAGE_CONTROLLERS).pluck(:id))
+    grant(roles["実務運用者"], admin_permissions.where(controller: R4_INTERNAL_CONTROLLERS).pluck(:id))
 
     %w[代理店グループ用 代理店用].each do |name|
       grant(
@@ -160,6 +179,16 @@ class RoleSeeder
       grant(
         roles[name],
         admin_permissions.where(controller: CSV_EXPORT_CONTROLLERS, action: %w[index show]).pluck(:id)
+      )
+      # 04 R4: 自スコープの問い合わせ参照（index/show）＋可視な問い合わせへの返信（inquiry_messages#create）。
+      # 起票（inquiries#new/create）はInquiryPolicy#create?がstaff_scope?限定のため渡さない。
+      grant(
+        roles[name],
+        admin_permissions.where(controller: R4_INQUIRY_CONTROLLERS, action: %w[index show]).pluck(:id)
+      )
+      grant(
+        roles[name],
+        admin_permissions.where(controller: R4_INQUIRY_MESSAGE_CONTROLLERS, action: %w[create]).pluck(:id)
       )
     end
   end

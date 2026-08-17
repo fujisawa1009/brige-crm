@@ -28,8 +28,26 @@ class RecipientResolver
     new(inquiry).recipients_for_inquiry
   end
 
-  def initialize(inquiry)
+  # 送信用の宛先展開（Laravel InquiryRecipientResolver#expandForSend 移植。メール送信欠落の補完）。
+  # recipients は [{type:, id:}, ...]（type は InquiryMessageRecipient#recipient_type と同じ Rails
+  # クラス名文字列: Agency / SalesRepresentative / Customer / User / RecipientGroup）。
+  def self.expand_for_send(recipients)
+    new.expand_for_send(recipients)
+  end
+
+  # inquiry は resolve_from_order 系だけが使う。expand_for_send は type/id 直指定で解決するため
+  # inquiry 不要（nil 可）。
+  def initialize(inquiry = nil)
     @inquiry = inquiry
+  end
+
+  # 送信用にメールアドレスを完全展開する（Laravel expandForSend 踏襲）。
+  # recipient_group はメンバー（User/ProductionCompany）を全展開し、宛先1件＝1エントリにする。
+  # メールを持たないエントリは除外する（送信不能な宛先で success/failed 集計を汚さない）。
+  # 戻り値: [{ type:, id:, label:, emails: [代表, cc...] }, ...]
+  def expand_for_send(recipients)
+    recipients.flat_map { |item| expand_single(item.fetch(:type), item.fetch(:id)) }
+              .select { |entry| entry[:emails].present? }
   end
 
   # 案件から代理店・営業担当者・顧客を解決する（宛先候補の提示用。メールなしでも返す＝
@@ -78,5 +96,59 @@ class RecipientResolver
 
     Party.new(type: "Customer", id: customer.id, name: customer.name,
               email: customer.email, has_email: customer.email.present?)
+  end
+
+  # 単一宛先を type/id から展開する（Laravel expandSingle 移植。preview 経路は現行不要のため送信用のみ）。
+  # RecipientGroup 以外は自身のメールを持つ1エントリ、RecipientGroup はメンバーを複数エントリへ展開する。
+  def expand_single(type, id)
+    case type
+    when "Agency"
+      agency = Agency.find_by(id: id)
+      return [] unless agency
+
+      emails = [ agency.email_1, agency.email_2, agency.email_3, agency.email_4, agency.email_5 ].compact_blank
+      [ { type: "Agency", id: agency.id, label: "代理店: #{agency.name}", emails: emails } ]
+    when "SalesRepresentative"
+      rep = SalesRepresentative.find_by(id: id)
+      return [] unless rep
+
+      [ { type: "SalesRepresentative", id: rep.id, label: "営業担当者: #{rep.name}", emails: [ rep.email ].compact_blank } ]
+    when "Customer"
+      customer = Customer.find_by(id: id)
+      return [] unless customer
+
+      [ { type: "Customer", id: customer.id, label: "顧客: #{customer.name}", emails: [ customer.email ].compact_blank } ]
+    when "User"
+      user = User.find_by(id: id)
+      return [] unless user
+
+      [ { type: "User", id: user.id, label: "ユーザー: #{user.name}", emails: [ user.email ].compact_blank } ]
+    when "RecipientGroup"
+      group = RecipientGroup.find_by(id: id)
+      return [] unless group
+
+      resolve_group_members(group)
+    else
+      []
+    end
+  end
+
+  # グループのメンバー（User/ProductionCompany）を、メール付きの送信エントリ配列へ展開する
+  # （Laravel resolveGroupMembers 移植。メール無しメンバーは除外）。
+  def resolve_group_members(group)
+    group.recipient_group_members.filter_map do |member|
+      case member.recipient_type
+      when "User"
+        user = member.recipient
+        next if user&.email.blank?
+
+        { type: "User", id: user.id, label: "ユーザー: #{user.name}", emails: [ user.email ] }
+      when "ProductionCompany"
+        company = member.recipient
+        next if company&.email.blank?
+
+        { type: "ProductionCompany", id: company.id, label: "制作会社: #{company.name}", emails: [ company.email ] }
+      end
+    end
   end
 end

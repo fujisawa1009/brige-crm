@@ -54,6 +54,11 @@ class Notification < ApplicationRecord
   has_many :notification_recipients, dependent: :destroy
   has_many_attached :attachments
 
+  # どのテンプレートから作られた通知かの由来（04 R4タスク2）。optional: テンプレート未使用の手入力通知も許す。
+  # 件名・本文は作成時にテンプレートから subject/body へコピー済み（ライブ参照ではない）ため、
+  # この関連はあくまで追跡用。テンプレートを後から編集しても送信済み通知の本文は変わらない。
+  belongs_to :notification_template, optional: true
+
   validates :title, presence: true, length: { maximum: 255 }
   validates :target_type, presence: true, inclusion: { in: TARGET_TYPES }
   validates :status, presence: true, inclusion: { in: STATUSES }
@@ -64,7 +69,10 @@ class Notification < ApplicationRecord
   # （Laravel現行のconsole.php「予約通知配信(毎分)」をポーリング無しで代替できる）。
   def schedule!(scheduled_at)
     update!(status: STATUS_SCHEDULED, scheduled_at: scheduled_at)
-    NotificationDeliveryJob.set(wait_until: scheduled_at).perform_later(id)
+    # コントローラからは params[:scheduled_at]（String）が渡りうる。ActiveJob#set(wait_until:)は
+    # 文字列に .utc を呼んで落ちるため、update! 後に型キャスト済みの self.scheduled_at（TimeWithZone）を
+    # 使う（String→Timeの変換をモデル側の型キャストに一本化する）。
+    NotificationDeliveryJob.set(wait_until: self.scheduled_at).perform_later(id)
   end
 
   # 即時配信登録（scheduled_atなし＝今すぐSolid Queueへ投入）。

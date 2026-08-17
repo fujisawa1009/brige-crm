@@ -25,12 +25,17 @@ class Admin::InquiriesController < Admin::BaseController
     @inquiry = Inquiry.new(inquiry_params)
     authorize @inquiry
 
+    first_message = nil
     ActiveRecord::Base.transaction do
       @inquiry.save!
       first_message = @inquiry.inquiry_messages.create!(body: params.dig(:inquiry, :first_message_body))
       first_message.assign_recipients!(RecipientResolver.recipients_for_inquiry(@inquiry))
       InquiryNotifier.notify_message_created(first_message)
     end
+
+    # メール通知はコミット確定後にenqueueする（トランザクション未コミット中にジョブが走り、
+    # レコード未発見で失敗する事故を防ぐ）。アプリ内通知(InquiryNotifier)とは別経路で追加する。
+    InquiryMessageMailJob.perform_later(first_message.id)
 
     redirect_to admin_inquiry_path(@inquiry), notice: "問い合わせを作成しました。"
   rescue ActiveRecord::RecordInvalid

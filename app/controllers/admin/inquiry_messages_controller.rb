@@ -18,6 +18,10 @@ class Admin::InquiryMessagesController < Admin::BaseController
       InquiryNotifier.notify_message_created(message)
     end
 
+    # メール通知はコミット確定後にenqueue（未コミット中にジョブが走る事故を防ぐ）。
+    # アプリ内通知(InquiryNotifier)は維持し、メール送信を追加する形。
+    InquiryMessageMailJob.perform_later(message.id)
+
     redirect_to admin_inquiry_path(@inquiry), notice: "メッセージを送信しました。"
   rescue ActiveRecord::RecordInvalid
     redirect_to admin_inquiry_path(@inquiry), alert: message.errors.full_messages.to_sentence

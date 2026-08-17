@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_160012) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -322,6 +322,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_160012) do
     t.uuid "inquiry_message_id", null: false
     t.uuid "recipient_id", null: false
     t.string "recipient_type", null: false
+    t.string "resolved_email"
     t.datetime "updated_at", null: false
     t.index ["inquiry_message_id"], name: "index_inquiry_message_recipients_on_message_id"
     t.index ["recipient_type", "recipient_id"], name: "idx_on_recipient_type_recipient_id_bf7c4c784f"
@@ -406,6 +407,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_160012) do
     t.uuid "created_by_id"
     t.integer "failed_count", default: 0, null: false
     t.jsonb "filter_params", default: {}, null: false
+    t.uuid "notification_template_id"
     t.datetime "scheduled_at"
     t.datetime "sent_at"
     t.string "status", default: "draft", null: false
@@ -416,6 +418,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_160012) do
     t.integer "total_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
+    t.index ["notification_template_id"], name: "index_notifications_on_notification_template_id"
     t.index ["scheduled_at"], name: "index_notifications_on_scheduled_at"
     t.index ["status"], name: "index_notifications_on_status"
   end
@@ -974,6 +977,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_160012) do
   add_foreign_key "notification_recipients", "notifications", on_delete: :cascade
   add_foreign_key "notification_templates", "users", column: "created_by_id"
   add_foreign_key "notification_templates", "users", column: "updated_by_id"
+  add_foreign_key "notifications", "notification_templates", on_delete: :nullify
   add_foreign_key "notifications", "users", column: "created_by_id"
   add_foreign_key "notifications", "users", column: "updated_by_id"
   add_foreign_key "option_groups", "users", column: "created_by_id"
@@ -1028,6 +1032,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_160012) do
   add_foreign_key "system_roles", "users", column: "updated_by_id"
   add_foreign_key "user_system_roles", "system_roles"
   add_foreign_key "user_system_roles", "users"
-  add_foreign_key "users", "agencies", on_delete: :nullify
-  add_foreign_key "users", "agency_groups", on_delete: :nullify
+  add_foreign_key "users", "agencies", on_delete: :restrict
+  add_foreign_key "users", "agency_groups", on_delete: :restrict
 end

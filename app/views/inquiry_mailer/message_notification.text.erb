@@ -1,0 +1,7 @@
+<%= @inquiry.title.presence || "(無題)" %>（<%= @inquiry.inquiry_number %>）
+
+案件番号: <%= @inquiry.order.order_number %>
+種別: <%= @inquiry.category %>
+状態: <%= @inquiry.status %>
+
+<%= @message.body %>

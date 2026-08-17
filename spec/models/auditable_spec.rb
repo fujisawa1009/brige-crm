@@ -33,4 +33,18 @@ RSpec.describe "Auditable", type: :model do
       role.update!(position: 99)
     end.not_to change { AuditLog.for_resource("SystemRole", role.id).where(action: "updated").count }
   end
+
+  # 04 R4追補: InquiryMessage は Auditable を include しているにもかかわらず TRACKED_FIELDS に
+  # エントリが無く、作成イベントが空のchanges_afterで記録されるだけになっていた
+  # （app/models/concerns/auditable.rb冒頭コメント「bodyは除外・構造的な列のみ追跡」との不整合）。
+  # inquiry_id を追跡対象に加えた修正を確認する。
+  it "InquiryMessageは作成時にinquiry_idをAuditLogへ記録し、本文(body)は記録しない", :seed_status_catalog do
+    inquiry = create(:inquiry)
+    message = inquiry.inquiry_messages.create!(body: "本文はログに残らないこと")
+
+    log = AuditLog.for_resource("InquiryMessage", message.id).find_by(action: "created")
+    expect(log).to be_present
+    expect(log.changes_after).to eq("inquiry_id" => inquiry.id)
+    expect(log.changes_after).not_to have_key("body")
+  end
 end

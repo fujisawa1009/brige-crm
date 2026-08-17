@@ -15,30 +15,37 @@ class Admin::NotificationsController < Admin::BaseController
   def new
     @notification = Notification.new(target_type: Notification::TARGET_AGENCY, status: Notification::STATUS_DRAFT)
     authorize @notification
+    load_notification_templates
   end
 
   def edit
     authorize @notification
+    load_notification_templates
   end
 
   def create
     @notification = Notification.new(notification_params)
     @notification.status = Notification::STATUS_DRAFT
     authorize @notification
+    apply_template_defaults
 
     if @notification.save
       redirect_to admin_notification_path(@notification), notice: "通知を下書き保存しました。"
     else
+      load_notification_templates
       render :new, status: :unprocessable_entity
     end
   end
 
   def update
     authorize @notification
+    @notification.assign_attributes(notification_params)
+    apply_template_defaults
 
-    if @notification.update(notification_params)
+    if @notification.save
       redirect_to admin_notification_path(@notification), notice: "通知を更新しました。"
     else
+      load_notification_templates
       render :edit, status: :unprocessable_entity
     end
   end
@@ -73,6 +80,26 @@ class Admin::NotificationsController < Admin::BaseController
   end
 
   def notification_params
-    params.require(:notification).permit(:title, :subject, :body, :target_type, filter_params: {})
+    params.require(:notification).permit(:title, :subject, :body, :target_type, :notification_template_id, filter_params: {})
+  end
+
+  # フォームで選択できるテンプレート（04 R4タスク2）。notification / common タイプのみ＝通知作成に
+  # 使える集合に限定する（inquiry 専用テンプレートは一斉通知の対象外）。NotificationTemplate に
+  # is_active 列は存在しないため template_type で絞る（当初指示の is_active 前提は現行スキーマと不一致）。
+  def load_notification_templates
+    @notification_templates = NotificationTemplate
+      .where(template_type: [ NotificationTemplate::TYPE_NOTIFICATION, NotificationTemplate::TYPE_COMMON ])
+      .order(:name)
+  end
+
+  # テンプレート選択時のサーバ側フォールバック（04 R4タスク2）。通常は Stimulus が件名・本文を自動入力するが、
+  # JS無効時でも件名/本文が空ならテンプレートの値をコピーする（ライブ参照ではなくコピー＝以後は編集可能・
+  # 送信済み通知はテンプレート編集の影響を受けない）。既に入力済みの値は尊重して上書きしない。
+  def apply_template_defaults
+    template = @notification.notification_template
+    return unless template
+
+    @notification.subject = template.subject if @notification.subject.blank?
+    @notification.body    = template.body    if @notification.body.blank?
   end
 end

@@ -1,0 +1,9 @@
+<h1><%= @inquiry.title.presence || "(無題)" %>（<%= @inquiry.inquiry_number %>）</h1>
+
+<dl>
+  <dt>案件番号</dt><dd><%= @inquiry.order.order_number %></dd>
+  <dt>種別</dt><dd><%= @inquiry.category %></dd>
+  <dt>状態</dt><dd><%= @inquiry.status %></dd>
+</dl>
+
+<div><%= simple_format(@message.body) %></div>

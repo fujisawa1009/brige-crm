@@ -1,8 +1,33 @@
-<%= form_with model: notification, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+<%# 04 R4タスク2: テンプレート選択→件名・本文の自動入力。テンプレートの subject/body を id 別の
+    JSON マップで controller 要素に持たせ、Stimulus(notification-template) が選択時に各フィールドへ
+    コピーする。保存されるのは notifications 側の subject/body 列（＝コピー・スナップショット）で、
+    テンプレート編集の影響を受けないライブ参照ではない。 %>
+<% templates_map = (@notification_templates || []).to_h { |t| [ t.id, { subject: t.subject.to_s, body: t.body.to_s } ] } %>
+<%= form_with model: notification, url: url, class: "flex flex-col gap-3 max-w-md",
+      data: { controller: "notification-template",
+              notification_template_templates_value: templates_map.to_json } do |f| %>
   <% if notification.errors.any? %><div class="text-red-700"><%= notification.errors.full_messages.to_sentence %></div><% end %>
+  <% if @notification_templates.present? %>
+    <div>
+      <%= f.label :notification_template_id, "テンプレート（任意）" %>
+      <%= f.select :notification_template_id,
+            @notification_templates.map { |t| [ t.name, t.id ] },
+            { include_blank: "テンプレートを使わない" },
+            class: "border rounded px-2 py-1 w-full",
+            data: { notification_template_target: "select", action: "change->notification-template#apply" } %>
+    </div>
+  <% end %>
   <div><%= f.label :title, "タイトル" %><%= f.text_field :title, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :subject, "件名" %><%= f.text_field :subject, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :body, "本文" %><%= f.text_area :body, rows: 6, class: "border rounded px-2 py-1 w-full" %></div>
+  <div>
+    <%= f.label :subject, "件名" %>
+    <%= f.text_field :subject, class: "border rounded px-2 py-1 w-full",
+          data: { notification_template_target: "subject" } %>
+  </div>
+  <div>
+    <%= f.label :body, "本文" %>
+    <%= f.text_area :body, rows: 6, class: "border rounded px-2 py-1 w-full",
+          data: { notification_template_target: "body" } %>
+  </div>
   <div>
     <%= f.label :target_type, "宛先種別" %>
     <%= f.select :target_type, Notification::TARGET_TYPES, {}, class: "border rounded px-2 py-1 w-full" %>
