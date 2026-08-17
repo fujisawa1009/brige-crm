@@ -20,11 +20,17 @@ RUN apt-get update -qq && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
+# BUNDLE_WITHOUTはARGとして宣言し、docker-compose.ymlのbuild.argsから空文字列で上書きできるようにする
+# （開発用compose buildではdevelopment gem・development環境設定を含める必要があるため。以前はENV固定
+# だったためcompose側のbuild args指定が無視され、developmentコンテナがweb-console/annotaterb/bindex等の
+# development gem不足で起動できないバグになっていた）。
+ARG BUNDLE_WITHOUT="development"
+
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
+    BUNDLE_WITHOUT="${BUNDLE_WITHOUT}" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Throw-away build stage to reduce size of final image

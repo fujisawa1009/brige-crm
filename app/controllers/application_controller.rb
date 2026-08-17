@@ -11,8 +11,24 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
-  before_action :authenticate_user!
-  before_action :set_current_attributes
+  # authenticate_user!・set_current_attributesはどちらもdevise_controller?（Users::SessionsController等）
+  # には適用しない。重大なセキュリティ修正（2026-08-17見直しレビューで発見）:
+  #
+  # Users::SessionsController#createはwarden.authenticate!(store: false)でパスワード認証だけを行い、
+  # sign_inを呼ばずにOTP入力へ進ませる設計（2要素認証、Q-23）。ところがこのアクションへのPOSTには
+  # params[:user][:email]/params[:user][:password]が含まれており、Deviseの
+  # prepend_before_action :allow_params_authentication! によってparamsベース認証が許可された状態で、
+  # 誰か（authenticate_user!、あるいはset_current_attributes内のcurrent_user呼び出し）が一度でも
+  # current_user/warden.authenticate相当を呼ぶと、Wardenがそのparamsで独自にDatabaseAuthenticatable
+  # ストラテジーを実行し、storeオプション省略（デフォルトtrue）でセッションに保存してしまう。
+  # 以降createアクション内でwarden.authenticate!(store: false)を呼んでも、Wardenの
+  # _perform_authenticationは「セッションに既にユーザーがいればstrategy自体を再実行しない」ため
+  # store: falseが完全に無視される。結果、パスワード認証成功時点でOTP完了前のまま実質ログイン済みに
+  # なってしまい、2要素認証がまるごとバイパスされる（実際にDocker環境・request specの両方で再現確認済み。
+  # authenticate_user!だけをスキップしてもset_current_attributes内のcurrent_user呼び出しで再発したため、
+  # 両方のスキップが必須）。
+  before_action :authenticate_user!, unless: :devise_controller?
+  before_action :set_current_attributes, unless: :devise_controller?
   before_action :authorize_system_permission!
 
   helper_method :policy, :policy_scope, :can_access_system_action?
