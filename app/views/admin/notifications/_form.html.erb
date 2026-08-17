@@ -1,0 +1,11 @@
+<%= form_with model: notification, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if notification.errors.any? %><div class="text-red-700"><%= notification.errors.full_messages.to_sentence %></div><% end %>
+  <div><%= f.label :title, "タイトル" %><%= f.text_field :title, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :subject, "件名" %><%= f.text_field :subject, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :body, "本文" %><%= f.text_area :body, rows: 6, class: "border rounded px-2 py-1 w-full" %></div>
+  <div>
+    <%= f.label :target_type, "宛先種別" %>
+    <%= f.select :target_type, Notification::TARGET_TYPES, {}, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

@@ -19,6 +19,23 @@ Rails.application.routes.draw do
     post "users/otp/resend", to: "users/otps#resend",  as: :resend_user_otp
   end
 
+  # 顧客マイページ専用Deviseスコープ（04 R4タスク5・03§4「顧客マイページ(Customer)はDevise別
+  # スコープ」）。path_namesでLaravel現行のURL（/mypage/login）に寄せる。#newはDevise gem既定ビューを
+  # そのまま使う（users/sessions#newと同じ方針。過剰実装を避ける）。
+  devise_for :customers,
+             path: "mypage",
+             path_names: { sign_in: "login", sign_out: "logout" },
+             controllers: { sessions: "mypage/sessions" }
+
+  devise_scope :customer do
+    get  "mypage/otp",        to: "mypage/otps#new",    as: :new_customer_otp
+    post "mypage/otp",        to: "mypage/otps#create", as: :customer_otp
+    post "mypage/otp/resend", to: "mypage/otps#resend", as: :resend_customer_otp
+  end
+
+  # Solid Cable（ActionCable）。アプリ内通知のリアルタイム配信（04 R4タスク4）。
+  mount ActionCable.server => "/cable"
+
   # admin section（決定C）。SystemPermissionSyncServiceがネームスペースから section: "admin" を自動判定する。
   namespace :admin do
     get "dashboard", to: "dashboard#index", as: :dashboard
@@ -71,6 +88,20 @@ Rails.application.routes.draw do
 
     # 04 R3タスク6: フォームビルダー（FormTemplate 1─* FormStep 1─* FormField をネスト属性で一括編集）。
     resources :form_templates
+
+    # 04 R4タスク1・2: 問い合わせ（Inquiry）＋掲示板統合後のステータス/ルーティングマスタ。
+    resources :inquiries, only: %i[index show new create] do
+      resources :inquiry_messages, only: %i[create]
+    end
+    resources :inquiry_statuses
+    resources :inquiry_recipient_routes
+
+    # 04 R4タスク3: 一斉通知（宛先グループ・テンプレート・スケジュール送信）。
+    resources :recipient_groups
+    resources :notification_templates
+    resources :notifications do
+      member { post :schedule }
+    end
   end
 
   # form section（決定C）。営業担当者の独自セッション認証（03§8-2決定b: authorize_system_permission!を
@@ -90,6 +121,13 @@ Rails.application.routes.draw do
     patch "applications/:token/steps/:step_number", to: "applications#update_step", as: "update_application_step"
     get   "applications/:token/complete",          to: "applications#complete",  as: "application_complete"
     post  "applications/:token/complete",          to: "applications#submit",    as: "submit_application"
+  end
+
+  # mypage section（決定C）。04 R4タスク5: 顧客マイページ（ログイン+ダッシュボードのみの最小構成。
+  # Laravel現行 routes/mypage.php踏襲）。SystemPermissionSyncServiceが"mypage/"prefixから
+  # section: "mypage" を自動判定する（config/routes.rb冒頭のadmin/formと同じ仕組み）。
+  namespace :mypage do
+    get "dashboard", to: "dashboard#index", as: :dashboard
   end
 
   # Defines the root path route ("/")

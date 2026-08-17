@@ -1,0 +1,16 @@
+<%= form_with model: recipient_group, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if recipient_group.errors.any? %><div class="text-red-700"><%= recipient_group.errors.full_messages.to_sentence %></div><% end %>
+  <div><%= f.label :name, "グループ名" %><%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :description, "説明" %><%= f.text_area :description, class: "border rounded px-2 py-1 w-full" %></div>
+  <div><%= f.label :is_active, "有効" %><%= f.check_box :is_active %></div>
+  <div>
+    <p class="font-bold text-sm">メンバー（ユーザー）</p>
+    <% User.order(:name).each do |user| %>
+      <label class="flex items-center gap-2">
+        <%= check_box_tag "member_user_ids[]", user.id, recipient_group.recipient_group_members.exists?(recipient_type: "User", recipient_id: user.id) %>
+        <%= user.name %>
+      </label>
+    <% end %>
+  </div>
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

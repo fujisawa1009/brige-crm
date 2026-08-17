@@ -35,7 +35,16 @@ module Auditable
     "FormTemplate" => %w[product_id name is_active],
     "FormStep"     => %w[form_template_id step_number name],
     "FormField"    => %w[form_step_id field_key label field_type target_table target_column required
-                          editable_by_tier lock_after_status]
+                          editable_by_tier lock_after_status],
+    # 04 R4: 問い合わせ・通知系。InquiryMessage.body / Notification.body はメール本文の全文で
+    # ノイズが大きく個人情報を含みうるため追跡対象から外し、構造・状態を特定する列のみ追う
+    # （TRACKED_FIELDSの原則: 秘匿値/本文のような大きい自由記述は入れない）。
+    "Inquiry"                => %w[category status order_id is_visible_to_agent],
+    "InquiryStatus"          => %w[category code label is_active is_system],
+    "InquiryRecipientRoute"  => %w[category status_code recipient_group_id],
+    "RecipientGroup"         => %w[name is_active],
+    "NotificationTemplate"   => %w[name template_type subject],
+    "Notification"           => %w[title target_type status scheduled_at]
   }.freeze
 
   included do

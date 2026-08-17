@@ -10,9 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_160012) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.uuid "record_id", null: false
+    t.string "record_type", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.string "content_type"
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "agencies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "agency_code", null: false
@@ -76,19 +104,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.integer "current_step_number", default: 1, null: false
     t.uuid "customer_id"
     t.jsonb "form_data", default: {}, null: false
-    t.text "hearing_content"
     t.uuid "order_id"
-    t.uuid "plan_id"
     t.uuid "product_id", null: false
-    t.uuid "product_initial_fee_id"
     t.uuid "sales_representative_id", null: false
     t.string "status", default: "in_progress", null: false
     t.uuid "store_id"
     t.string "token", limit: 64, null: false
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
-    t.index ["plan_id"], name: "index_applications_on_plan_id"
-    t.index ["product_initial_fee_id"], name: "index_applications_on_product_initial_fee_id"
     t.index ["sales_representative_id"], name: "index_applications_on_sales_representative_id"
     t.index ["status"], name: "index_applications_on_status"
     t.index ["token"], name: "index_applications_on_token", unique: true
@@ -180,6 +203,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.uuid "created_by_id"
     t.string "customer_number", limit: 20, null: false
     t.string "email", limit: 255
+    t.string "encrypted_password", default: "", null: false
+    t.integer "failed_attempts", default: 0, null: false
     t.string "fax_number", limit: 20
     t.string "industry", limit: 50
     t.string "industry_sub", limit: 50
@@ -192,6 +217,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.string "invoice_phone", limit: 20
     t.string "invoice_postal_code", limit: 8
     t.string "lbc_code", limit: 20
+    t.datetime "locked_at"
     t.string "mobile_contact_person", limit: 50
     t.string "mobile_phone", limit: 20
     t.string "name", limit: 255, null: false
@@ -199,6 +225,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.date "netmove_registered_at"
     t.integer "num_employees"
     t.integer "num_offices"
+    t.integer "otp_attempts", default: 0, null: false
+    t.string "otp_code_digest"
+    t.datetime "otp_code_expires_at"
     t.string "phone", limit: 20
     t.string "postal_code", limit: 8
     t.string "prefecture", limit: 20
@@ -209,15 +238,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.string "sms_mobile_number", limit: 20
     t.string "status", limit: 50, default: "applied", null: false
     t.string "town", limit: 100
+    t.string "unlock_token"
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
     t.string "years_in_business", limit: 20
     t.index ["agency_id"], name: "index_customers_on_agency_id"
     t.index ["applied_at"], name: "index_customers_on_applied_at"
     t.index ["customer_number"], name: "index_customers_on_customer_number", unique: true
+    t.index ["email"], name: "index_customers_on_email", unique: true
     t.index ["name"], name: "index_customers_on_name"
     t.index ["sales_representative_id"], name: "index_customers_on_sales_representative_id"
     t.index ["status"], name: "index_customers_on_status"
+    t.index ["unlock_token"], name: "index_customers_on_unlock_token", unique: true
   end
 
   create_table "form_fields", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -263,6 +295,75 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.index ["product_id"], name: "index_form_templates_on_product_id", unique: true
   end
 
+  create_table "inquiries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "after_area"
+    t.string "after_type"
+    t.string "after_urgency"
+    t.string "category", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "first_responder_name"
+    t.string "inquiry_number", null: false
+    t.boolean "is_visible_to_agent", default: true, null: false
+    t.string "next_responder_name"
+    t.uuid "order_id", null: false
+    t.string "reception_channel"
+    t.string "status", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["category", "status"], name: "index_inquiries_on_category_and_status"
+    t.index ["inquiry_number"], name: "index_inquiries_on_inquiry_number", unique: true
+    t.index ["order_id"], name: "index_inquiries_on_order_id"
+  end
+
+  create_table "inquiry_message_recipients", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "inquiry_message_id", null: false
+    t.uuid "recipient_id", null: false
+    t.string "recipient_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["inquiry_message_id"], name: "index_inquiry_message_recipients_on_message_id"
+    t.index ["recipient_type", "recipient_id"], name: "idx_on_recipient_type_recipient_id_bf7c4c784f"
+  end
+
+  create_table "inquiry_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "inquiry_id", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["inquiry_id", "created_at"], name: "index_inquiry_messages_on_inquiry_and_created_at"
+  end
+
+  create_table "inquiry_recipient_routes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "category", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "recipient_group_id", null: false
+    t.string "status_code", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["category", "status_code", "recipient_group_id"], name: "index_inquiry_recipient_routes_on_category_status_group", unique: true
+    t.index ["category", "status_code"], name: "index_inquiry_recipient_routes_on_category_status"
+  end
+
+  create_table "inquiry_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "category", null: false
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.boolean "is_system", default: false, null: false
+    t.string "label", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["category", "code"], name: "index_inquiry_statuses_on_category_and_code", unique: true
+    t.index ["category", "is_active", "sort_order"], name: "index_inquiry_statuses_on_category_active_order"
+  end
+
   create_table "ip_allowlist_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "cidr", null: false
     t.datetime "created_at", null: false
@@ -271,6 +372,52 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
     t.index ["cidr"], name: "index_ip_allowlist_entries_on_cidr", unique: true
+  end
+
+  create_table "notification_recipients", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email"
+    t.text "error_message"
+    t.uuid "notification_id", null: false
+    t.uuid "recipient_id", null: false
+    t.string "recipient_type", null: false
+    t.datetime "sent_at"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["notification_id"], name: "index_notification_recipients_on_notification_id"
+    t.index ["recipient_type", "recipient_id"], name: "idx_on_recipient_type_recipient_id_7b525e48ed"
+  end
+
+  create_table "notification_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "name", null: false
+    t.string "subject"
+    t.string "template_type", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["template_type"], name: "index_notification_templates_on_template_type"
+  end
+
+  create_table "notifications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.integer "failed_count", default: 0, null: false
+    t.jsonb "filter_params", default: {}, null: false
+    t.datetime "scheduled_at"
+    t.datetime "sent_at"
+    t.string "status", default: "draft", null: false
+    t.string "subject"
+    t.integer "success_count", default: 0, null: false
+    t.string "target_type", null: false
+    t.string "title", null: false
+    t.integer "total_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["scheduled_at"], name: "index_notifications_on_scheduled_at"
+    t.index ["status"], name: "index_notifications_on_status"
   end
 
   create_table "option_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -586,6 +733,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.index ["is_active"], name: "index_products_on_is_active"
   end
 
+  create_table "recipient_group_members", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "recipient_group_id", null: false
+    t.uuid "recipient_id", null: false
+    t.string "recipient_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recipient_group_id", "recipient_type", "recipient_id"], name: "index_recipient_group_members_on_group_and_recipient", unique: true
+    t.index ["recipient_group_id"], name: "index_recipient_group_members_on_group_id"
+    t.index ["recipient_type", "recipient_id"], name: "idx_on_recipient_type_recipient_id_72cf03b455"
+  end
+
+  create_table "recipient_groups", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.text "description"
+    t.boolean "is_active", default: true, null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["is_active"], name: "index_recipient_groups_on_is_active"
+  end
+
   create_table "sales_materials", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "category", limit: 50
     t.datetime "created_at", null: false
@@ -664,6 +833,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.index ["store_code"], name: "index_stores_on_store_code"
   end
 
+  create_table "system_notifications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.jsonb "data", default: {}, null: false
+    t.datetime "expires_at", null: false
+    t.string "notification_type", null: false
+    t.datetime "read_at"
+    t.uuid "recipient_id", null: false
+    t.string "recipient_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_system_notifications_on_expires_at"
+    t.index ["recipient_type", "recipient_id", "read_at"], name: "index_system_notifications_on_recipient_and_read_at"
+  end
+
   create_table "system_permissions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "action", null: false
     t.string "controller", null: false
@@ -737,6 +919,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "agencies", "agency_groups", on_delete: :restrict
   add_foreign_key "agencies", "users", column: "created_by_id"
   add_foreign_key "agencies", "users", column: "updated_by_id"
@@ -749,8 +933,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
   add_foreign_key "applications", "agencies", on_delete: :restrict
   add_foreign_key "applications", "customers", on_delete: :nullify
   add_foreign_key "applications", "orders", on_delete: :nullify
-  add_foreign_key "applications", "plans", on_delete: :nullify
-  add_foreign_key "applications", "product_initial_fees", on_delete: :nullify
   add_foreign_key "applications", "products", on_delete: :restrict
   add_foreign_key "applications", "sales_representatives", on_delete: :restrict
   add_foreign_key "applications", "stores", on_delete: :nullify
@@ -775,8 +957,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
   add_foreign_key "form_templates", "products", on_delete: :cascade
   add_foreign_key "form_templates", "users", column: "created_by_id"
   add_foreign_key "form_templates", "users", column: "updated_by_id"
+  add_foreign_key "inquiries", "orders", on_delete: :restrict
+  add_foreign_key "inquiries", "users", column: "created_by_id"
+  add_foreign_key "inquiries", "users", column: "updated_by_id"
+  add_foreign_key "inquiry_message_recipients", "inquiry_messages", on_delete: :cascade
+  add_foreign_key "inquiry_messages", "inquiries", on_delete: :cascade
+  add_foreign_key "inquiry_messages", "users", column: "created_by_id"
+  add_foreign_key "inquiry_messages", "users", column: "updated_by_id"
+  add_foreign_key "inquiry_recipient_routes", "recipient_groups", on_delete: :cascade
+  add_foreign_key "inquiry_recipient_routes", "users", column: "created_by_id"
+  add_foreign_key "inquiry_recipient_routes", "users", column: "updated_by_id"
+  add_foreign_key "inquiry_statuses", "users", column: "created_by_id"
+  add_foreign_key "inquiry_statuses", "users", column: "updated_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "created_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "updated_by_id"
+  add_foreign_key "notification_recipients", "notifications", on_delete: :cascade
+  add_foreign_key "notification_templates", "users", column: "created_by_id"
+  add_foreign_key "notification_templates", "users", column: "updated_by_id"
+  add_foreign_key "notifications", "users", column: "created_by_id"
+  add_foreign_key "notifications", "users", column: "updated_by_id"
   add_foreign_key "option_groups", "users", column: "created_by_id"
   add_foreign_key "option_groups", "users", column: "updated_by_id"
   add_foreign_key "option_values", "option_groups", on_delete: :cascade
@@ -812,6 +1011,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
   add_foreign_key "production_companies", "users", column: "updated_by_id"
   add_foreign_key "products", "users", column: "created_by_id"
   add_foreign_key "products", "users", column: "updated_by_id"
+  add_foreign_key "recipient_group_members", "recipient_groups", on_delete: :cascade
+  add_foreign_key "recipient_groups", "users", column: "created_by_id"
+  add_foreign_key "recipient_groups", "users", column: "updated_by_id"
   add_foreign_key "sales_materials", "users", column: "created_by_id"
   add_foreign_key "sales_materials", "users", column: "updated_by_id"
   add_foreign_key "sales_representatives", "agencies", on_delete: :restrict
@@ -826,6 +1028,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_144820) do
   add_foreign_key "system_roles", "users", column: "updated_by_id"
   add_foreign_key "user_system_roles", "system_roles"
   add_foreign_key "user_system_roles", "users"
-  add_foreign_key "users", "agencies", on_delete: :restrict
-  add_foreign_key "users", "agency_groups", on_delete: :restrict
+  add_foreign_key "users", "agencies", on_delete: :nullify
+  add_foreign_key "users", "agency_groups", on_delete: :nullify
 end

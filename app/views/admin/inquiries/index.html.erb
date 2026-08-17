@@ -1,0 +1,17 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">問い合わせ</h1>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">番号</th><th class="border px-2 py-1 text-left">種別</th><th class="border px-2 py-1 text-left">状態</th><th class="border px-2 py-1 text-left">案件</th></tr></thead>
+    <tbody>
+      <% @inquiries.each do |inquiry| %>
+        <tr>
+          <td class="border px-2 py-1"><%= link_to inquiry.inquiry_number, admin_inquiry_path(inquiry) %></td>
+          <td class="border px-2 py-1"><%= inquiry.category %></td>
+          <td class="border px-2 py-1"><%= inquiry.status %></td>
+          <td class="border px-2 py-1"><%= inquiry.order.order_number %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

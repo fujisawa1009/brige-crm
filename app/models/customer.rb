@@ -88,6 +88,19 @@
 #  fk_rails_...  (updated_by_id => users.id)
 #
 class Customer < ApplicationRecord
+  # 04 R4タスク5・03§4「顧客マイページ(Customer)はDevise別スコープ」。db/migrate/20260815160012が
+  # 追加した列に対応する。:validatable/:registerable/:recoverableは意図的に外す（migrationコメント
+  # 参照）: R3の申込トランザクションがパスワード無しでCustomerを大量生成するため、Deviseの既定
+  # バリデーション（email/password presence等）を持ち込むとその経路を壊す。マイページは
+  # 「ログイン+ダッシュボードのみの最小構成」（04 R4本文）でパスワード再設定UIも対象外。
+  # unlock_strategy: :time でロック解除もメール送信無し（過剰実装を避ける）。
+  devise :database_authenticatable, :lockable, :timeoutable,
+         unlock_strategy: :time, lock_strategy: :failed_attempts, maximum_attempts: 5
+
+  # OtpAuthenticatable→AuthAuditableの順でincludeすること（User#の同順コメント参照。
+  # AuthAuditable#after_otp_eventがsuper経由でOtpAuthenticatable側のフックを呼ぶ前提）。
+  include OtpAuthenticatable
+  include AuthAuditable
   include TracksUser
   include Auditable
 
@@ -96,6 +109,7 @@ class Customer < ApplicationRecord
 
   has_many :stores, dependent: :destroy
   has_many :orders, dependent: :restrict_with_error
+  has_many :system_notifications, as: :recipient, dependent: :destroy
 
   # customer_numberはpresenceバリデーション対象のため、before_create（バリデーション後）ではなく
   # before_validationで採番する（before_createにすると常に「空のまま」バリデーションに失敗する）。
@@ -136,6 +150,18 @@ class Customer < ApplicationRecord
 
   # 退会済みを除くスコープ（Laravel JasminCustomer#scopeActive踏襲）。
   scope :active, -> { where.not(status: CustomerStatus::CODE_WITHDRAWN) }
+
+  # 退会済み顧客はマイページへログインできない（User#active_for_authentication?のCustomer版。
+  # is_activeフラグを持たないCustomerでは、CustomerStatus::CODE_WITHDRAWNをその代替として使う）。
+  def active_for_authentication?
+    super && status != CustomerStatus::CODE_WITHDRAWN
+  end
+
+  # Devise/OTPの通知メールを非同期送信する（User#send_devise_notification踏襲。ただしCustomerは
+  # :recoverable等を持たないためDeviseからの発火は実質lockable系の通知のみ）。
+  def send_devise_notification(notification, *args)
+    devise_mailer.send(notification, self, *args).deliver_later
+  end
 
   private
 

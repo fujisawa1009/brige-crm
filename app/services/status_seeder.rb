@@ -31,9 +31,20 @@ class StatusSeeder
     { code: "100:CLOSE",                 label: "CLOSE" }
   ].freeze
 
+  # 04 R4タスク2・決定D-11: 掲示板4種のステータス集合（board-implementation-options.md §1表）を
+  # そのままinquiry_statusesへ落とし込む。各category先頭値はInquiry::DEFAULT_STATUS_CODESから
+  # 参照されるためis_system=true（CustomerStatus/OrderStatusと同じ理由）。
+  INQUIRY_STATUSES = {
+    Inquiry::CATEGORY_POST_CONFIRM => %w[対応中 営業部対応依頼 営業部対応中 後確依頼 後確NG 再申請 後確OK キャンセル],
+    Inquiry::CATEGORY_PRODUCTION   => %w[制作対応中 FT確認依頼 営業部対応依頼 営業部対応中 再申請 制作OK キャンセル],
+    Inquiry::CATEGORY_INSPECTION   => %w[検収コール対応中 検収コールNG 検収コールNG対応中 再申請 検収コールOK キャンセル],
+    Inquiry::CATEGORY_AFTER        => %w[未対応 対応中 対応済 完了]
+  }.freeze
+
   def call
     seed(CustomerStatus, CUSTOMER_STATUSES)
     seed(OrderStatus, ORDER_STATUSES)
+    seed_inquiry_statuses
   end
 
   private
@@ -45,6 +56,20 @@ class StatusSeeder
       record.is_system  = attrs.fetch(:is_system, false)
       record.sort_order = index + 1 if record.sort_order.blank? || record.new_record?
       record.save!
+    end
+  end
+
+  # InquiryStatusはcode一意制約がcategory単位のため、find_or_initialize_byのキーがCustomerStatus等と
+  # 異なる（category+code）。同じ冪等パターンをここだけ個別実装する。
+  def seed_inquiry_statuses
+    INQUIRY_STATUSES.each do |category, codes|
+      codes.each_with_index do |code, index|
+        record = InquiryStatus.find_or_initialize_by(category: category, code: code)
+        record.label      = code if record.new_record?
+        record.is_system  = code == Inquiry::DEFAULT_STATUS_CODES.fetch(category)
+        record.sort_order = index + 1 if record.sort_order.blank? || record.new_record?
+        record.save!
+      end
     end
   end
 end

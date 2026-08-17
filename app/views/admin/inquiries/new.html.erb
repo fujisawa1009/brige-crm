@@ -1,0 +1,18 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">問い合わせの新規作成</h1>
+
+  <%= form_with model: @inquiry, url: admin_inquiries_path, class: "flex flex-col gap-3 max-w-md" do |f| %>
+    <% if @inquiry.errors.any? %><div class="text-red-700"><%= @inquiry.errors.full_messages.to_sentence %></div><% end %>
+    <div><%= f.label :order_id, "案件ID" %><%= f.text_field :order_id, class: "border rounded px-2 py-1 w-full" %></div>
+    <div><%= f.label :title, "タイトル" %><%= f.text_field :title, class: "border rounded px-2 py-1 w-full" %></div>
+    <div>
+      <%= f.label :category, "掲示板種別" %>
+      <%= f.select :category, Inquiry::CATEGORIES, {}, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+    <div>
+      <%= f.label :first_message_body, "本文" %>
+      <%= text_area_tag "inquiry[first_message_body]", nil, rows: 4, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+    <%= f.submit "作成", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+  <% end %>
+</div>

@@ -1,0 +1,16 @@
+<%= form_with model: inquiry_recipient_route, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
+  <% if inquiry_recipient_route.errors.any? %><div class="text-red-700"><%= inquiry_recipient_route.errors.full_messages.to_sentence %></div><% end %>
+  <div>
+    <%= f.label :category, "掲示板種別" %>
+    <%= f.select :category, Inquiry::CATEGORIES, {}, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :status_code, "ステータス" %>
+    <%= f.text_field :status_code, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <div>
+    <%= f.label :recipient_group_id, "宛先グループ" %>
+    <%= f.collection_select :recipient_group_id, RecipientGroup.active, :id, :name, {}, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+<% end %>

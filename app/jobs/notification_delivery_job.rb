@@ -1,0 +1,43 @@
+# 一斉通知の実送信（04 R4タスク3。Solid Queueのdelayed job。Notification#schedule!が
+# `.set(wait_until: scheduled_at)`で発火時刻を予約する＝Laravel現行の「予約通知配信(毎分)」の
+# ポーリングが不要になる）。
+#
+# 宛先1件ごとにNotificationRecipientを作成し、送信成否を記録する（一部宛先の失敗が全体を止めない
+# ようbegin/rescueを宛先単位にする。Notification#total_count等の集計はここで更新する）。
+class NotificationDeliveryJob < ApplicationJob
+  queue_as :default
+
+  def perform(notification_id)
+    notification = Notification.find(notification_id)
+    notification.update!(status: Notification::STATUS_SENDING)
+
+    recipients = notification.resolve_recipients
+    success = 0
+    failed  = 0
+
+    recipients.each do |entry|
+      recipient_record = notification.notification_recipients.create!(
+        recipient_type: entry.fetch(:recipient_type),
+        recipient_id:   entry.fetch(:recipient_id),
+        email:          entry.fetch(:email)
+      )
+
+      begin
+        NotificationMailer.broadcast(notification, entry.fetch(:email)).deliver_now
+        recipient_record.mark_sent!
+        success += 1
+      rescue StandardError => e
+        recipient_record.mark_failed!(e.message)
+        failed += 1
+      end
+    end
+
+    notification.update!(
+      status:        failed.positive? && success.zero? ? Notification::STATUS_FAILED : Notification::STATUS_SENT,
+      sent_at:       Time.current,
+      total_count:   recipients.size,
+      success_count: success,
+      failed_count:  failed
+    )
+  end
+end

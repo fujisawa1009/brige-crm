@@ -1,0 +1,17 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">一斉通知</h1>
+  <% if policy(Notification).create? %><%= link_to "新規作成", new_admin_notification_path, class: "underline w-fit" %><% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">タイトル</th><th class="border px-2 py-1 text-left">宛先</th><th class="border px-2 py-1 text-left">状態</th></tr></thead>
+    <tbody>
+      <% @notifications.each do |n| %>
+        <tr>
+          <td class="border px-2 py-1"><%= link_to n.title, admin_notification_path(n) %></td>
+          <td class="border px-2 py-1"><%= n.target_type %></td>
+          <td class="border px-2 py-1"><%= n.status %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

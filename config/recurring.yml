@@ -13,3 +13,9 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  # 04 R4タスク4: アプリ内通知の30日自動prune（Laravel MassPrunable相当）。
+  # Solid Queueのrecurringタスクとして実装（別途cronは不要）。
+  prune_expired_system_notifications:
+    command: "SystemNotification.prune_expired!"
+    schedule: every day at 2am

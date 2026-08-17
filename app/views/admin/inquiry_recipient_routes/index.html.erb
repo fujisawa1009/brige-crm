@@ -1,0 +1,17 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">問い合わせ宛先ルーティング</h1>
+  <% if policy(InquiryRecipientRoute).create? %><%= link_to "新規作成", new_admin_inquiry_recipient_route_path, class: "underline w-fit" %><% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">種別</th><th class="border px-2 py-1 text-left">ステータス</th><th class="border px-2 py-1 text-left">宛先グループ</th></tr></thead>
+    <tbody>
+      <% @inquiry_recipient_routes.each do |route| %>
+        <tr>
+          <td class="border px-2 py-1"><%= route.category %></td>
+          <td class="border px-2 py-1"><%= link_to route.status_code, admin_inquiry_recipient_route_path(route) %></td>
+          <td class="border px-2 py-1"><%= route.recipient_group.name %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

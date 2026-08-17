@@ -1,0 +1,33 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold"><%= @inquiry.inquiry_number %>（<%= @inquiry.category %>）</h1>
+  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+    <dt class="font-bold">案件</dt><dd><%= @inquiry.order.order_number %></dd>
+    <dt class="font-bold">状態</dt><dd><%= @inquiry.status %></dd>
+    <dt class="font-bold">代理店可視</dt><dd><%= @inquiry.is_visible_to_agent %></dd>
+  </dl>
+
+  <h2 class="text-lg font-bold">メッセージ</h2>
+  <ul class="flex flex-col gap-3">
+    <% @inquiry_messages.each do |message| %>
+      <li class="border rounded p-2">
+        <p class="text-xs text-gray-500"><%= message.created_by&.name %> / <%= message.created_at %></p>
+        <p><%= message.body %></p>
+        <p class="text-xs text-gray-500">宛先: <%= message.inquiry_message_recipients.map { |r| "#{r.recipient_type}:#{r.recipient_id}" }.join(", ") %></p>
+      </li>
+    <% end %>
+  </ul>
+
+  <%= form_with model: @inquiry_message, url: admin_inquiry_inquiry_messages_path(@inquiry), class: "flex flex-col gap-3 max-w-md" do |f| %>
+    <div>
+      <%= f.label :body, "返信本文" %>
+      <%= f.text_area :body, rows: 4, class: "border rounded px-2 py-1 w-full" %>
+    </div>
+    <div>
+      <%= label_tag :status, "ステータス変更（任意）" %>
+      <%= select_tag :status, options_for_select(InquiryStatus.for_category(@inquiry.category).ordered.pluck(:label, :code), @inquiry.status), class: "border rounded px-2 py-1 w-full" %>
+    </div>
+    <%= f.submit "送信", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+  <% end %>
+
+  <%= link_to "一覧に戻る", admin_inquiries_path, class: "underline w-fit" %>
+</div>

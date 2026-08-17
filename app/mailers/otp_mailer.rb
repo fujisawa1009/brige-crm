@@ -19,4 +19,14 @@ class OtpMailer < ApplicationMailer
     # SalesRepresentative向けに複製する必要が無い。template_nameでlogin_code用テンプレートを指定する）。
     mail(to: sales_representative.email, subject: "[brige-crm] 受注入力ログイン認証コード", template_name: "login_code")
   end
+
+  # 04 R4タスク5・03§8-2 Q-23: 顧客マイページ（Customer）ログイン用OTP。form_login_codeと同じ理由で
+  # login_code.html/text.erbを使い回す（Customerも@user.name/@code/@valid_minutesの型に乗る）。
+  def mypage_login_code(customer, code)
+    @user          = customer
+    @code          = code
+    @valid_minutes = Customer::OTP_VALID_FOR.to_i / 60
+
+    mail(to: customer.email, subject: "[brige-crm] マイページログイン認証コード", template_name: "login_code")
+  end
 end

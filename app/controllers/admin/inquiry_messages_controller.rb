@@ -1,0 +1,35 @@
+# 問い合わせメッセージの返信（04 R4タスク1。inquiries配下のネストリソース）。
+# ステータス変更を伴う返信＝board-implementation-options.md §2-2「ステータス選択＝宛先自動決定」を
+# ここで実現する: paramsにstatusが含まれていればInquiry#statusを更新してから宛先解決するため、
+# 新しいステータスに対応したルーティング（InquiryRecipientRoute）が反映される。
+class Admin::InquiryMessagesController < Admin::BaseController
+  before_action :set_inquiry
+
+  def create
+    authorize @inquiry, :show?
+
+    @inquiry.update!(status: params[:status]) if params[:status].present?
+
+    message = @inquiry.inquiry_messages.new(inquiry_message_params)
+
+    ActiveRecord::Base.transaction do
+      message.save!
+      message.assign_recipients!(RecipientResolver.recipients_for_inquiry(@inquiry))
+      InquiryNotifier.notify_message_created(message)
+    end
+
+    redirect_to admin_inquiry_path(@inquiry), notice: "メッセージを送信しました。"
+  rescue ActiveRecord::RecordInvalid
+    redirect_to admin_inquiry_path(@inquiry), alert: message.errors.full_messages.to_sentence
+  end
+
+  private
+
+  def set_inquiry
+    @inquiry = Inquiry.find(params[:inquiry_id])
+  end
+
+  def inquiry_message_params
+    params.require(:inquiry_message).permit(:body, attachments: [])
+  end
+end

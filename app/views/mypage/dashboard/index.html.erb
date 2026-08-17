@@ -1,0 +1,19 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">マイページ</h1>
+  <p><%= @customer.name %> さん、ようこそ。</p>
+
+  <h2 class="text-lg font-bold">案件一覧</h2>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">案件番号</th><th class="border px-2 py-1 text-left">状態</th></tr></thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr>
+          <td class="border px-2 py-1"><%= order.order_number %></td>
+          <td class="border px-2 py-1"><%= order.status %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= button_to "ログアウト", destroy_customer_session_path, method: :delete, class: "underline w-fit" %>
+</div>

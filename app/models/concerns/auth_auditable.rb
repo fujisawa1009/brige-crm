@@ -83,7 +83,10 @@ module AuthAuditable
       user_id:        id,
       user_type:      self.class.name,
       action:         action.to_s,
-      resource_type:  "User",
+      # 04 R4タスク5でCustomer（マイページ）にもこのconcernを横展開したため、resource_typeは
+      # 呼び出し元クラス名を使う（旧実装はUser専用実装だった名残で"User"を固定していたが、
+      # concern冒頭コメントが謳う「モデル横断で再利用できる」設計に合わせて修正）。
+      resource_type:  self.class.name,
       resource_id:    id,
       resource_label: email,
       ip_address:     ip_address || Current.ip_address,

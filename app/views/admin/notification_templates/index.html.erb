@@ -1,0 +1,16 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">通知テンプレート</h1>
+  <% if policy(NotificationTemplate).create? %><%= link_to "新規作成", new_admin_notification_template_path, class: "underline w-fit" %><% end %>
+  <table class="border-collapse w-full text-sm">
+    <thead><tr><th class="border px-2 py-1 text-left">名称</th><th class="border px-2 py-1 text-left">種別</th></tr></thead>
+    <tbody>
+      <% @notification_templates.each do |template| %>
+        <tr>
+          <td class="border px-2 py-1"><%= link_to template.name, admin_notification_template_path(template) %></td>
+          <td class="border px-2 py-1"><%= NotificationTemplate::TEMPLATE_TYPES[template.template_type] %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>
