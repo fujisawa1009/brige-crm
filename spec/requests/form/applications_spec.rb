@@ -149,6 +149,15 @@ RSpec.describe "Form::Applications", type: :request, seed_status_catalog: true, 
         expect(audit.user_type).to eq("SalesRepresentative")
       end
 
+      # R3レビュー指摘: form_data(jsonb・暗号化なし)にはSNS認証情報等の機密情報が入りうるため、
+      # 各カラムへ転記済みの完了後は平文のまま残さずクリアする
+      # （app/services/form/application_submission_service.rb参照）。
+      it "申込完了後はApplication#form_dataが空になる" do
+        post form_submit_application_path(token: application.token)
+
+        expect(application.reload.form_data).to eq({})
+      end
+
       it "完了後に再送信すると重複してレコードが作られず完了画面へ遷移する" do
         post form_submit_application_path(token: application.token)
 

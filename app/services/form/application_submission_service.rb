@@ -44,8 +44,11 @@ module Form
 
         apply_order_work_detail!(order)
 
+        # R3レビュー指摘: form_data(jsonb・暗号化なし)にはSNS認証情報等の機密情報が入りうる。
+        # 各カラムへ転記済みの完了時点で平文のまま残す理由が無いため、同一トランザクションでクリアする。
         @application.update!(
-          status: "completed", customer: customer, store: store, order: order, completed_at: Time.current
+          status: "completed", customer: customer, store: store, order: order, completed_at: Time.current,
+          form_data: {}
         )
       end
 

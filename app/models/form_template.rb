@@ -40,5 +40,21 @@ class FormTemplate < ApplicationRecord
   validates :name, presence: true, length: { maximum: 255 }
   validates :product_id, uniqueness: true
 
+  # R3レビュー指摘（バグ修正）: FormStep/FormFieldはdependent: :destroyでFormTemplate削除に連動して
+  # 消えるため、対象商材で進行中のApplication（Form::ApplicationsController#set_form_stepや
+  # Form::ApplicationSubmissionService#all_fieldsがform_template.form_stepsへ依存）が残っていると、
+  # 申込者の次のリクエストでNoMethodError（未捕捉の500）になる。Product#applicationsの
+  # dependent: :restrict_with_errorと同様のガードをFormTemplate単独削除にも効かせる。
+  before_destroy :prevent_destroy_with_in_progress_applications
+
   scope :active, -> { where(is_active: true) }
+
+  private
+
+  def prevent_destroy_with_in_progress_applications
+    return unless product.applications.in_progress.exists?
+
+    errors.add(:base, "進行中の申込があるため削除できません。無効化(is_active=false)をご利用ください。")
+    throw :abort
+  end
 end

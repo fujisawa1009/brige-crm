@@ -95,6 +95,20 @@ RSpec.describe "Admin::FormTemplates", type: :request, seed_permission_catalog: 
       expect { delete admin_form_template_path(form_template) }.to change(FormTemplate, :count).by(-1)
     end
 
+    # R3レビュー指摘（バグ修正）: 進行中のApplicationを巻き込んだ削除を拒否する
+    # （app/models/form_template.rb#prevent_destroy_with_in_progress_applications）。
+    it "進行中の申込がある商材のテンプレートは削除できない" do
+      form_template = create(:form_template, product: product)
+      sales_representative = create(:sales_representative, agency: create(:agency))
+      create(:application, product: product, sales_representative: sales_representative,
+             agency: sales_representative.agency, status: "in_progress")
+
+      expect { delete admin_form_template_path(form_template) }.not_to change(FormTemplate, :count)
+      expect(response).to redirect_to(admin_form_template_path(form_template))
+      follow_redirect!
+      expect(response.body).to include("進行中の申込があるため削除できません")
+    end
+
     it "無効なJSONの選択肢はエラーになる" do
       form_template = create(:form_template, product: product)
 

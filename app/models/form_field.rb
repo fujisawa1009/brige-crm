@@ -56,6 +56,60 @@ class FormField < ApplicationRecord
   TIERS = %w[sales_representative agency admin].freeze
   TIER_SALES_REPRESENTATIVE = "sales_representative"
 
+  # target_table => 対応モデル（Form::ApplicationSubmissionServiceの既存マッピングと一致させる）。
+  # R3レビュー指摘: target_columnホワイトリスト検証（#target_column_must_be_allowed）で使う。
+  TARGET_MODELS = {
+    "customer" => Customer,
+    "store" => Store,
+    "order" => Order,
+    "order_work_detail" => OrderWorkDetail
+  }.freeze
+
+  # target_table="order"のproduct_option_idsは実カラムではなく、has_many :through が生成する
+  # 集合idsライター（Order#product_option_ids=。Form::ApplicationsController#product_option_field?
+  # ／Form::DynamicFormValidatorが特別扱いする申込フォームの選択オプション枠）のため、
+  # Order.column_namesには現れない。ホワイトリストへ個別に加える唯一の例外。
+  EXTRA_ALLOWED_COLUMNS = {
+    "order" => %w[product_option_ids]
+  }.freeze
+
+  # SequenceCounterでモデル内部が採番する列（Customer#assign_customer_number／
+  # Order#assign_order_number）。フォーム入力者が上書きできてはならない。
+  AUTO_ASSIGNED_COLUMNS = {
+    "customer" => %w[customer_number],
+    "order" => %w[order_number]
+  }.freeze
+
+  # 主キー・タイムスタンプ・TracksUser由来の追跡列は、どのtarget_tableでもフォーム入力対象にしない。
+  SYSTEM_COLUMNS = %w[id created_at updated_at created_by_id updated_by_id lock_version].freeze
+
+  # target_columnホワイトリスト検証（R3レビュー指摘・セキュリティ）: FormField#target_columnは
+  # 任意の文字列を許容していたため、フォームビルダー操作者が誤ってagency_id等の所属・紐付け外部キーや
+  # OrderWorkDetailのSNS認証情報カラムをtarget_columnに指定すると、申込フォーム経由で
+  # 営業担当者がこれらの機密・結線用カラムを直接上書きできてしまっていた（Form::ApplicationSubmissionService
+  # がrecord.public_send("#{target_column}=", value)で無条件に反映するため）。
+  #
+  # 許可カラムは対応モデルの全カラムから、以下を除外して算出する（ハードコードによる二重管理を避けるため
+  # 極力動的に導出する）:
+  #   - システム列（SYSTEM_COLUMNS）
+  #   - 他レコードへの参照キー全般（belongs_to由来のforeign_key。フォーム入力者が書き込むべきでない
+  #     結線用カラム。application_submission_serviceが明示的に設定するagency_id/customer_id/store_id/
+  #     sales_representative_id/contract_condition_id等はいずれもここに含まれる）
+  #   - 暗号化列（Model.encrypted_attributes。OrderWorkDetailのSNS認証情報8カラムに加え、
+  #     Order#billing_passwordのような同種の暗号化列も一律で対象にする）
+  #   - 自動採番列（AUTO_ASSIGNED_COLUMNS）
+  # に、product_option_idsのような実カラムでない正規の書き込み先（EXTRA_ALLOWED_COLUMNS）を加える。
+  def self.allowed_target_columns_for(target_table)
+    model = TARGET_MODELS[target_table]
+    return [].freeze if model.blank?
+
+    foreign_keys       = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
+    encrypted_columns   = model.encrypted_attributes.to_a.map(&:to_s)
+    disallowed_columns = SYSTEM_COLUMNS + foreign_keys + encrypted_columns + Array(AUTO_ASSIGNED_COLUMNS[target_table])
+
+    (model.column_names - disallowed_columns + Array(EXTRA_ALLOWED_COLUMNS[target_table])).freeze
+  end
+
   attr_accessor :input_options_json, :validation_rules_json
 
   before_validation :parse_json_virtual_attributes
@@ -71,6 +125,7 @@ class FormField < ApplicationRecord
   validates :editable_by_tier, presence: true
   validate :editable_by_tier_must_be_known_tiers
   validate :lock_after_status_must_exist_in_order_statuses
+  validate :target_column_must_be_allowed
 
   scope :ordered, -> { order(:sort_order) }
   # 指定tierが編集可能なフィールドのみに絞る（Postgres配列の包含検索）。
@@ -120,5 +175,15 @@ class FormField < ApplicationRecord
     return if OrderStatus.exists?(code: lock_after_status)
 
     errors.add(:lock_after_status, "はorder_statusesに存在しないコードです（#{lock_after_status}）")
+  end
+
+  # target_tableそのものが不正（TARGET_TABLES外）な場合はtarget_table側のバリデーションに任せ、
+  # ここでは二重にエラーを積まない。
+  def target_column_must_be_allowed
+    return if target_column.blank?
+    return unless TARGET_TABLES.include?(target_table)
+    return if self.class.allowed_target_columns_for(target_table).include?(target_column)
+
+    errors.add(:target_column, "は#{target_table}に割り当てられない列です（#{target_column}）")
   end
 end

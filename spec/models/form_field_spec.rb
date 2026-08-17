@@ -69,6 +69,49 @@ RSpec.describe FormField, type: :model, seed_status_catalog: true do
       field = build(:form_field, editable_by_tier: [ "unknown_tier" ])
       expect(field).not_to be_valid
     end
+
+    # R3レビュー指摘（セキュリティ）: target_columnはホワイトリスト外の値を許可しない
+    # （app/models/form_field.rb#allowed_target_columns_for参照）。
+    describe "target_columnのホワイトリスト検証" do
+      it "所属・紐付けを表す外部キー（agency_id）は許可しない" do
+        field = build(:form_field, target_table: "order", target_column: "agency_id")
+        expect(field).not_to be_valid
+        expect(field.errors[:target_column]).to be_present
+      end
+
+      it "他レコードの外部キー（customer_id）は許可しない" do
+        field = build(:form_field, target_table: "order", target_column: "customer_id")
+        expect(field).not_to be_valid
+      end
+
+      it "OrderWorkDetailの暗号化列（system_account_pass）は許可しない" do
+        field = build(:form_field, target_table: "order_work_detail", target_column: "system_account_pass")
+        expect(field).not_to be_valid
+        expect(field.errors[:target_column]).to be_present
+      end
+
+      it "Orderの暗号化列（billing_password）は許可しない" do
+        field = build(:form_field, target_table: "order", target_column: "billing_password")
+        expect(field).not_to be_valid
+      end
+
+      it "自動採番列（customer_number）は許可しない" do
+        field = build(:form_field, target_table: "customer", target_column: "customer_number")
+        expect(field).not_to be_valid
+      end
+
+      it "通常の業務カラム（name/phone_number等）は許可する" do
+        expect(build(:form_field, target_table: "customer", target_column: "name")).to be_valid
+        expect(build(:form_field, target_table: "store", target_column: "phone_number")).to be_valid
+        expect(build(:form_field, target_table: "order", target_column: "remarks")).to be_valid
+        expect(build(:form_field, target_table: "order_work_detail", target_column: "gbp_url")).to be_valid
+      end
+
+      it "target_table=orderのproduct_option_idsは実カラムでなくても特例で許可する" do
+        field = build(:form_field, target_table: "order", target_column: "product_option_ids")
+        expect(field).to be_valid
+      end
+    end
   end
 
   describe "input_options_json / validation_rules_json（jsonb仮想属性）" do
