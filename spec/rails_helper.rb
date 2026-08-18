@@ -1,6 +1,14 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
-ENV['RAILS_ENV'] ||= 'test'
+# `||=`ではなく強制上書き（2026-08-18 R4 QA調査で発覚）。docker-compose.ymlのwebサービスは
+# `rails server`用にRAILS_ENV=developmentを固定しているため、`docker compose run web bundle exec rspec`
+# を`-e RAILS_ENV=test`無しで実行すると、このENV変数が既に"development"で埋まっており`||=`が
+# 効かず、rspecがdevelopment環境（development DB・ActionDispatch::HostAuthorizationのdevelopment既定
+# 許可リスト等）のまま実行されてしまっていた。development既定の許可ホストはIP/*.localhost/*.testのみで
+# rspec-rails標準のHostヘッダ"www.example.com"を含まないため、request specが軒並み403で誤って
+# 落ちる、という紛らわしい壊れ方をする（PJ-05進捗ログ参照）。テストは常にtest環境で走るべきという
+# 原則どおり、ここで無条件にtestへ上書きする。
+ENV['RAILS_ENV'] = 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
 abort("The Rails environment is running in production mode!") if Rails.env.production?
