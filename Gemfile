@@ -55,7 +55,7 @@ gem "csv"
 # v9→v43で全く別物のAPI（Pagy::Backend/Frontendモジュールが廃止され、Pagy::Offset等の
 # クラスベースAPIに刷新）に変わっているため、枯れたBackend/Frontend API系列の最終メジャーである
 # 8系に固定する（v43系は破壊的すぎてR2のスコープでの検証コストが見合わない。CTO判断）。
-gem "pagy", "~> 8.6"
+gem "pagy", "~> 43.6"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
