@@ -2,6 +2,9 @@
 # 添付はActive Storage（has_many_attached）。Laravel現行の「合計10MB超でエラー」バグ（05反映事項）を
 # 踏まえ、点検は個々のファイルサイズ／件数のみで合計サイズは制限しない（Active Storageのdirect
 # uploadと相性が悪い合計判定は避け、個々のガードに留める）。
+# 上限値はR6-3でSystemSetting（システム設定画面）のDB管理へ切り出した（旧 MAX_ATTACHMENTS /
+# MAX_ATTACHMENT_SIZE class定数は撤去。既定値5件/50MBはSystemSettingのカラムdefaultへ移設済みで
+# 移行前後の挙動は変わらない）。
 # == Schema Information
 #
 # Table name: inquiry_messages
@@ -28,9 +31,6 @@ class InquiryMessage < ApplicationRecord
   include TracksUser
   include Auditable
 
-  MAX_ATTACHMENTS = 5
-  MAX_ATTACHMENT_SIZE = 50.megabytes
-
   belongs_to :inquiry, inverse_of: :inquiry_messages
   has_many :inquiry_message_recipients, dependent: :destroy, inverse_of: :inquiry_message
   has_many_attached :attachments
@@ -52,14 +52,17 @@ class InquiryMessage < ApplicationRecord
   def attachments_within_limits
     return unless attachments.attached?
 
-    if attachments.count > MAX_ATTACHMENTS
-      errors.add(:attachments, "は#{MAX_ATTACHMENTS}件までです")
+    settings = SystemSetting.current
+
+    if attachments.count > settings.inquiry_attachment_max_count
+      errors.add(:attachments, "は#{settings.inquiry_attachment_max_count}件までです")
     end
 
     attachments.each do |attachment|
-      next unless attachment.blob&.byte_size.to_i > MAX_ATTACHMENT_SIZE
+      next unless attachment.blob&.byte_size.to_i > settings.inquiry_attachment_max_size_bytes
 
-      errors.add(:attachments, "の1ファイルあたりの上限は50MBです（#{attachment.filename}）")
+      errors.add(:attachments,
+                  "の1ファイルあたりの上限は#{settings.inquiry_attachment_max_size_mb}MBです（#{attachment.filename}）")
     end
   end
 end

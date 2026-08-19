@@ -85,3 +85,12 @@ RSpec.configure do |config|
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 end
+
+# Gemfileに導入済みだが未設定だったため、validate_numericality_of等のmatcherが
+# 使えなかった（R6-3のspec実装時に発覚）。標準構成で有効化する。
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :rspec
+    with.library :rails
+  end
+end

@@ -38,6 +38,9 @@ class Admin::BaseController < ApplicationController
   #   - notification_settings（R6-1）: idパラメータを持たない単数resourceで、常にcurrent_user自身の
   #     設定のみを読み書きする（他ユーザーのレコードへ到達する経路が構造的に存在しない）。
   #     policy_scope対象の一覧も無いためdashboardと同じ理由で除外する。
+  #   - system_settings（R6-3）: idパラメータを持たない単数resourceで、常に唯一のSystemSettingレコード
+  #     （テナント・所有者の概念を持たないシステム全体設定）のみを対象にする。ip_allowlist_entriesと
+  #     同じ「代理店スコープの概念を持たない、RBACのみで守られるシステム管理画面」に該当する。
   PUNDIT_VERIFICATION_EXEMPT_CONTROLLERS = %w[
     admin/dashboard
     admin/login_histories
@@ -45,6 +48,7 @@ class Admin::BaseController < ApplicationController
     admin/permission_management
     admin/role_management
     admin/notification_settings
+    admin/system_settings
   ].freeze
 
   def pundit_verification_exempt?

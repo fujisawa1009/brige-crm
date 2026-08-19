@@ -1,0 +1,65 @@
+<% content_for :page_title, "システム設定" %>
+
+<div class="flex flex-col gap-6">
+  <div>
+    <h2 class="text-xl font-bold text-slate-900">システム設定</h2>
+    <p class="text-sm text-slate-500">
+      ファイルアップロード上限等、システム全体で1つだけ持つ設定をまとめた画面です（admin専有機能）。
+    </p>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">問い合わせ添付ファイル</h3>
+
+    <%= form_with model: @system_setting, url: admin_system_settings_path, method: :patch,
+          class: "flex flex-col gap-4 max-w-md" do |f| %>
+      <% if @system_setting.errors.any? %>
+        <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+          <%= @system_setting.errors.full_messages.to_sentence %>
+        </div>
+      <% end %>
+
+      <div>
+        <%= f.label :inquiry_attachment_max_count, "添付件数の上限（1メッセージあたり）",
+              class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.number_field :inquiry_attachment_max_count, min: 1, max: 100,
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <div>
+        <%= f.label :inquiry_attachment_max_size_mb, "1ファイルあたりの上限（MB）",
+              class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.number_field :inquiry_attachment_max_size_mb, min: 1, max: 500,
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <%= f.submit "保存", class: "w-fit btn-primary" %>
+    <% end %>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">関連するマスタ・設定画面</h3>
+    <p class="mb-4 text-sm text-slate-500">
+      案件種別・問い合わせ種別等の選択肢そのものは、複数箇所から参照される専用のマスタ画面で管理します
+      （このページでの一括編集は行わず、各画面への導線のみを提供します）。
+    </p>
+    <ul class="flex flex-col gap-2 text-sm">
+      <li>
+        <%= link_to "案件ステータス", admin_order_statuses_path, class: "text-indigo-600 hover:underline" %>
+      </li>
+      <li>
+        <%= link_to "問い合わせステータス", admin_inquiry_statuses_path, class: "text-indigo-600 hover:underline" %>
+      </li>
+      <li>
+        <%= link_to "顧客ステータス", admin_customer_statuses_path, class: "text-indigo-600 hover:underline" %>
+      </li>
+      <li>
+        <%= link_to "オプショングループ（選択肢マスタ）", admin_option_groups_path, class: "text-indigo-600 hover:underline" %>
+      </li>
+      <li>
+        <%= link_to "IP許可リスト（OTPスキップ設定）", admin_ip_allowlist_entries_path,
+              class: "text-indigo-600 hover:underline" %>
+      </li>
+    </ul>
+  </div>
+</div>

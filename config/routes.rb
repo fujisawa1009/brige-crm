@@ -45,6 +45,9 @@ Rails.application.routes.draw do
     # ルーティングの形自体で担保する）。
     resource :notification_settings, only: [ :show, :update ], controller: "notification_settings"
 
+    # R6-3: システム設定（システム全体で1行のみのシングルトン。idパラメータを持たない単数resource）。
+    resource :system_settings, only: [ :show, :update ], controller: "system_settings"
+
     resource :permission_management, only: [ :show, :update ], controller: "permission_management" do
       post :sync, on: :collection
     end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_010100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -999,6 +999,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_010100) do
     t.index ["system"], name: "index_system_roles_on_system"
   end
 
+  create_table "system_settings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.integer "inquiry_attachment_max_count", default: 5, null: false
+    t.integer "inquiry_attachment_max_size_mb", default: 50, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+  end
+
   create_table "user_system_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.uuid "system_role_id", null: false
@@ -1155,6 +1164,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_010100) do
   add_foreign_key "system_role_permissions", "system_roles"
   add_foreign_key "system_roles", "users", column: "created_by_id"
   add_foreign_key "system_roles", "users", column: "updated_by_id"
+  add_foreign_key "system_settings", "users", column: "created_by_id"
+  add_foreign_key "system_settings", "users", column: "updated_by_id"
   add_foreign_key "user_system_roles", "system_roles"
   add_foreign_key "user_system_roles", "users"
   add_foreign_key "users", "agencies", on_delete: :restrict

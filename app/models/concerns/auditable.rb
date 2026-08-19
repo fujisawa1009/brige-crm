@@ -48,7 +48,10 @@ module Auditable
     "Notification"           => %w[title target_type status scheduled_at],
     # R6-1: 個人ごとの通知設定。PIIを含まないためON/OFF状態をそのまま追跡する。
     "StaffNotificationSetting"    => %w[user_id event_type app_enabled email_enabled],
-    "CustomerNotificationSetting" => %w[customer_id event_type app_enabled email_enabled]
+    "CustomerNotificationSetting" => %w[customer_id event_type app_enabled email_enabled],
+    # R6-3: システム設定（シングルトン。admin専有で書き換え頻度は低いが、値の変更が問い合わせ添付の
+    # アップロード可否に直結するため変更履歴を残す）。
+    "SystemSetting" => %w[inquiry_attachment_max_count inquiry_attachment_max_size_mb]
   }.freeze
 
   included do

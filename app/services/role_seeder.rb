@@ -40,11 +40,14 @@ class RoleSeeder
   # ip_allowlist_entries が実務運用者/代理店系ロールに開放されていると、当人が自分の接続元IPを
   # 許可リストに登録して2要素認証を回避できてしまうため、SA(admin)専有にする
   # （ftlogのSYSTEM_ADMIN_ONLY_CONTROLLERSに実在した理由をそのまま踏襲）。
+  # R6-3: admin/system_settings（問い合わせ添付上限等のシステム設定）も同じ理由でadmin専有にする
+  # （実務運用者以下に開放すると、添付ファイルサイズ上限を自己申告で緩められてしまうため）。
   SYSTEM_ADMIN_ONLY_CONTROLLERS = %w[
     admin/role_management
     admin/permission_management
     admin/login_histories
     admin/ip_allowlist_entries
+    admin/system_settings
   ].freeze
 
   # 全ロール共通の「自分の状態」系コントローラー（ftlog踏襲。ログイン後に必ず到達できる画面）。

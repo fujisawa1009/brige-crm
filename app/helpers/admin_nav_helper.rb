@@ -23,7 +23,9 @@ module AdminNavHelper
         AdminNavItem.new(label: "ログイン履歴", path: admin_login_histories_path,
                           controller: "admin/login_histories", action: "index"),
         AdminNavItem.new(label: "IP許可リスト", path: admin_ip_allowlist_entries_path,
-                          controller: "admin/ip_allowlist_entries", action: "index")
+                          controller: "admin/ip_allowlist_entries", action: "index"),
+        AdminNavItem.new(label: "システム設定", path: admin_system_settings_path,
+                          controller: "admin/system_settings", action: "show")
       ]),
       AdminNavSection.new(title: "組織", items: [
         AdminNavItem.new(label: "代理店グループ", path: admin_agency_groups_path,
