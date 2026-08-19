@@ -95,7 +95,7 @@ R0〜R6 は**機能**の計画。本書は「機能が全部できても、こ�
 |---|---|---|
 | C-1 | セキュリティレビュー / 脆弱性診断（外部） | ⬜ 未実施（R8）。内部レビューは R0〜R4 見直しで実施済み（OTP バイパス修正 commit `2022d67`、権限昇格バグ `1e7a0ad`、target_column ホワイトリスト `7cb7dc4` 等） |
 | C-2 | 依存パッケージ脆弱性スキャンの CI 組込み | ✅ 実装済み: `bundler-audit`（`config/bundler-audit.yml`）・`brakeman`・`importmap audit` が CI で毎 PR 実行 |
-| C-3 | **顧客SNS認証情報の暗号化**（現行は平文） | 🔶 部分実装／❓ Q-D: `OrderWorkDetail` の 8 カラム（system/google/instagram 等の ID・パスワード）は `ActiveRecord::Encryption` で暗号化済み（R2）。Customer 本体の PII（分類A）を暗号化しない方針は**正式決定として未記録**（04 R2 見送り事項）→ 運用開始前に文書化 |
+| C-3 | ~~**顧客SNS認証情報の暗号化**~~ → **暗号化は行わない（2026-08-19 CEO決定）** | ✅ 決定済み（対応しない）／⚠️ 代替防御の担保が必須: **Q-45 決定により `ActiveRecord::Encryption` を全廃**し、`OrderWorkDetail` 8カラム・`Order#billing_password` は平文保存に変更した（BRIDGE_PLUS申込フォームでのInstagram ID/パスワード必須入力化のため。リスク説明のうえCEO確定）。分類A（Customer本体PII）も **Q-D-2 で A-1 現状追認＝暗号化しない**と決定。**結果として本システムはアプリ層の暗号化を一切持たないため、C-5（個人情報の取り扱い）と E-4（バックアップ）で定める「DB・バックアップの at-rest 暗号化」がPII保護の主防御となる。R8 のインフラ構築時に必須要件として担保すること**（`pii-handling-rules.md` §5） |
 | C-4 | 決済まわりの PCI DSS（非保持・非通過） | ⬜ 未確認（R5・payment §4-1）。ネットムーブ リダイレクト型で非保持を維持する設計は継続 |
 | C-5 | 個人情報の取り扱い（保存・アクセス制限・削除） | ❓ Q-A: `pii-handling-rules.md` ドラフトあり・確定保留（D-3）。**PII取扱ルール確定前に本番相当データを本番/ステージングへ置かない**（Q-43 と連動） |
 | C-6 | レート制限・ブルートフォース対策 | 🔶 部分実装: rack-attack（`config/initializers/rack_attack.rb`・Solid Cache ストア）で `/users/password`（3回/15分/メール）・`/users/otp`（10回/15分/IP）・`/users/otp/resend`（3回/15分/IP）を制限。OTP コード単位の 5 回上限は `OtpAuthenticatable`（User/Customer/SalesRepresentative 共通）。Devise `lockable`。**未対応: `/form/otp` `/form/login` `/mypage/otp` `/mypage/login` への IP スロットル、ログイン試行そのもの（`/users/sign_in`）の IP スロットル** → R8（または R5 前の小改修）で 3 系統を揃える |

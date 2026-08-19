@@ -97,7 +97,9 @@ require "rails_helper"
 #  fk_rails_...  (updated_by_id => users.id)
 #
 RSpec.describe OrderWorkDetail, type: :model, seed_status_catalog: true do
-  ENCRYPTED_ATTRIBUTES = %w[
+  # 2026-08-19 CEO決定（Q-45）で ActiveRecord::Encryption の適用を全廃し平文保存に変更したため、
+  # 「暗号化されていること」ではなく「平文で保存され、フォームからも入力できること」を固定する。
+  SNS_CREDENTIAL_ATTRIBUTES = %w[
     system_account_id system_account_pass google_account_id google_account_pass
     instagram_id instagram_pass facebook_id facebook_pass
   ].freeze
@@ -107,28 +109,37 @@ RSpec.describe OrderWorkDetail, type: :model, seed_status_catalog: true do
   let(:customer) { Customer.create!(agency: agency, name: "顧客") }
   let(:order) { Order.create!(agency: agency, customer: customer, contract_condition: contract_condition) }
 
-  it "分類B対象8カラムがすべてPII暗号化対象として宣言されている" do
-    encrypted = OrderWorkDetail.encrypted_attributes.map(&:to_s)
-    expect(encrypted).to match_array(ENCRYPTED_ATTRIBUTES)
+  it "SNS認証情報8カラムは暗号化対象として宣言されていない（Q-45: 平文保存へ変更）" do
+    # encrypts が1つも宣言されていないモデルでは encrypted_attributes は nil を返す。
+    expect(OrderWorkDetail.encrypted_attributes.to_a.map(&:to_s)).to be_empty
   end
 
-  it "DB上では平文で保存されず、モデル経由なら復号されて読める" do
-    plaintext_by_attr = ENCRYPTED_ATTRIBUTES.index_with { |attr| "plain-#{attr}-value" }
+  it "DB上にそのまま平文で保存される（Q-45決定。保護はアクセス制御・監査ログ・at-rest暗号化に依存）" do
+    plaintext_by_attr = SNS_CREDENTIAL_ATTRIBUTES.index_with { |attr| "plain-#{attr}-value" }
     detail = OrderWorkDetail.create!(order: order, **plaintext_by_attr)
 
     raw_row = ActiveRecord::Base.connection.select_one(
-      "SELECT #{ENCRYPTED_ATTRIBUTES.join(', ')} FROM order_work_details " \
+      "SELECT #{SNS_CREDENTIAL_ATTRIBUTES.join(', ')} FROM order_work_details " \
       "WHERE id = #{ActiveRecord::Base.connection.quote(detail.id)}"
     )
 
-    ENCRYPTED_ATTRIBUTES.each do |attr|
-      expect(raw_row[attr]).not_to eq(plaintext_by_attr[attr])
-      expect(raw_row[attr]).not_to include(plaintext_by_attr[attr]) if raw_row[attr]
+    SNS_CREDENTIAL_ATTRIBUTES.each do |attr|
+      expect(raw_row[attr]).to eq(plaintext_by_attr[attr])
     end
 
     detail.reload
-    ENCRYPTED_ATTRIBUTES.each do |attr|
+    SNS_CREDENTIAL_ATTRIBUTES.each do |attr|
       expect(detail.public_send(attr)).to eq(plaintext_by_attr[attr])
     end
+  end
+
+  it "SNS認証情報は監査ログ(AuditLog)の追跡対象に含まれない（値をログに残さない）" do
+    tracked = Auditable::TRACKED_FIELDS.fetch("OrderWorkDetail", [])
+    expect(tracked & SNS_CREDENTIAL_ATTRIBUTES).to be_empty
+  end
+
+  it "申込フォームのtarget_columnとして指定できる（Q-45: Instagram必須入力化の前提）" do
+    allowed = FormField.allowed_target_columns_for("order_work_detail")
+    expect(allowed).to include("instagram_id", "instagram_pass")
   end
 end

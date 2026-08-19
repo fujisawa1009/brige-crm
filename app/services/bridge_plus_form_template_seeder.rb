@@ -174,6 +174,19 @@ class BridgePlusFormTemplateSeeder
         { key: "business_hours_2", label: "営業時間2", target_table: "store", target_column: "business_hours_2", type: "text" },
         { key: "regular_holiday", label: "定休日", target_table: "store", target_column: "regular_holiday", type: "text" }
       ]
+    },
+    # 2026-08-18 浅賀MTG（Q-45）: BRIDGE_PLUS では Instagram の ID/パスワードを**必須入力**にする。
+    # これらは pii-handling-rules.md 分類B（顧客が他社サービスで使用中の実認証情報）だが、
+    # 2026-08-19 CEO決定で暗号化を廃止し平文列となったため、通常の FormField として投入できる
+    # （従来は encrypts 列がホワイトリストから機構的に除外されていたため不可能だった）。
+    {
+      name: "SNSアカウント情報",
+      fields: [
+        { key: "instagram_id", label: "Instagram ID", target_table: "order_work_detail",
+          target_column: "instagram_id", type: "text", required: true },
+        { key: "instagram_pass", label: "Instagram パスワード", target_table: "order_work_detail",
+          target_column: "instagram_pass", type: "text", required: true }
+      ]
     }
   ].freeze
 
@@ -237,7 +250,10 @@ class BridgePlusFormTemplateSeeder
     field.field_type = field_def[:type]
     field.target_table = field_def[:target_table]
     field.target_column = field_def[:target_column]
-    field.required = false
+    # 既定は false（form-template-mapping.md §5-2 の3段階必須は R5 の入力チェック設定で実装するため、
+    # 現状は「必須にするとアラートで現行運用が回らなくなる」G-3 を踏まえ必須にしない）。
+    # 明示的に required: true を指定したフィールドのみ必須にする（Q-45 の Instagram 認証情報など）。
+    field.required = field_def.fetch(:required, false)
     field.sort_order = index + 1
     field.editable_by_tier = [ "sales_representative" ]
     field.input_options = choices_for(field_def[:option_group])

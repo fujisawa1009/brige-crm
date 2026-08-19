@@ -1,9 +1,20 @@
 # 案件作業詳細（GBP/SNS。04 R2タスク2。Column.md §11 jasmin_order_work_details が正）。Orderと1:1。
 #
-# PII暗号化（pii-handling-rules.md §1 分類B: SNSアカウントID/PASS・システムアカウントID/PASS）。
-# 対象8カラムに ActiveRecord::Encryption の encrypts を適用する。deterministic: false（既定の
-# ランダム化暗号）で保存し、等価検索（WHERE system_account_id = ...）はこのモデルでは行わない前提
-# （運用上、これらのカラムを検索キーに使うことは無いため）。
+# PII（pii-handling-rules.md §1 分類B: SNSアカウントID/PASS・システムアカウントID/PASS）。
+#
+# 【2026-08-19 CEO決定（Q-45）: 暗号化を廃止し平文保存に変更】
+# 従来は対象8カラムへ ActiveRecord::Encryption の encrypts を適用していたが、申込フォーム
+# （FormField の動的マッピング）で Instagram ID/パスワードを必須入力にしたいという業務要件
+# （2026-08-18 浅賀MTG）に対し、暗号化列は FormField.allowed_target_columns_for から機構的に
+# 除外される設計だったため衝突した。決定にあたり秘書から「①encrypts は非決定的暗号のため
+# スタッフは管理画面で従来どおり値を読めており業務影響は無い ②必須化できない原因は暗号化では
+# なくホワイトリスト設定で、専用ステップ実装なら暗号化のまま必須化できる ③対象は顧客が他社
+# サービスで使用中の実パスワードで分類B（最厳格）」を説明したうえで、CEOが平文保存を再確認・確定した。
+#
+# 平文化に伴い、これらのカラムの保護はアクセス制御（RBAC＋Pundit スコープ＋IP許可リスト＋メールOTP）・
+# 監査ログ（Auditable の TRACKED_FIELDS から除外することで値自体は AuditLog に残さない）・
+# ログのパラメータフィルタ（config/initializers/filter_parameter_logging.rb）・
+# DB/バックアップの at-rest 暗号化（R8 で要件化）に依存する。
 # == Schema Information
 #
 # Table name: order_work_details
@@ -102,15 +113,6 @@ class OrderWorkDetail < ApplicationRecord
   include Auditable
 
   belongs_to :order
-
-  encrypts :system_account_id
-  encrypts :system_account_pass
-  encrypts :google_account_id
-  encrypts :google_account_pass
-  encrypts :instagram_id
-  encrypts :instagram_pass
-  encrypts :facebook_id
-  encrypts :facebook_pass
 
   validates :instagram_account, length: { maximum: 20 }
   validates :instagram_login_confirmed, length: { maximum: 20 }

@@ -175,8 +175,9 @@
 
 | 論点 | 状態 | 根拠 |
 |---|---|---|
-| Q-D 本来の論点「平文SNS認証情報（分類B）を新システムへ運ぶか」 | **未決**（移行 load は R7 で未着手） | `development-plan.md` Q-D「未確認」。`legacy-research/11` §4 のマッピングは保持前提のまま |
-| 分類B の保存方式（保持する場合） | **実装済み**: `encrypts`（非決定的）9列（`OrderWorkDetail` 8列 + `Order#billing_password`）。等価検索不可・フォーム/監査から除外 | `app/models/order_work_detail.rb` / `order.rb`、`spec/models/order_work_detail_spec.rb`。release C-3 の実装面は充足 |
+| Q-D 本来の論点「平文SNS認証情報（分類B）を新システムへ運ぶか」 | ✅ **2026-08-19 CEO決定: 運ぶ**（既存顧客のSNS作業を移行後も継続するため。R7 ETLで取り込む） | `development-plan.md` Q-D-1。`legacy-research/11` §4 のマッピングどおり保持する |
+| 分類B の保存方式 | ⚠️ **2026-08-19 CEO決定（Q-45）で暗号化を廃止し平文保存へ変更**。従来の `encrypts`（非決定的）9列（`OrderWorkDetail` 8列 + `Order#billing_password`）は全て除去し、**本システムに `ActiveRecord::Encryption` の適用箇所は存在しない** | 変更理由: BRIDGE_PLUS申込フォームでInstagram ID/パスワードを必須入力にする業務要件（2026-08-18浅賀MTG・Q-45）に対し、暗号化列は `FormField.allowed_target_columns_for` から機構的に除外される設計だったため衝突した。秘書から「①`encrypts`は非決定的暗号のためスタッフは管理画面で従来どおり値を読めており業務影響は無い ②必須化できない原因は暗号化ではなくホワイトリスト設定で、専用ステップ実装なら暗号化のまま必須化できる ③対象は顧客が他社サービスで使用中の実パスワードで分類B（最厳格）」を説明したうえでCEOが平文保存を再確認・確定。**release-readiness C-3（顧客SNS認証情報の暗号化）は本決定により「対応しない」へ変更が必要** |
+| 分類B 平文化後の代替防御 | アクセス制御（RBAC＋Pundit スコープ＋IP許可リスト＋メールOTP）／`Auditable::TRACKED_FIELDS` から除外し値をAuditLogに残さない／`filter_parameter_logging`（`:pass` 等）でログにも残さない／`CsvExportJob::EXPORT_TARGETS` の列許可リストでCSVにも出さない／**DB・バックアップの at-rest 暗号化（R8 で要件化。Q-D-2 で分類Aを平文追認した際の前提条件でもあり、分類B平文化により重要度がさらに上がった）** | 「暗号化列だから自動的に安全」という前提が全面的に無くなったため、上記の各防御が唯一の防御線になる。列を追加・変更する際は都度確認すること |
 | 分類A（Customer/Store 本体の PII）の暗号化 | **暗号化しない方針で実装先行**。`customers.name` に index、`email` に UNIQUE index（Devise ログインID）、名前検索は LIKE、pg_bigm 全文検索を前提。**正式決定の記録が無い**（04 R2見直しレビュー残タスク・リスク5「R2着手前に確定が必要」が未消化のまま実装） | `db/schema.rb`、`app/models/customer.rb`（`encrypts` 無し） |
 | 分類C（`netmove_member_id` 等）の暗号化 | **未決・平文**。R5（決済）着手前に方針が要る | `customers.netmove_member_id` string(50)、フォームのホワイトリストからも未除外 |
 | 監査ログ・ログ出力での PII | 分類B は除外済み。分類A は `AuditLog` に name のみ、`filter_parameters` は email のみ | §1-1 |

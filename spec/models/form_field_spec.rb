@@ -84,15 +84,19 @@ RSpec.describe FormField, type: :model, seed_status_catalog: true do
         expect(field).not_to be_valid
       end
 
-      it "OrderWorkDetailの暗号化列（system_account_pass）は許可しない" do
-        field = build(:form_field, target_table: "order_work_detail", target_column: "system_account_pass")
-        expect(field).not_to be_valid
-        expect(field.errors[:target_column]).to be_present
+      # 2026-08-19 CEO決定（Q-45）で ActiveRecord::Encryption を全廃し平文保存へ変更したため、
+      # 「暗号化列は自動的にホワイトリストから外れる」防御は無くなった。SNS認証情報を申込フォームの
+      # 入力項目として必須化する業務要件（2026-08-18浅賀MTG）を満たすための意図的な変更であり、
+      # これらの列がフォームから書き込めるようになったことを仕様として固定する。
+      it "SNS認証情報（system_account_pass等）は許可する（Q-45: 平文化により入力可能に変更）" do
+        expect(build(:form_field, target_table: "order_work_detail", target_column: "system_account_pass")).to be_valid
+        expect(build(:form_field, target_table: "order_work_detail", target_column: "instagram_id")).to be_valid
+        expect(build(:form_field, target_table: "order_work_detail", target_column: "instagram_pass")).to be_valid
       end
 
-      it "Orderの暗号化列（billing_password）は許可しない" do
+      it "billing_passwordは許可する（Q-45: 暗号化列を全廃したため）" do
         field = build(:form_field, target_table: "order", target_column: "billing_password")
-        expect(field).not_to be_valid
+        expect(field).to be_valid
       end
 
       it "自動採番列（customer_number）は許可しない" do

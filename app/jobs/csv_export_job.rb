@@ -9,8 +9,11 @@ require "csv"
 class CsvExportJob < ApplicationJob
   queue_as :default
 
-  # billing_password はActiveRecord::Encryption対象（PII分類B）のため、CSVへは絶対に出さない
+  # billing_password 等の秘匿値（PII分類B）はCSVへは絶対に出さない
   # （Auditableの「秘匿値は絶対に含めない」原則をエクスポートでも踏襲）。
+  # 2026-08-19 CEO決定（Q-45）で ActiveRecord::Encryption を全廃し平文保存へ変更したため、
+  # 「暗号化列だから自動的に安全」という前提は無くなった。以下の columns 許可リストが
+  # 唯一の防御線になるので、列を追加する際は秘匿値を含めていないか必ず確認すること。
   #
   # クラスは文字列からconstantizeせず、この固定Hashのキーで引く（brakeman UnsafeReflection対策。
   # CsvExport#resource_typeはモデルのinclusion validationで許可リストを持つが、

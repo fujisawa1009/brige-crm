@@ -31,7 +31,8 @@ RSpec.describe CsvExportJob, type: :job, seed_status_catalog: true do
     expect(export.row_count).to eq(1)
   end
 
-  it "billing_password等のPII暗号化対象カラムはCSVの列に含まれない（Orderの場合）" do
+  # Q-45（2026-08-19）で暗号化を全廃したため、秘匿値の除外はEXPORT_TARGETSの許可リストのみが担保する。
+  it "billing_password等の秘匿値カラムはCSVの列に含まれない（Orderの場合）" do
     contract_condition = create(:contract_condition, agency: agency_a)
     create(:order, agency: agency_a, customer: customer_a, contract_condition: contract_condition,
                    billing_password: "secret-pass")

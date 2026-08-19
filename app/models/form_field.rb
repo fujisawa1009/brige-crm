@@ -113,8 +113,11 @@ class FormField < ApplicationRecord
   #   - 他レコードへの参照キー全般（belongs_to由来のforeign_key。フォーム入力者が書き込むべきでない
   #     結線用カラム。application_submission_serviceが明示的に設定するagency_id/customer_id/store_id/
   #     sales_representative_id/contract_condition_id等はいずれもここに含まれる）
-  #   - 暗号化列（Model.encrypted_attributes。OrderWorkDetailのSNS認証情報8カラムに加え、
-  #     Order#billing_passwordのような同種の暗号化列も一律で対象にする）
+  #   - 暗号化列（Model.encrypted_attributes）
+  #     ※ 2026-08-19 CEO決定（Q-45）で ActiveRecord::Encryption の適用を全廃したため、現時点では
+  #       常に空集合＝実質no-op。SNS認証情報（instagram_id/pass 等）を申込フォームの入力項目として
+  #       必須化する業務要件（2026-08-18浅賀MTG）を満たすために平文化された結果であり、意図どおり。
+  #       将来 encrypts を再導入した場合に自動で除外へ戻るよう、判定ロジック自体は残しておく。
   #   - Devise/メールOTP認証列（AUTHENTICATION_COLUMNS。encrypted_password等はbcryptハッシュで
   #     Model.encrypted_attributesには乗らないため上記の暗号化列除外では捕捉できず、別枠で除外する）
   #   - 自動採番列（AUTO_ASSIGNED_COLUMNS。netmove_member_id等の決済連携でシステムが設定する列を含む）

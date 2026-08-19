@@ -189,8 +189,15 @@ RSpec.describe Order, type: :model, seed_status_catalog: true do
     end
   end
 
-  describe "PII暗号化（billing_password）" do
-    it "DB上では平文で保存されない" do
+  # 2026-08-19 CEO決定（Q-45）: 暗号化列を全廃し平文保存へ変更した（billing_password含む）。
+  # 保護はアクセス制御（RBAC＋Pundit）・監査ログの追跡除外・ログのパラメータフィルタ・
+  # DB/バックアップのat-rest暗号化（R8で要件化）に依存する。
+  describe "billing_password（Q-45: 平文保存）" do
+    it "暗号化対象として宣言されていない" do
+      expect(Order.encrypted_attributes.to_a.map(&:to_s)).to be_empty
+    end
+
+    it "DB上にそのまま平文で保存される" do
       agency = create(:agency)
       contract_condition = create(:contract_condition, agency: agency)
       customer = Customer.create!(agency: agency, name: "顧客")
@@ -199,15 +206,16 @@ RSpec.describe Order, type: :model, seed_status_catalog: true do
         agency: agency, customer: customer, contract_condition: contract_condition, billing_password: plaintext
       )
 
-      # ActiveRecord::Encryptionのcastを経由せず、生SQLでカラム値を直接読む。
       raw_value = ActiveRecord::Base.connection.select_value(
         "SELECT billing_password FROM orders WHERE id = #{ActiveRecord::Base.connection.quote(order.id)}"
       )
 
-      expect(raw_value).not_to eq(plaintext)
-      expect(raw_value).not_to include(plaintext)
-      # 復号すればアプリ側からは平文で読める（暗号化が壊れていないことの確認）。
+      expect(raw_value).to eq(plaintext)
       expect(order.reload.billing_password).to eq(plaintext)
+    end
+
+    it "監査ログ(AuditLog)の追跡対象に含まれない（値をログに残さない）" do
+      expect(Auditable::TRACKED_FIELDS.fetch("Order", [])).not_to include("billing_password")
     end
   end
 end

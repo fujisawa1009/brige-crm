@@ -156,7 +156,10 @@ class Order < ApplicationRecord
   has_many :product_options, through: :order_options
   has_many :applications, dependent: :nullify
 
-  encrypts :billing_password
+  # 【2026-08-19 CEO決定（Q-45）: 暗号化を廃止し平文保存に変更】
+  # 従来は encrypts :billing_password を適用していたが、「暗号化列を全部平文にする」というCEO決定に
+  # 伴い除去した（決定の経緯・代替防御は app/models/order_work_detail.rb 冒頭のコメント参照）。
+  # billing_password は口座振替の請求パスワードで pii-handling-rules.md 分類B相当。
 
   # order_numberはpresenceバリデーション対象のため、Customer同様にbefore_validationで採番する。
   before_validation :assign_default_status, on: :create
