@@ -1,29 +1,46 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">CSVエクスポート</h1>
-  <table class="border-collapse w-full text-sm">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1 text-left">対象</th>
-        <th class="border px-2 py-1 text-left">状態</th>
-        <th class="border px-2 py-1 text-left">件数</th>
-        <th class="border px-2 py-1 text-left">依頼日時</th>
-        <th class="border px-2 py-1"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @csv_exports.each do |export| %>
-        <tr>
-          <td class="border px-2 py-1"><%= export.resource_type %></td>
-          <td class="border px-2 py-1"><%= export.status %></td>
-          <td class="border px-2 py-1"><%= export.row_count %></td>
-          <td class="border px-2 py-1"><%= export.created_at %></td>
-          <td class="border px-2 py-1">
-            <% if export.status == "completed" %>
-              <%= link_to "ダウンロード", admin_csv_export_path(export), class: "underline" %>
-            <% end %>
-          </td>
+<% content_for :page_title, "CSVエクスポート" %>
+
+<div class="flex flex-col gap-6">
+  <div>
+    <h2 class="text-xl font-bold text-slate-900">CSVエクスポート</h2>
+    <p class="text-sm text-slate-500">顧客・案件一覧から依頼した非同期CSV出力の状況です。完了後にダウンロードできます。</p>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">対象</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3">件数</th>
+          <th class="px-4 py-3">依頼日時</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @csv_exports.empty? %>
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">エクスポート履歴はありません</td>
+          </tr>
+        <% end %>
+        <% @csv_exports.each do |export| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-800"><%= export.resource_type %></td>
+            <td class="px-4 py-3">
+              <% badge_class = { "completed" => "bg-green-100 text-green-700", "failed" => "bg-red-100 text-red-700" }.fetch(export.status, "bg-amber-100 text-amber-700") %>
+              <% badge_label = { "completed" => "完了", "failed" => "失敗", "pending" => "処理中" }.fetch(export.status, export.status) %>
+              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= badge_class %>"><%= badge_label %></span>
+            </td>
+            <td class="px-4 py-3 text-slate-600"><%= export.row_count.presence || "—" %></td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-600"><%= export.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td class="px-4 py-3 text-right">
+              <% if export.status == "completed" %>
+                <%= link_to "ダウンロード", admin_csv_export_path(export), class: "text-indigo-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>
