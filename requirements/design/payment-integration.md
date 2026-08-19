@@ -352,7 +352,7 @@ pending / authorized / captured / failed / unknown / canceled / refunded
 | **ret_url / cancel_url 受け口** | **`Form::PaymentReturnsController#create`（ret_url）/ `#cancel`（cancel_url）**（`form/payments/return`, `form/payments/cancel`） | **form** | **`skip_forgery_protection` + `skip_before_action :authenticate_user!, :require_form_sales_representative!`**。セッション不参照（§4-9-1） | **推奨案**。理由: (1) 申込フローの続き（同じ顧客の画面遷移）で form section の「営業担当者/顧客の系統」に属する (2) `form/` は RBAC スキップ済みで `SystemPermissionSyncService` / `ApplicationController#skip_system_permission_authorization?` を**変更せずに済む** (3) 認証を外す範囲がこの1コントローラに閉じる。`Form::BaseController` は継承せず `ApplicationController` 直下＋ `form/` パスに置く。**rack-attack で ret_url へのレート制限**を掛ける |
 | （代替案）`Webhooks::NetmoveController` | 新規 `webhooks/` 名前空間 | （なし） | `EXCLUDED_CONTROLLER_PREFIXES` に `webhooks/` を追加 **かつ** `skip_system_permission_authorization?` に `webhooks/` を追加 | 将来 Webhook（依頼 C-3）が提供された場合の置き場。現状は **RBAC 基盤2箇所の改修が必要**なため、ret_url だけのために新設しない。Webhook 提供時に本案へ移す判断を再検討する（**要確認**） |
 | 決済状況の確認・手動再開・突合確定 UI（P3-2-f） | `Admin::PaymentTransactionsController`（index/show + member `reopen`/`confirm`）、`Admin::PaymentReconciliationsController`（CSV取込） | admin | RBAC（`SystemPermission` 自動カタログ）＋ **Pundit `PaymentTransactionPolicy`（`policy_scope` = 親 Order の代理店スコープを継承）** | 04 R3レビュー指摘「`OrderWorkDetail` 用 Policy が無い」と同じ轍を踏まないよう Policy を同時に新設 |
-| カード変更導線（`option=member-modify`） | 候補A: `Mypage::CardsController`（顧客本人が再 checkout）／候補B: 管理画面からメールリンク決済案内 | mypage / admin | Devise Customer + OTP／RBAC | **未決**（`netmove-card-migration.md` §3「共通」・S-7 現行手順未確認）。R5 スコープ境界として明記のみ |
+| カード変更導線（`option=member-modify`） | **mypage に決定（2026-08-19 CEO追加決定）**: `Mypage::CardsController`（顧客本人が再 checkout）。候補B（管理画面からメールリンク決済案内）は不採用 | mypage | Devise Customer + OTP | 実装本体はS-7（現行カード変更手順）の回答後（`netmove-card-migration.md` §3「共通」）。R5 ではスコープ境界の明記のみ |
 | Service Object 群 | `app/services/payment/`: `Config` `CheckCode` `JutyuCodeGenerator`（`SequenceCounter` 利用）`MemberIdAllocator`（新規採番/既存引継ぎ両対応）`CardholderInfoBuilder` `CheckoutSession` `ReturnHandler` `ParamMasker` `OrderStatusSyncService` `ReconciliationSource` + `reconciliation_sources/*` | — | — | 03§6「services（ビジネスロジック集約）」。コントローラは薄く保つ |
 | ジョブ | `app/jobs/payment/reconciliation_job.rb`（日次突合。`queue_as :payments`、`retry_on` なし）、`payment/expire_stale_transactions_job.rb`（`expires_at` 超過の pending を unknown/failed でなく **expired 扱いに**するかは要設計。Solid Queue recurring で日次） | — | — | §4-2 |
 | メール | `PaymentMailer`（決済失敗/不確定の社内通知。宛先ルール E6 は未決＝04 R4節） | — | `deliver_later`（既定キューでよい。決済専用キューは課金に関わる処理のみ） | |
@@ -476,7 +476,8 @@ pending / authorized / captured / failed / unknown / canceled / refunded
 | I-19 / D-1 | 受注コードの桁数（11 or 12）・採番規則 | **✅ 04 Q-37 作業前提確定（2026-08-19 v5）**: 「サイトコード4桁+ハイフン+数字7桁=12文字」でR5実装を進める。正式確定はネットムーブへの事務依頼（別途）と並行 |
 | I-18 / C-1〜C-4 / R-8 | 決済結果の確定手段（ret_url に結果コード無し） | **✅ 04 Q-38 作業前提確定（2026-08-19 v5）**: 「会員ID非空 ＋ check_cd一致」判定＋`Payment::ReconciliationSources::ManualCsv`（取引履歴一括ダウンロードCSV突合）のフォールバックで実装する |
 | R-6 / P3-2-i / E-1〜E-4 | ステージング（実結線）検証方式。検証環境無し・商用カード・1円与信＋与信取消 | **✅ 04 Q-39 作業前提確定（2026-08-19 v5）**: 商用カードでの1円与信＋与信取消で検証する。ネットムーブ側の開通処理・HMACキー発行はベンダー事務作業として別途依頼 |
-| （Rails版追加）§4-10 | ret_url 受け口を form section に置く案の妥当性（vs `webhooks/` 名前空間新設）／カード変更導線の section（mypage or admin） | 04 未記載。CTO 判断で足りる見込みだが R5 着手時に確定 |
+| （Rails版追加）§4-10 | ret_url 受け口を form section に置く案の妥当性（vs `webhooks/` 名前空間新設） | 04 未記載。CTO 判断で足りる見込みだが R5 着手時に確定 |
+| ~~（Rails版追加）カード変更導線の section~~ | mypage or admin | **✅ 2026-08-19 CEO追加決定**: mypage（`Mypage::CardsController`）に確定。04 R5-16/決定済みテーブルに反映済み |
 
 ---
 

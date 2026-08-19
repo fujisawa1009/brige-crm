@@ -231,8 +231,8 @@ Excel 由来ゆえの品質リスク：
 - 会員IDと受注コードの関係の確定（§2-2 の1桁問題）
 - カード変更（有効期限切れ・再発行）の導線：`option=member-modify` で
   既存会員IDのカードを差し替えられる（ガイド5.1.3）。**洗替の自動連携があるかは別途**（依頼 A-6）
-  （Rails版・R5）導線の section は未決（`payment-integration.md` §4-10: 候補A＝mypage で顧客本人が再 checkout／候補B＝admin からメールリンク決済案内）。
-  S-7新（現行手順）の回答で決める。いずれも `PaymentTransaction` を新規作成（`kind`/用途を区別できるよう `purpose: member_modify` 相当の列 or ログ `kind` で識別）し、
+  （Rails版・R5）導線の section は **mypage に決定（2026-08-19 CEO追加決定）**：顧客本人が `Mypage::CardsController` から再 checkout する方式（`payment-integration.md` §4-10）。
+  admin からのメールリンク決済案内（候補B）は不採用。実装本体はS-7新（現行手順）の回答後。いずれも `PaymentTransaction` を新規作成（`kind`/用途を区別できるよう `purpose: member_modify` 相当の列 or ログ `kind` で識別）し、
   成功時に `customers.netmove_registered_at` ではなく「カード変更日」を更新する（保持先は §6-4 のとおり `payment_transactions` 側）
 
 ---
