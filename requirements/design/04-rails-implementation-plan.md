@@ -132,6 +132,11 @@
 
 **R2完了条件（2026-08-15追記）**: 案件90フィールド・ステータス管理に加え、代理店ユーザで他代理店のCustomer/Order一覧・詳細・更新に到達できないことをrequest specで確認。
 
+**R2 Punditスコープ 3回独立監査の指摘と是正（2026-08-19追記）**:
+- 🔴 **【是正済み】フォームの`collection_select`がPunditスコープを迂回し全代理店のデータを露出**: `orders/_form.html.erb`（customer_id/store_id/contract_condition_id/sales_representative_idの4フィールド）・`customers/_form.html.erb`（sales_representative_id）が、コントローラの`policy_scope`を経由せずビュー内で直接`Model.order`を呼んでおり、代理店ユーザーが編集画面を開くだけで他代理店の顧客・店舗・契約条件（手数料等の商取引条件）・営業担当者名を閲覧できた。`Admin::OrdersController#load_select_options`/`Admin::CustomersController#load_select_options`で`policy_scope`経由の一覧をnew/edit/create失敗時/update失敗時に供給する形で是正。回帰防止specを`spec/requests/admin/{orders,customers}_spec.rb`に追加（32 examples green）。`users/_form.html.erb`・`sales_representatives/_form.html.erb`は既に`staff_scope?`ガード内のため対象外、`contract_conditions/_form.html.erb`はnew/edit自体がstaff限定到達のため対象外と判断。
+- 【メモのみ・将来対応】`find`→`authorize`パターン（`set_customer`/`set_order`等）はレコード取得を`policy_scope`経由にしていないため、他代理店レコードでも「存在する」ことは403判定できてしまう（404にならない）。UUID主キーのため実害は限定的。
+- 【メモのみ・将来対応】`app/policies/concerns/agency_scoped.rb`の共通ロジック（`AgencyScoped`/`ScopeMethods`）自体の単体テストが無く、正当性の検証はrequest spec経由の間接検証のみ。`StorePolicy`はagency_groupスコープを実装済みだが`stores_spec.rb`にグループユーザーのシナリオが無い。`ContractConditionPolicy`も同様にグループスコープのテストが薄い。
+
 **R2見直しレビュー残タスク（2026-08-17追記）**: ログの機密情報フィルタ漏れ（`filter_parameter_logging.rb`が`*_pass`系カラムにマッチしない）・OptionValueの循環参照/グループ越境防止バリデーション欠如・CSVエクスポートのOrderスコープテスト不足・採番並行処理のrequest spec不足・Order`customer_id`/`store_id`付け替えによるデータ整合性リスクは発見・是正済み（commit `50bd98d`）。加えて以下は機能追加に近く見送り:
 - **販売許可の管理UI未実装**: `AgencyProduct`/`AgencyGroupProduct`（Product×Agency/AgencyGroup中間テーブル）はモデル・クエリ（`Product.sellable_by`）のみ実装済みで、staffが管理画面から代理店/代理店グループへ商材の許可を付与・剥奪する手段が無い（現状はコンソール/直接DB操作でしかレコードを作れない）。旧Laravelには`AgencyController#products`等のUIが存在したため後退。`admin/agencies_controller.rb`・`admin/agency_groups_controller.rb`（またはProduct側）に`product_ids`同期アクションの追加を推奨。
 - Store一覧に検索・ページネーション（pagy）が無い（他のCustomer/Order/マスタ一覧は全て対応済みでStoreのみ未対応）。
@@ -247,19 +252,19 @@
 | R5-4 | `app/services/payment/`: Config / CheckCode / JutyuCodeGenerator / MemberIdAllocator / CardholderInfoBuilder / ParamMasker + unit spec | payment §4-9/§4-10 | 高 |
 | R5-5 | Solid Queue 決済専用キュー（`queue.yml`・`retry_on` 禁止・`limits_concurrency`）+ job spec | payment §4-2 | 高 |
 | R5-6 | 決済開始 `Form::PaymentsController` + `Payment::CheckoutSession` + D-P12① 3択分岐 + 3DS 項目送信 | payment §4-10/§4-7 | 高 |
-| R5-6b | **【v5 CEO決定】顧客本人入力導線（ハイブリッド方式）**: 営業担当者が仮申込を作成→顧客へメール送信→`Application#token` 付きURLで顧客が別セッションから申込を再開・決済まで完了。トークン有効期限・再送・なりすまし対策のrequest spec必須 | basic-design §6、04次のアクション6 | 高 |
+| R5-6b | **【v5 CEO決定】顧客本人入力導線（ハイブリッド方式）**: 営業担当者が仮申込を作成→顧客へメール送信→`Application#token` 付きURLで顧客が別セッションから申込を再開・決済まで完了。トークン有効期限・再送・なりすまし対策のrequest spec必須。**採用理由（2026-08-18浅賀MTGで再確認）**: 同意メールと電子サインを1通に統合する代替案を検討したが不可と判断——クレカ情報は顧客本人が入力するため画面が営業担当者から顧客へ移るフェーズが必ず発生し、メールリンクを挟む必要がある | basic-design §6、04次のアクション6、`contract-confirmation-docs.md` §1-3 | 高 |
 | R5-7 | ret_url/cancel_url 受け口 `Form::PaymentReturnsController` + `Payment::ReturnHandler` + rack-attack + **request spec（Cookie無し/改ざん/二重POST）** | payment §4-9/§4-10、R-12 | 高 |
 | R5-8 | `Payment::OrderStatusSyncService`（決済→業務ステータス連動） | payment §4-6 | 中 |
 | R5-9 | 管理画面 `Admin::PaymentTransactionsController`（一覧/詳細/手動再開/突合確定）+ `PaymentTransactionPolicy`（親 Order の代理店スコープ継承）+ `Admin::PaymentReconciliationsController` + `Payment::ReconciliationJob` | payment §4-3/§4-10 | 中 |
 | R5-10 | 請求用受注データCSV: `EXPORT_TARGETS` に `BillingOrder` 追加 | payment §4-8、export-profile §7 | 中（締切あり） |
 | R5-11 | PDF 生成基盤選定 + `Documents::PdfRenderer` + `OrderDocument`/`OrderDocumentDelivery` migration + `OrderDocumentGenerateJob` | contract-confirmation §3-2 | 中 |
 | R5-12 | 申込確認メール（P3-13）: `OrderDocumentMailer` + `NotificationTemplate` 値追加 + E2 宛先（`RecipientResolver`）+ source_snapshot | contract-confirmation §3-2 Q-7 | 中 |
-| R5-13 | 重説チェック（P3-12）: `Disclosure*` 4テーブル + 実施UI + 管理画面版管理 + Policy | contract-confirmation §3-1 | 中（R5-1 の後） |
-| R5-14 | 入力チェック設定（`InputCheckRule`）・キーワード自動選定（`KeywordSuggestionService`）・契約書PDF・版数管理・契約確認メール・手書き署名（R5-11 の器を共用） | basic-design §8/§11/§13/§14 | 中 |
-| R5-15 | 実結線確認（P3-2-i）は Q-39 確定後（商用カード・1円与信＋与信取消）。`legacy-research/15` のテスト購入結果は未記入＝Q-37/38 の一次確認未了 | payment §6/R-6 | — |
+| R5-13 | **【v5決定でR5-1非依存に変更】重説チェック（P3-12）**: `Disclosure*` 4テーブル + R3/R5-6b（顧客ハイブリッド入力フロー）の送信バリデーションに組み込み + 管理画面版管理 + Policy。R5-1（状態機械）を待たずに着手可能。項目マスタは法務確認済み文面を先行投入 | contract-confirmation §3-1 | 高（R5-6bと同時・早期着手可） |
+| R5-14 | 入力チェック設定（`InputCheckRule`）・キーワード自動選定（`KeywordSuggestionService`）・契約書PDF・版数管理・契約確認メール（Cc要否=Q-8は保留のためCcなしで先行実装）・手書き署名（R5-11 の器を共用） | basic-design §8/§11/§13/§14 | 中 |
+| R5-15 | 実結線確認（P3-2-i）: 商用カードでの1円与信＋与信取消で実施（Q-39作業前提確定）。ネットムーブの開通処理・HMACキー発行の依頼が前提 | payment §6/R-6 | — |
 | R5-16 | カード変更導線（member-modify）はスコープ境界の明記のみ（S-7 回答後に実装） | netmove §3/§6-4 | 低 |
 
-**R5着手前チェックリスト（2026-08-15追記 / 2026-08-19拡充 / 2026-08-19 v4 再拡充 / 2026-08-19 v5 CEO決定反映）**: `development-plan.md`§8で未確認のまま残っている論点のうち、**CEO判断が必要だった8論点は v5 で全件決定した**。残る Q-35〜39（重説チェック詳細・決済技術仕様・ネットムーブ回答待ち）と、CTO判断で着手可能な項目のみ引き続き未着手。
+**R5着手前チェックリスト（2026-08-15追記 / 2026-08-19拡充 / 2026-08-19 v4 再拡充 / 2026-08-19 v5 CEO決定反映）**: `development-plan.md`§8で未確認のまま残っていたQ-25〜27・Q-35〜39・Q-D-3・G-1/G-9・DM-6・E3/E5/E6・R4追補・FAQテンプレ・顧客本人入力導線は **v5で全件決定・作業前提確定した**。CTO判断で着手可能な項目のみ引き続き未着手。**新たにQ-45〜47（2026-08-18浅賀MTG由来）が判明しており、これらはv5で扱っていないため引き続き未決**。
 
 ### 決定済み（2026-08-19 v5・CEO回答）
 
@@ -277,16 +282,19 @@
 | R4追補 | `RecipientResolver#recipients_for_inquiry` の合成規則（全投稿を代理店・営業・顧客へ自動送信している現行実装） | **修正する**。`is_visible_to_agent` 等の見える範囲・ステータスに応じて宛先を絞る（R4追補タスク） |
 | FAQテンプレ | 問い合わせ返信テンプレート機能（FAQ 318件・12カテゴリ） | **実装する**。R6（運用強化フェーズ）で着手 |
 | 顧客本人入力導線 | 申込入力を顧客本人の端末からも行えるようにするか | **ハイブリッド方式を採用**: 営業担当者が入力して仮申込を作成→顧客にメールでリンク送付→顧客がそのリンクから申込を再開する。R5で実装（`Application#token` 付きURLの別セッション許可＋有効期限管理が必要） |
+| Q-35（重説チェック・確認書） | `contract-confirmation-docs.md` Q-1〜9 | **✅ 8/9決定**: 重説項目=法務確認済み文面を流用／実施方式=顧客がWeb上でチェック（案件単位・再実施任意）／**未実施時は契約ステータス遷移ではなくWeb申込フォーム送信自体をブロック**／確認書テンプレ=現行「申込書控えPDF」流用／確認書データ=申込時点スナップショット／送信基盤=専用Mailer（開発判断）／保存期間=監査ログと同じ5年。**Q-8（Cc要否）のみ保留** |
+| Q-36（決済紐づけ単位） | `payment-integration.md` §8 論点9 | **確定してよい**: `customer_id`（主）＋`order_id`（登録契機案件）の併記で確定 |
+| Q-37〜39（jutyu_cd桁数／決済結果確定手段／ステージング検証方式） | ネットムーブ導入ガイド再確認 | **作業前提を確定しR5実装を進める**: jutyu_cd=サイトコード4桁+ハイフン+数字7桁=12文字で実装／決済結果確定=「会員ID非空＋check_cd一致」判定＋取引履歴CSV突合フォールバック／ステージング検証=商用カードでの1円与信＋与信取消。**並行してネットムーブへの事務依頼（桁数の正式確定・開通処理・HMACキー発行）が必要**（外部連絡のため承認パイプライン経由で起票） |
 
 ### 未決（引き続き保留・次に確認が必要）
 
 | 論点 | 内容 | 出典 |
 |---|---|---|
-| Q-35 | 重説チェック・確認書の未決事項（項目/実施者/タイミング/宛先/版管理）= `contract-confirmation-docs.md` Q-1〜9（Q-7 は開発判断で可・推奨(b)専用Mailer） | development-plan.md §8 / contract-confirmation-docs.md |
-| Q-36 | 決済トランザクションの紐づけ単位（`payment-integration.md` §8 論点9 の結論=`customer_id` 主・`order_id` 併記で閉じてよいか） | development-plan.md §8 |
-| Q-37 | jutyu_cd（受注コード）の桁数問題 | development-plan.md §8 / legacy-research/02-payment-netmove.md |
-| Q-38 | 決済結果の確定手段（ret_urlに結果コードが無い問題） | development-plan.md §8 / legacy-research/02-payment-netmove.md |
-| Q-39 | ステージング検証方式 | development-plan.md §8 |
+| Q-45（新規・2026-08-18浅賀MTG） | BRIDGE_PLUS申込フォームでのInstagram ID/PASS必須入力化と、`encrypts`列を`FormField`ホワイトリストから除外する現行設計の整合。専用ステップ実装か運用ルールのままかをCTOが判断 | development-plan.md §8 / form-template-mapping.md §5 |
+| Q-46（新規・2026-08-18浅賀MTG） | 割引A/B別の利用規約自動切替・自動送付、重要規約チェック内容の反映確認 | development-plan.md §8 / contract-confirmation-docs.md §1-3・Q-10/Q-11 |
+| Q-47（新規・2026-08-18浅賀MTG） | アシストからの逆方向データ連携（フォーム送信→受注番号で紐づけ） | development-plan.md §8 / export-profile-design.md §6 |
+
+> ⚠️ **2026-08-18浅賀さん打ち合わせ議事録を反映（development-plan.md §9 変更履歴）**: リリース予定が**2026年9月中**と提示された（Q-1）。Q-35〜39はv5で決定済みとなったが、Q-45〜47は新規ブロッカーとして残っており、9月リリースは現状のR5進捗と整合しない可能性がある。決定者へ実現可能性の再確認が必要。なお Q-背2（development-plan.md §8）が決定し、**新プランはBrige_plus単一価格のみ販売・プラン選択プルダウン不要**となった（Q-33の`item_name`表示設計を単純化しうる）。
 
 ### CTO判断で着手可能（CEO確認不要・事後報告）
 
@@ -394,9 +402,10 @@
    - G-10: 案件ステータス35値のシード（統廃合後コード表は `status-naming-analysis.md` §3-3）
    - R3残: BRIDGE_PLUS テンプレ67フィールド＋OptionGroup の seed/rake 投入（投入手段は (b) seed・rake を推奨）
    - R4追補: `RecipientResolver#recipients_for_inquiry` の宛先絞り込み修正（v5決定）
-8. **残るCEO確認事項（R5着手のブロッカー・v5未回答分）**:
-   - R5着手前チェックリストのQ-35〜39（重説チェック詳細・決済トランザクション技術仕様。Q-37〜39はネットムーブ回答待ち）
-   - Q-D-2（分類A本体PIIの暗号化。推奨 A-1 現状追認）・Q-D-1（分類B＝SNS認証情報を新システムへ運ぶか）の方向性（Q-D-3は決定済み）
-9. **CEO確認事項（R5と並行で早期に）**: 本番構成・デプロイ方式（Q-40・Kamal採否）・ドメイン/TLS（Q-42）・SMTP・情シス連携（W-4/G-2）、W-5 リクリックとのカットオーバー合意、リリース時期（Q-1/Q-2）
-10. **CEO確認事項（R6/R7着手前）**: E7/E8/E11/E12 の宛先、代理店またぎ名寄せの可否、Q-15 アシスト納品フォーマット、Q-移7/15/18/19/20・DM-7/DM-8、238フィールド中の移行先無し10件の要否、名寄せ精度目標97%と業務側レビュー窓口・SLA、Q-30（受注入力にパスワード再設定を持たせない現実装で確定するか）、Q-9 の業務側（「グループ兼代理店」を単一所属で表現してよいか）、P5-13 月次レポート・P4-24 音声ログのスコープ可否
-11. 上記7を実施し、Q-35〜39（重説・決済技術仕様）が確定次第 **R5 着手（契約フロー・決済。R5-1 状態機械設計から）**
+8. ~~R5着手前チェックリストのQ-35〜39を確定~~ ✅ 2026-08-19（v5）**全件決定・作業前提確定**（Q-35は8/9決定・Q-8のみ保留、Q-36は確定、Q-37〜39は作業前提を確定しネットムーブへの事務依頼と並行してR5実装を進める）
+9. **外部アクション（承認パイプライン経由で起票）**: ネットムーブへの正式依頼（受注コード桁数の確定・アカウント開通処理・HMACキー発行）。依頼書ドラフトは旧Laravel側 `requirements/drafts/netmove-request-draft.md`（A〜Jの34項目）に残存・brige-crm未コピーのため、起票時に内容を再構成する
+10. **残るCEO確認事項（R5着手前・新規判明分）**: Q-45（BRIDGE_PLUS Instagram ID/PASS必須化とホワイトリスト除外の整合）・Q-46（割引A/B別利用規約の自動切替）・Q-47（アシストとの逆方向データ連携）— 2026-08-18浅賀MTG由来。加えて Q-8（申込確認メールのCc要否）が保留のまま
+11. **CEO確認事項（R5着手前・継続）**: Q-D-2（分類A本体PIIの暗号化。推奨 A-1 現状追認）・Q-D-1（分類B＝SNS認証情報を新システムへ運ぶか）の方向性（Q-D-3は決定済み）
+12. **CEO確認事項（R5と並行で早期に）**: 本番構成・デプロイ方式（Q-40・Kamal採否）・ドメイン/TLS（Q-42）・SMTP・情シス連携（W-4/G-2）、W-5 リクリックとのカットオーバー合意、リリース時期（Q-1/Q-2。2026-08-18浅賀MTGで「9月中」提示・現状のR5進捗との整合を要再確認）
+13. **CEO確認事項（R6/R7着手前）**: E7/E8/E11/E12 の宛先、代理店またぎ名寄せの可否、Q-15 アシスト納品フォーマット、Q-移7/15/18/19/20・DM-7/DM-8、238フィールド中の移行先無し10件の要否、名寄せ精度目標97%と業務側レビュー窓口・SLA、Q-30（受注入力にパスワード再設定を持たせない現実装で確定するか）、Q-9 の業務側（「グループ兼代理店」を単一所属で表現してよいか）、P5-13 月次レポート・P4-24 音声ログのスコープ可否
+14. 上記7を実施のうえ **R5 着手（契約フロー・決済）**。R5-13（重説チェック）はR5-1を待たず着手可能。R5-1（状態機械設計）はQ-45〜47の影響有無を確認しつつ並行して進められる
