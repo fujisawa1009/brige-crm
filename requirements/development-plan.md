@@ -78,7 +78,7 @@
 | R3 | 申込フォーム | `Form::BaseController` + `Form::SessionsController`（代理店CD＋営業担当者CD）+ `Form::OtpsController`、FormTemplate / FormStep / FormField（target_table / target_column ホワイトリスト / editable_by_tier / lock_after_status）、動的マルチステップ + `Form::DynamicFormValidator`、`Form::ApplicationSubmissionService`（Customer+Store+Order+Application 一括生成）、フォームビルダー UI（`Admin::FormTemplatesController`） |
 | R4 | 問い合わせ・通知 | Inquiry / InquiryMessage（添付）/ InquiryStatus（種別別マスタ）/ InquiryRecipientRoute / InquiryMessageRecipient、`RecipientResolver` / `InquiryNotifier` / `InquiryMessageMailJob`、Notification / NotificationRecipient / NotificationTemplate / RecipientGroup（`NotificationDeliveryJob`・スケジュール送信）、SystemNotification（Solid Cable リアルタイム・30日 prune を Solid Queue recurring で）、顧客マイページ（Devise Customer + OTP + ダッシュボード最小） |
 
-主要テーブル 48（`db/schema.rb`）。RSpec 38 ファイル（request 19 / model 12 / job 4 / service 3）。
+主要テーブル 48（`db/schema.rb`）。RSpec 40 ファイル（request 19 / model 12 / job 4 / service 5。2026-08-19時点。`bridge_plus_form_template_seeder_spec.rb`/`status_seeder_spec.rb`追加分を反映）。
 
 ### 未実装（設計書に記載あり・コード無し）
 
@@ -108,10 +108,10 @@
 | T-5 | `composer.json` の name（Laravel 固有） | — 該当なし |
 | T-6 | `organizations` 前提の旧記述 | ✅ 03§5: nestedset/organizations は持ち込まない。実装は AgencyGroup/Agency + `users.agency_group_id/agency_id`。`basic-design.md` §3 の旧記述は同書の Rails 版改訂で追従 |
 | T-7（新） | Ruby バージョン差異（03 記載 3.4 vs 実態 3.3.4） | R8 で整合（release A-14） |
-| T-8（新） | Q-B（ステータス呼称）が `order_statuses` 側のみ適用・`customer_statuses` は「顧客ステータス」のまま | 04 R2 追加タスク・決定者 確認事項 |
+| T-8（新） | Q-B（ステータス呼称）が `order_statuses` 側のみ適用・`customer_statuses` は「顧客ステータス」のまま | ✅ 2026-08-19解消（commit `8c506d5`。customer_statuses画面・customers/orders各画面のラベルを統一） |
 | T-9（新） | セッション/Cookie ハードニング未実施（`force_ssl`・`expire_after`・form ログイン時 `reset_session`・`config.hosts`） | 04 R3 見送り事項 → release C-13（本番前必須） |
-| T-10（新） | rack-attack のスロットルが `/users/*` のみで form/mypage の OTP・ログインに未適用 | release C-6 → R5 前の小改修 or R8 |
-| T-11（新） | `verify_authorized`/`verify_policy_scope` 未導入（Pundit 呼び出し漏れの機械検出無し） | 04 R0 見送り事項 → release F-10（R5 前推奨） |
+| T-10（新） | rack-attack のスロットルが `/users/*` のみで form/mypage の OTP・ログインに未適用 | ✅ 2026-08-19解消（commit `fc184ff`。管理画面/form/mypage全系統に拡張） |
+| T-11（新） | `verify_authorized`/`verify_policy_scope` 未導入（Pundit 呼び出し漏れの機械検出無し） | ✅ 2026-08-19解消（commit `ee8965d`。`Admin::BaseController`に導入） |
 
 ### 外部・他部門待ち
 
@@ -190,7 +190,7 @@
 | §3 権限管理 | R0/R1（実装済み）/ Q-31 | RBAC + Pundit スコープ実装済み。T-2/T-3 是正済み。代理店ログインメールの扱いは Q-31。`organizations` 前提は不採用（T-6） |
 | §4 顧客一覧 | R2（実装済み）/ R6（P4-2 統合ビュー・P4-4 名寄せ）/ Q-F | 参照範囲は R2 で Pundit 適用済み。商材横断ビュー・名寄せは R6。商材増（Q-F 決定）→ 納品日別テーブルは未実装（G-1・04 R6） |
 | §5 顧客詳細 | R2（実装済み）/ R4（マイページ最小）/ R6（P4-9 拡充・P4-29 退会）/ Q-34 | 155項目・37カラムは R2 実装済み。表示/編集権限は Pundit。マイページ拡充・通常退会は R6（04 未反映） |
-| §6 申込登録 | R3（実装済み）/ R5（P3-3 署名・P3-12/13 重説・確認書）/ Q-32・Q-33 | 動的マッピング・フォームビルダーは R3 実装済み。BRIDGE_PLUS 155項目の突合は未（04 R3 要確認）。署名・重説・確認書は R5 |
+| §6 申込登録 | R3（実装済み）/ R5（P3-3 署名・P3-12/13 重説・確認書）/ Q-32・Q-33 | 動的マッピング・フォームビルダーは R3 実装済み。BRIDGE_PLUS 67フィールドの突合・テンプレ投入は完了（2026-08-19・commit `63c52e9`）。署名・重説・確認書は R5 |
 | §7 決済連携 | R5 / Q-7・Q-25〜27・Q-33・Q-36〜39 | 基本設計は「API ドキュメント待ち」の古い状態。`payment-integration.md` が正。実装はモック先行（R5）、実結線は開通処理・HMAC キー取得後（release D-1） |
 
 ---
@@ -227,9 +227,9 @@
 | P2-3 | mapping §7 #5〜7 の未決定事項確定 | ⚠️ **04 未反映**（`form-template-mapping.md` §7 の残論点。R3 要確認と併せて処理） |
 | P2-4 | customers 37 カラム追加・netmove 会員ID | ✅ R2 実装済み |
 | P2-5 | OptionGroup シーダー（属性1-11 等・`legacy-research/05` §4） | ⚠️ **04 未反映**（`db/seeds.rb` は RoleSeeder/StatusSeeder のみ。R7 初期データ or R8 release I-6） |
-| P2-6 | FormTemplate へ BRIDGE_PLUS フィールド追加 | 🔶 04 R3「要確認」（155項目突合）として記載。テンプレ実データ投入は未 |
+| P2-6 | FormTemplate へ BRIDGE_PLUS フィールド追加 | ✅ 2026-08-19実装済み（67フィールド。`BridgePlusFormTemplateSeeder`・commit `63c52e9`） |
 | P2-7 | step-n.vue の動的バインディング | ✅ R3（ERB 動的レンダリング） |
-| P2-8 | フォームビルダーで BRIDGE_PLUS テンプレート設定 | 🔶 UI は R3 実装済み。BRIDGE_PLUS テンプレ定義の投入は **04 未反映**（P2-6 と一体で R3 後続 / R7） |
+| P2-8 | フォームビルダーで BRIDGE_PLUS テンプレート設定 | ✅ 2026-08-19実装済み（UI は R3・テンプレ定義投入は commit `63c52e9`。7ステップ・67フィールド） |
 | P2-9 | 案件契約登録の入力フィールド突合・バリデーション整理 | 🔶 `Form::DynamicFormValidator` は R3 実装済み。突合は 04 R3 要確認に含意 |
 | P2-10 | T-2/T-3 解消 | ✅ R1/R2 |
 
@@ -321,8 +321,8 @@ R7 の律速は **現行DB再エクスポート＋名寄せ表＋カットオー
 
 | 優先度 | 基準 | 該当 |
 |---|---|---|
-| 最優先 | 業務が回らない／後回しほど手戻り／リードタイムが長い | R5 全般（着手前チェックリスト含む）、R7 準備工程、R8-G 法務、R8-D-1 本番接続審査、T-9/T-11（本番前セキュリティ小改修） |
-| 高 | 契約フローの前提・R5 の設計を左右 | Q-B 呼称統一（T-8）、~~G-1 納品日別テーブル要否~~（✅2026-08-19決定・現状維持）、R8-A 本番構成決定（Q-40） |
+| 最優先 | 業務が回らない／後回しほど手戻り／リードタイムが長い | R5 全般（着手前チェックリスト含む）、R7 準備工程、R8-G 法務、R8-D-1 本番接続審査、T-9（本番前セキュリティ小改修。T-11は2026-08-19解消済み） |
+| 高 | 契約フローの前提・R5 の設計を左右 | ~~Q-B 呼称統一（T-8）~~（✅2026-08-19実装済み）、~~G-1 納品日別テーブル要否~~（✅2026-08-19決定・現状維持）、R8-A 本番構成決定（Q-40） |
 | 中 | 運用効率 | R6（名寄せ・一括更新・統合ビュー・遅延検知・集計・CSV プロファイル）、R8-E 監視、R8-C セキュリティ診断 |
 | 低 | 後付け可能 | P4-11 残り（お纏め請求・備考・予備欄）、P5-8 バックヤードマニュアル、P5-13 月次レポート |
 
@@ -332,11 +332,11 @@ R7 の律速は **現行DB再エクスポート＋名寄せ表＋カットオー
 
 | フェーズ | 状態（2026-08-19） |
 |---|---|
-| R0 基盤 | ✅ 完了（見直し残: `verify_authorized` 導入 = T-11） |
+| R0 基盤 | ✅ 完了（`verify_authorized` 導入 = T-11 は2026-08-19解消済み・commit `ee8965d`） |
 | R1 組織・アカウント | ✅ 完了（見直し残: CSV 取込履歴の可視化） |
-| R2 CRM 中核 | ✅ 完了（見直し残: 販売許可 UI・Store 検索/CSV・Q-B 呼称・未収情報要否・PII 分類A 方針の文書化〔Q-D-3は決定済み〕） |
-| R3 申込フォーム | ✅ 完了（見直し残: セッション強化 = T-9・BRIDGE_PLUS 155項目突合） |
-| R4 問い合わせ・通知 | ✅ 完了（返信テンプレート/FAQ は2026-08-19実装決定・R6着手。見直し残: E7/E8/E11/E12 の通知マトリクス整合確認） |
+| R2 CRM 中核 | ✅ 完了（見直し残: 販売許可 UI・Store 検索/CSV・未収情報要否・PII 分類A 方針の文書化〔Q-D-3は決定済み〕。Q-B 呼称統一は2026-08-19実装済み） |
+| R3 申込フォーム | ✅ 完了（BRIDGE_PLUS テンプレ67フィールド＋OptionGroup投入は2026-08-19実装済み・commit `63c52e9`。見直し残: セッション強化 = T-9） |
+| R4 問い合わせ・通知 | ✅ 完了（RecipientResolver宛先絞り込みは2026-08-19実装済み・commit `0006f43`。返信テンプレート/FAQ は2026-08-19実装決定・R6着手。見直し残: E7/E8/E11/E12 の通知マトリクス整合確認） |
 | R5 契約フロー・決済 | ⬜ 未着手（**着手前ブロッカー = 決定者 確認事項**。04「次のアクション」5） |
 | R6 運用強化 | ⬜ 未着手（04 未反映の P4 タスクあり → §3-2） |
 | R7 データ移行 | ⬜ 未着手（設計済み。別プロジェクト切り出し） |
@@ -366,7 +366,7 @@ R7 の律速は **現行DB再エクスポート＋名寄せ表＋カットオー
 
 | # | 論点 | 状態 | R / 04 参照 | 備考 |
 |---|---|---|---|---|
-| Q-1 | リリース目標時期・全体スケジュール | クライアント希望は判明・システム側は未決 | R8 | 2026-08-18 浅賀さん打ち合わせで**リリース予定：2026年9月中**と提示（`mtg/2026年8月18日 浅賀さん打ち合わせ議事録.txt`）。R5 が未着手（Q-35〜39 等ブロッカー残）かつ本 MTG で新規論点（Q-45〜47）も発生しており、9月中は**高リスク**。リクリック当日作業合意（W-5/N-1-a）と移行リハーサル実測（N-1-b）も未了。決定者へ実現可能性の再確認要 |
+| Q-1 | リリース目標時期・全体スケジュール | クライアント希望は判明・システム側は未決 | R8 | 2026-08-18 浅賀さん打ち合わせで**リリース予定：2026年9月中**と提示（`mtg/2026年8月18日 浅賀さん打ち合わせ議事録.txt`）。R5 が未着手（Q-35〜39 等ブロッカー残）かつ本 MTG で新規論点（Q-45〜47）も発生しており、9月中は**高リスク**。リクリック当日作業合意（W-5/N-1-a）と移行リハーサル実測（N-1-b）も未了。決定者へ実現可能性の再確認要。**✅ 2026-08-19 CEO決定: 段階リリースとする**（完成済みのR0〜R4＝顧客管理・申込フォーム・問い合わせ/通知を9月に先行公開し、R5＝契約フロー・決済は後続リリースで追加する）。R8の本番構成・カットオーバー計画は段階リリース前提で組み直すこと |
 | Q-2 | 段階リリースか一括か | 未決 | R8（release I-1） | 同上 |
 | Q-3 | 開発体制（人数・役割） | 未決 | R8 | アプリ実装/インフラ構築/データ移行/外部調整/法務・情シス窓口/UAT/リリース判定の役割分担 |
 | Q-4 | データ移行の要否・規模 | ✅ 決定済み（2026-07-24） | R7 | 移行必須・規模判明（`legacy-research/08`） |
@@ -408,12 +408,12 @@ R7 の律速は **現行DB再エクスポート＋名寄せ表＋カットオー
 | Q-42 | ドメイン取得/移管、DNS 管理、HTTPS 証明書方式 | 未決 | R8（release A-9） | Kamal proxy（Let's Encrypt）or 終端側 TLS |
 | Q-43 | ステージング環境で使用するデータ種別（マスク済み/本番相当/実PII禁止） | 未決 | R8（release A-2/C-5） | Q-A（PII ルール）に連動 |
 | Q-44 | 掲示板アーカイブの検索要件・保持期間・アクセス権・添付移行方針 | 未決 | R7 | Q-C は実装方針決定済み。参照専用アーカイブの運用要件は別途 |
-| Q-45 | BRIDGE_PLUS 申込フォームでの Instagram ID/パスワード**必須入力**化と、SNS認証情報が `encrypts` 列のため `FormField` ホワイトリストから機構的に除外されている現行設計（`form-template-mapping.md` §5・R3見直しレビューでの是正）との整合 | **未決（新規論点）** | R3残 / R5 | 2026-08-19（2026-08-18浅賀MTG出典）起票。動的 FormField 経由では暗号化列を対象にできない設計のため、(a) 決済カード情報と同様に専用ステップ（ハードコード実装）で必須入力にする／(b) ホワイトリスト設計自体を見直す、のどちらかを選ぶ必要がある。9月リリース希望（Q-1）に対する新規スコープのため優先度高 |
+| ~~Q-45~~ | BRIDGE_PLUS 申込フォームでの Instagram ID/パスワード**必須入力**化と、SNS認証情報が `encrypts` 列のため `FormField` ホワイトリストから機構的に除外されている現行設計との整合 | ✅ **決定済み（2026-08-19・CEO）: SNS認証情報を平文保存へ変更する** | R3残 | **CEO決定＝(c) 暗号化を外して平文保存に変更し、通常のFormField項目として必須入力化する**。決定にあたり秘書からリスクを説明済み: ①`encrypts`は非決定的暗号化のため**スタッフは管理画面で従来どおり値を読める**（業務影響なし）②必須化できない原因は暗号化ではなく`FormField.allowed_target_columns_for`の除外設定であり、専用ステップ実装なら暗号化のまま必須化が可能③対象は顧客が他社サービス（Instagram/Facebook/Google）で使用中の実パスワードで、`pii-handling-rules.md` 分類B（「第三者アカウントへの不正アクセスに直結するためA と同等以上の厳格さで扱う」最厳格分類）。以上を提示のうえ**CEOが平文保存を再確認・確定**（2026-08-19）。**要対応**: 実装前に (i) 対象範囲（Instagram 2列のみか、facebook/google/system_account を含む8列全部か。`orders.billing_password` の扱い）を確定 (ii) `pii-handling-rules.md` §1分類B・§5 Q-D-1 と `release-readiness.md` C-3 を本決定に合わせて改訂 (iii) 既存暗号化データの復号移行手順 (iv) 平文化に伴う代替防御（アクセス制御・監査ログ・DB at-rest暗号化=Q-D-2）の強化要否 |
 | Q-46 | オプション割引（なし／割引A／割引B）による**利用規約の自動切替・自動送付**、および「重要規約」チェック内容と送付内容の整合確認 | **未決（新規論点）** | R5 | 2026-08-19（2026-08-18浅賀MTG出典）起票。`contract-confirmation-docs.md` Q-10/Q-11 参照。同意メールと電子サインを1通に統合する案は**MTGで不可と判断済み**（クレカ情報は顧客入力のため営業担当者→顧客へ画面が移るフェーズが必要で、メールリンクを挟まざるを得ない。R5-6b ハイブリッド方式の採用理由と一致）。プランごとにWebフォームを分ける代替案は要件整理が必要 |
 | Q-47 | アシストからの逆方向データ連携（アシスト側からフォームで情報を送信し受注情報と紐づける仕組み。紐づけキーは受注番号必須） | **未決（新規論点）** | R6 | 2026-08-19（2026-08-18浅賀MTG出典）起票。Q-15（アシスト納品用CSV）と対をなす受信側の仕組み。`export-profile-design.md`／将来的な入力フォーム or API 受け口の要否を検討 |
 | **Q-48** | **ネットムーブとの決済会社契約の巻き直し（社内SSS経由）の担当・期限** | **未決（新規論点）** | R5/R8 | 2026-08-19（2026-08-18浅賀MTG出典）起票。契約巻き直しが未了だと本番接続審査・決済開通（M-2残）が進められない。加えて `netmove-card-migration.md` の「既存カードは引き継がれる前提」（サイトコードS084・接続資材が変わらない想定）の根拠がこの契約継続性に依存しており、巻き直し内容次第では前提の再確認が必要（`payment-integration.md` R-13） |
 | Q-A | 原資料の外部認証情報・実顧客個人情報の取り扱い | 保留（D-3・2026-07-26） | R8（release C-5/G-8） | `pii-handling-rules.md` ドラフトあり。確定前は本番相当データを本番/ステージングへ置かない |
-| ~~Q-B~~ | 「顧客ステータス」の呼称と customer_statuses / order_statuses の関係整理 | ✅ 決定済み（2026-07-26・D-8）だが **実装が中途半端（T-8）** | 04 R2 追加タスク・決定者 確認事項 | 案A（案件/申込/契約ステータスの3語・テーブルリネームなし）。`order_statuses` 側のみ適用済み。`customer_statuses` を「申込ステータス」へ統一するかの再確認が 04「次のアクション」に載っている |
+| ~~Q-B~~ | 「顧客ステータス」の呼称と customer_statuses / order_statuses の関係整理 | ✅ 決定済み（2026-07-26・D-8）、**実装も完了（T-8。2026-08-19・commit `8c506d5`）** | 04 R2 追加タスク完了 | 案A（案件/申込/契約ステータスの3語・テーブルリネームなし）。`customer_statuses`＝申込ステータス、`order_statuses`＝案件ステータスへ全画面統一済み。マイページ顧客向け表示のみ業務確認のため保留 |
 | ~~Q-C~~ | 掲示板4種の実装方針 | ✅ 決定済み（2026-07-26・D-11）→ R4 実装済み | R4 / R7 | 問い合わせ統合（Inquiry 拡張）＋過去42万件は参照専用アーカイブ（R7） |
 | Q-D | 顧客SNSアカウント・パスワードの保持可否（保持なら暗号化） | 部分決定（Q-D-3 は 2026-08-19・v5 決定済み） | R2 実装済み / 04 R5 着手前チェック残 | `OrderWorkDetail` 8 カラムは `ActiveRecord::Encryption` で暗号化済み（分類B）。**Q-D-3（分類C＝`netmove_member_id` 等）は「平文のまま」で決定済み**。Q-D-2（分類A＝Customer本体PII。推奨A-1現状追認）・Q-D-1（分類B＝SNS認証情報を新システムへ運ぶか）は引き続き未決。移行時の平文 SNS 認証情報の扱いは R7 |
 | Q-E | AI投稿代行の発注（外部フォーム22項目）を自動化できるか | 未決 | R6 | |
@@ -454,3 +454,5 @@ R7 の律速は **現行DB再エクスポート＋名寄せ表＋カットオー
 | 2026-08-19 | **全設計ドキュメントの Rails 版改訂を完了**（9グループ並列。集約=`design/review/review-06-rails-revision-sweep.md`）。突合で判明したギャップ・タスクを **04 v4** へ反映（R3残: FormField ホワイトリスト認証列除外・BRIDGE_PLUS テンプレ67件未投入、R4追補: RecipientResolver 合成規則・ルート初期投入、R5: タスク分解 R5-0〜16・着手前チェックリスト拡充（Q-D-3/Q-B適用/G-1・9・10/DM-6/E3・5・6/verify系/rack-attack）、R6/R7 タスク分解、R8 本番前必須）。Q-B は D-8 決定済みと確認し 04 に記録。`p3-12-13-confirmation-docs.md`→`contract-confirmation-docs.md`、`notification-matrix-draft.md`→`notification-matrix.md` へリネーム |
 | 2026-08-19 | **浅賀さん打ち合わせ議事録（2026-08-18・`mtg/2026年8月18日 浅賀さん打ち合わせ議事録.txt`）を設計書へ反映**。⚠️ **リリース予定は2026年9月中**と判明（Q-1）。決定/更新: Q-背2（新プランは単一価格・Brige_plusのみ販売・プルダウン不要）、Q-背1（月次レポートはスコープに含める。ワンポイントアドバイス廃止・SラボDL・PA/BP番号自動紐づけ等）。新規起票: Q-45（Instagram ID/PW必須化とencrypts列ホワイトリスト除外の整合）・Q-46（割引A/B別の利用規約自動切替・同意メール+電子サイン統合案は不可と判断）・Q-47（アシストからの逆方向データ連携）。E10（掲示板の次回対応者ルーティング）を決定（Q-21）。関連して `form-template-mapping.md`・`contract-confirmation-docs.md`・`business-flow-analysis.md`・`export-profile-design.md`・`notification-matrix.md`・`payment-integration.md`・04 を同時更新 |
 | 2026-08-19（2回目） | 上記MTG反映時に payment-integration.md へ追記した R-13（ネットムーブ決済会社契約のSSS経由巻き直し）が development-plan.md 自身の論点管理から漏れていたため追補。**Q-48 を新設**（未決事項テーブル）し、M-2残（ネットムーブ開通処理・HMACキー確認）に「契約巻き直し完了が前提」と明記。連動して `release-readiness.md` D-9、`netmove-card-migration.md` §0/§5（S-3改を最優先化）、`04-rails-implementation-plan.md`（Q-48・R5-15）も同時更新 |
+| 2026-08-19（3回目） | **実装状況を再確認し反映**。git log（コミット `efe7857`〜`261c9cf`）を突合した結果、04「次のアクション」7（CTO判断で即着手可能）に挙げていた項目のうち5件が既に実装済みと判明: **T-8（Q-B適用）**＝`8c506d5`、**T-11（verify_authorized/verify_policy_scope）**＝`ee8965d`、**T-10（rack-attack拡張）**＝`fc184ff`、**FormFieldホワイトリスト認証列除外**＝`efe7857`、**R4追補 RecipientResolver宛先絞り込み**＝`0006f43`。T-8/T-10/T-11・Q-Bを解消済みへ更新。一方 **G-10（案件ステータス35値シード）** と **R3残 BRIDGE_PLUSテンプレ67フィールド＋OptionGroup投入** は `StatusSeeder`/`db/seeds/` を確認した限り未着手のまま（04 に明記）。併せて `04-rails-implementation-plan.md` の該当箇所・R5着手前チェックリスト・次のアクション7を同時更新 |
+| 2026-08-19（4回目） | **実装状況を再々確認し反映**。git log（コミット `114a174`〜`63c52e9`）を突合した結果、3回目時点で唯一残っていた2件も実装済みと判明: **G-10（案件ステータス全35値シード。統廃合後31値）**＝`114a174`（旧Laravel側原本＋`legacy-research/03`統廃合指針を反映）、**R3残 BRIDGE_PLUSテンプレ67フィールド＋OptionGroup 8種投入**＝`63c52e9`（`BridgePlusFormTemplateSeeder`。営業担当者ログイン→全7ステップ描画まで実HTTPリクエストで確認済み。consent_status等5項目の選択肢は業務未確定のため設計書記載の「選択肢案」を暫定投入・本番前に業務確認要）。**これにより04「次のアクション」7（CTO判断で即着手可能）は全7件が完了**。§2実装済みテーブル・RSpecファイル数（38→40。service 3→5）、P2-6/P2-8、§4申込登録、§6進捗サマリを同時更新。`04-rails-implementation-plan.md` の対応箇所（R2/R3節・CTO判断で着手可能テーブル・G-1〜G-10反映状況・次のアクション7・状態行）も同時更新。次アクションはCEO確認事項（Q-45〜48・Q-8・Q-D-1/2、本番構成・デプロイ・リリース時期）と外部アクション（ネットムーブ正式依頼。ただしS-3改・R-13担当確認が判明するまで送付不可）待ちの段階 |
