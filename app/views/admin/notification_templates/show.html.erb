@@ -1,15 +1,43 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @notification_template.name %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">種別</dt><dd><%= NotificationTemplate::TEMPLATE_TYPES[@notification_template.template_type] %></dd>
-    <dt class="font-bold">件名</dt><dd><%= @notification_template.subject %></dd>
-    <dt class="font-bold">本文</dt><dd><%= simple_format(@notification_template.body) %></dd>
-  </dl>
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_notification_templates_path, class: "underline" %>
-    <% if policy(@notification_template).update? %><%= link_to "編集", edit_admin_notification_template_path(@notification_template), class: "underline" %><% end %>
-    <% if policy(@notification_template).destroy? %>
-      <%= button_to "削除", admin_notification_template_path(@notification_template), method: :delete, form: { data: { turbo_confirm: "削除しますか？" } } %>
-    <% end %>
+<% content_for :page_title, "通知テンプレート詳細" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-bold text-slate-900"><%= @notification_template.name %></h2>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_notification_templates_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@notification_template).update? %>
+        <%= link_to "編集", edit_admin_notification_template_path(@notification_template),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
   </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4">
+      <div>
+        <dt class="text-xs text-slate-500">種別</dt>
+        <dd class="mt-1">
+          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"><%= NotificationTemplate::TEMPLATE_TYPES[@notification_template.template_type] %></span>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">件名</dt>
+        <dd class="mt-1 text-slate-800"><%= @notification_template.subject.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">本文</dt>
+        <dd class="mt-1 text-slate-800"><%= simple_format(@notification_template.body) %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if policy(@notification_template).destroy? %>
+    <div>
+      <%= button_to "このテンプレートを削除", admin_notification_template_path(@notification_template), method: :delete,
+            form: { data: { turbo_confirm: "#{@notification_template.name} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>

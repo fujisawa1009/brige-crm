@@ -1,16 +1,56 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">制作会社</h1>
-  <% if policy(ProductionCompany).create? %><%= link_to "新規作成", new_admin_production_company_path, class: "underline w-fit" %><% end %>
-  <table class="border-collapse w-full text-sm">
-    <thead><tr><th class="border px-2 py-1 text-left">会社名</th><th class="border px-2 py-1 text-left">担当者名</th></tr></thead>
-    <tbody>
-      <% @production_companies.each do |company| %>
-        <tr>
-          <td class="border px-2 py-1"><%= link_to company.name, admin_production_company_path(company) %></td>
-          <td class="border px-2 py-1"><%= company.contact_name %></td>
+<% content_for :page_title, "制作会社" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">制作会社</h2>
+      <p class="text-sm text-slate-500">案件の制作対応を委託する制作会社マスタを管理します。</p>
+    </div>
+    <% if policy(ProductionCompany).create? %>
+      <%= link_to "新規作成", new_admin_production_company_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">会社名</th>
+          <th class="px-4 py-3">担当者名</th>
+          <th class="px-4 py-3">メール</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @production_companies.empty? %>
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">制作会社が登録されていません</td>
+          </tr>
+        <% end %>
+        <% @production_companies.each do |company| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to company.name, admin_production_company_path(company), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= company.contact_name.presence || "—" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= company.email.presence || "—" %></td>
+            <td class="px-4 py-3"><%= active_badge(company.is_active?) %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_production_company_path(company), class: "text-indigo-600 hover:underline" %>
+              <% if policy(company).update? %>
+                <%= link_to "編集", edit_admin_production_company_path(company), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(company).destroy? %>
+                <%= button_to "削除", admin_production_company_path(company), method: :delete,
+                      form: { data: { turbo_confirm: "#{company.name} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>

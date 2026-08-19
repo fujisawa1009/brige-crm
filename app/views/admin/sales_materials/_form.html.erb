@@ -1,16 +1,50 @@
-<%= form_with model: sales_material, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
-  <% if sales_material.errors.any? %><div class="text-red-700"><%= sales_material.errors.full_messages.to_sentence %></div><% end %>
-  <div><%= f.label :title, "タイトル" %><%= f.text_field :title, class: "border rounded px-2 py-1 w-full" %></div>
-  <div>
-    <%= f.label :category, "カテゴリ" %>
-    <%= f.select :category, SalesMaterial::CATEGORIES, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div><%= f.label :description, "説明" %><%= f.text_area :description, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :file_path, "ファイルパス/URL" %><%= f.text_field :file_path, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :original_file_name, "元ファイル名" %><%= f.text_field :original_file_name, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :file_size, "ファイルサイズ(byte)" %><%= f.number_field :file_size, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :mime_type, "MIMEタイプ" %><%= f.text_field :mime_type, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :sort_order, "表示順" %><%= f.number_field :sort_order, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :is_published, "公開" %><%= f.check_box :is_published %></div>
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-<% end %>
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: sales_material, url: url, class: "flex flex-col gap-4 max-w-md" do |f| %>
+    <% if sales_material.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= sales_material.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <div>
+      <%= f.label :title, "タイトル", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :title, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :category, "カテゴリ", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.select :category, SalesMaterial::CATEGORIES, { include_blank: true },
+            class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :description, "説明", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_area :description, rows: 3, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :file_path, "ファイルパス/URL", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :file_path, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono" %>
+    </div>
+    <div>
+      <%= f.label :original_file_name, "元ファイル名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :original_file_name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :file_size, "ファイルサイズ（byte）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.number_field :file_size, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :mime_type, "MIMEタイプ", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :mime_type, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :sort_order, "表示順", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.number_field :sort_order, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= f.check_box :is_published, class: "h-4 w-4 rounded border-slate-300" %>
+      <%= f.label :is_published, "公開", class: "text-sm font-medium text-slate-700" %>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= link_to "キャンセル", admin_sales_materials_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+    </div>
+  <% end %>
+</div>

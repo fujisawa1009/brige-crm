@@ -1,16 +1,56 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">通知テンプレート</h1>
-  <% if policy(NotificationTemplate).create? %><%= link_to "新規作成", new_admin_notification_template_path, class: "underline w-fit" %><% end %>
-  <table class="border-collapse w-full text-sm">
-    <thead><tr><th class="border px-2 py-1 text-left">名称</th><th class="border px-2 py-1 text-left">種別</th></tr></thead>
-    <tbody>
-      <% @notification_templates.each do |template| %>
-        <tr>
-          <td class="border px-2 py-1"><%= link_to template.name, admin_notification_template_path(template) %></td>
-          <td class="border px-2 py-1"><%= NotificationTemplate::TEMPLATE_TYPES[template.template_type] %></td>
+<% content_for :page_title, "通知テンプレート" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">通知テンプレート</h2>
+      <p class="text-sm text-slate-500">一斉通知・問い合わせ通知の件名/本文テンプレートを管理します。</p>
+    </div>
+    <% if policy(NotificationTemplate).create? %>
+      <%= link_to "新規作成", new_admin_notification_template_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">テンプレート名</th>
+          <th class="px-4 py-3">種別</th>
+          <th class="px-4 py-3">件名</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @notification_templates.empty? %>
+          <tr>
+            <td colspan="4" class="px-4 py-8 text-center text-slate-500">テンプレートが登録されていません</td>
+          </tr>
+        <% end %>
+        <% @notification_templates.each do |template| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to template.name, admin_notification_template_path(template), class: "hover:underline" %></td>
+            <td class="px-4 py-3">
+              <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"><%= NotificationTemplate::TEMPLATE_TYPES[template.template_type] %></span>
+            </td>
+            <td class="px-4 py-3 text-slate-600"><%= template.subject.presence || "—" %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_notification_template_path(template), class: "text-indigo-600 hover:underline" %>
+              <% if policy(template).update? %>
+                <%= link_to "編集", edit_admin_notification_template_path(template), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(template).destroy? %>
+                <%= button_to "削除", admin_notification_template_path(template), method: :delete,
+                      form: { data: { turbo_confirm: "#{template.name} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>
