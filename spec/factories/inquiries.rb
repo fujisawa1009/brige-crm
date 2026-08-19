@@ -13,6 +13,7 @@
 #  first_responder_name :string
 #  inquiry_number       :string           not null
 #  is_visible_to_agent  :boolean          default(TRUE), not null
+#  is_visible_to_customer :boolean        default(TRUE), not null
 #  next_responder_name  :string
 #  reception_channel    :string
 #  status               :string           not null

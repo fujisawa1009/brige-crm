@@ -29,6 +29,10 @@
         <dt class="text-xs text-slate-500">代理店への公開</dt>
         <dd class="mt-1 text-slate-800"><%= @inquiry.is_visible_to_agent? ? "公開" : "非公開（社内限定）" %></dd>
       </div>
+      <div>
+        <dt class="text-xs text-slate-500">顧客への公開</dt>
+        <dd class="mt-1 text-slate-800"><%= @inquiry.is_visible_to_customer? ? "公開" : "非公開（社内限定）" %></dd>
+      </div>
     </dl>
   </div>
 

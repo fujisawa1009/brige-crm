@@ -134,6 +134,62 @@ RSpec.describe "Admin::Inquiries", type: :request, seed_permission_catalog: true
     end
   end
 
+  # R6-5: 問い合わせ社内外公開制御（2026-08-20 CEO決定）。is_visible_to_customer=falseの問い合わせは
+  # 顧客（Customer/SalesRepresentative）が宛先から除外され、メール・アプリ内通知のいずれも届かない
+  # ことを検証する（RecipientResolver#recipients_for_inquiryが両経路(InquiryMessageMailJob/
+  # InquiryNotifier)共通の入口であるため、ここを塞げば漏洩経路が塞がることの確認）。
+  describe "R6-5: 顧客非公開の問い合わせは顧客・営業担当者へ通知が飛ばない" do
+    include ActiveJob::TestHelper
+
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:sales_rep) { create(:sales_representative, agency: agency_a1, email: "rep@example.com") }
+    let!(:customer_with_mail) { create(:customer, agency: agency_a1, email: "customer-visible-check@example.com") }
+    let!(:order_with_mail) do
+      create(:order, agency: agency_a1, customer: customer_with_mail, sales_representative: sales_rep)
+    end
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "作成時、顧客・営業担当者はinquiry_message_recipientsに含まれず、代理店は含まれる" do
+      post admin_inquiries_path, params: {
+        inquiry: { order_id: order_with_mail.id, category: Inquiry::CATEGORY_AFTER, title: "非公開問い合わせ",
+                   first_message_body: "社内限定の初回本文", is_visible_to_customer: "0" }
+      }
+
+      inquiry = Inquiry.find_by!(title: "非公開問い合わせ")
+      expect(inquiry.is_visible_to_customer).to eq(false)
+
+      recipient_types = inquiry.inquiry_messages.first.inquiry_message_recipients.pluck(:recipient_type)
+      expect(recipient_types).not_to include("Customer", "SalesRepresentative")
+      expect(recipient_types).to include("Agency")
+    end
+
+    it "作成時、顧客宛にメールもアプリ内通知も作られない" do
+      perform_enqueued_jobs do
+        post admin_inquiries_path, params: {
+          inquiry: { order_id: order_with_mail.id, category: Inquiry::CATEGORY_AFTER, title: "非公開問い合わせ2",
+                     first_message_body: "社内限定の初回本文2", is_visible_to_customer: "0" }
+        }
+      end
+
+      tos = ActionMailer::Base.deliveries.flat_map(&:to)
+      expect(tos).not_to include(customer_with_mail.email, sales_rep.email)
+      expect(SystemNotification.where(recipient: customer_with_mail)).to be_empty
+    end
+
+    it "既定（is_visible_to_customer未指定=true）では顧客宛にメールが届く" do
+      perform_enqueued_jobs do
+        post admin_inquiries_path, params: {
+          inquiry: { order_id: order_with_mail.id, category: Inquiry::CATEGORY_AFTER, title: "公開問い合わせ",
+                     first_message_body: "通常の初回本文" }
+        }
+      end
+
+      tos = ActionMailer::Base.deliveries.flat_map(&:to)
+      expect(tos).to include(customer_with_mail.email)
+    end
+  end
+
   # R6-4: 問い合わせ返信テンプレート機能。テンプレート由来かどうかのメタ情報を記録しつつ、
   # 「テンプレート未選択でも新規作成できてしまう」というftlogの弱点を踏まえ、存在しない
   # テンプレートIDを申告する不正なリクエストはサーバー側で弾かれることを確認する。

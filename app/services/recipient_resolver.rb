@@ -69,11 +69,19 @@ class RecipientResolver
   # 2026-08-19 v5 CEO決定（R4追補・notification-matrix.md §3-13）: is_visible_to_agent=false の
   # 問い合わせ（社内限定のやり取り。InquiryPolicy#show?が代理店/代理店グループから不可視にする対象）は、
   # 代理店へのメール送信も同様に止める（画面で見えないのにメールだけ届く食い違いを解消）。
-  # 営業担当者（SalesRepresentative）・顧客は InquiryPolicy の可視性制御の対象外（別モデル・別画面）
-  # のため対象外＝現行どおり全投稿で含める。
+  #
+  # 2026-08-20 CEO決定（R6-5・04-implementation-plan.md line 211/362、notification-matrix.md §3-13
+  # 論点13）: 顧客側の絞り込みは「現場ヒアリング前は据え置き」を上書きして着手。is_visible_to_customer
+  # =falseの問い合わせは顧客への自動送信を止める。営業担当者（SalesRepresentative）は「顧客と同じ
+  # ルールに揃える」という2026-08-19 CEO決定（notification-matrix.md E4/E9/E10列の確定）に従い、
+  # is_visible_to_customerを流用して同一の絞り込みを同時適用する（顧客専用のフラグを別途作らない＝
+  # 「顧客ルール確定時に顧客と営業担当者へ同一の絞り込みを同時適用する」という決定そのままの実装）。
   def recipients_for_inquiry
     order_parties = resolve_from_order.to_a.compact.select(&:has_email)
     order_parties = order_parties.reject { |party| party.type == "Agency" } unless inquiry.is_visible_to_agent?
+    unless inquiry.is_visible_to_customer?
+      order_parties = order_parties.reject { |party| %w[Customer SalesRepresentative].include?(party.type) }
+    end
     routed_groups = self.class.route_for(category: inquiry.category, status_code: inquiry.status)
 
     order_parties.map { |party| { type: party.type, id: party.id } } +

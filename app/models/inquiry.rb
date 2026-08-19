@@ -24,6 +24,7 @@
 #  first_responder_name :string
 #  inquiry_number       :string           not null
 #  is_visible_to_agent  :boolean          default(TRUE), not null
+#  is_visible_to_customer :boolean        default(TRUE), not null
 #  next_responder_name  :string
 #  reception_channel    :string
 #  status               :string           not null
@@ -86,6 +87,13 @@ class Inquiry < ApplicationRecord
   # 排他バリデーションは時期尚早と判断）。
 
   scope :visible_to_agent, -> { where(is_visible_to_agent: true) }
+  # R6-5: 顧客側の表示制御（is_visible_to_agentと対になる独立フラグ）。現時点で顧客が直接
+  # Inquiryを閲覧する経路（マイページ等）は存在しない（app/controllers/mypage/配下を確認済み。
+  # dashboard/login/OTP/通知設定のみ）ため、このscopeの主な利用箇所はRecipientResolver（宛先の
+  # メール絞り込み）。ただし「default_scopeに頼らずクエリのたびに明示する」方針（ftlog横展開調査の
+  # 教訓）を踏襲し、将来マイページ等で顧客向け参照経路を追加する際はこのscopeを明示的にチェーンする
+  # こと（Inquiry.visible_to_customer を経由しない直接参照を作らない）。
+  scope :visible_to_customer, -> { where(is_visible_to_customer: true) }
   scope :for_category, ->(category) { where(category: category) }
 
   # ステータス駆動の宛先ルーティング解決（board-implementation-options.md §2-2「ステータス

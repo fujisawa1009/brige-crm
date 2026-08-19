@@ -26,6 +26,16 @@
         <%= f.label :first_message_body, "本文", class: "mb-1 block text-sm font-medium text-slate-700" %>
         <%= text_area_tag "inquiry[first_message_body]", nil, rows: 4, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
+      <%# R6-5: 社内外公開制御。既定は両方公開（見せる）で、社内限定にしたい場合だけ外す運用
+          （is_visible_to_agent/is_visible_to_customerのカラムdefault:trueと揃える）。 %>
+      <div class="flex items-center gap-2">
+        <%= f.check_box :is_visible_to_agent, class: "rounded border-slate-300" %>
+        <%= f.label :is_visible_to_agent, "代理店へ公開する", class: "text-sm text-slate-700" %>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= f.check_box :is_visible_to_customer, class: "rounded border-slate-300" %>
+        <%= f.label :is_visible_to_customer, "顧客へ公開する", class: "text-sm text-slate-700" %>
+      </div>
 
       <div class="flex gap-2 pt-2">
         <%= f.submit "作成", class: "btn-primary" %>

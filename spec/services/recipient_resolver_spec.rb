@@ -131,5 +131,36 @@ RSpec.describe RecipientResolver, type: :service, seed_status_catalog: true do
       expect(result).to include({ type: "Customer", id: customer.id })
       expect(result).to include({ type: "SalesRepresentative", id: rep.id })
     end
+
+    it "is_visible_to_customer=falseの場合は顧客と営業担当者を宛先から除外する（2026-08-20 CEO決定・R6-5）" do
+      agency = create(:agency, email_1: "agency@example.com")
+      customer = create(:customer, agency: agency, email: "cust@example.com")
+      rep = create(:sales_representative, agency: agency, email: "rep@example.com")
+      order = create(:order, agency: agency, customer: customer, sales_representative: rep)
+      inquiry = create(:inquiry, order: order, category: Inquiry::CATEGORY_AFTER, is_visible_to_customer: false)
+
+      result = described_class.recipients_for_inquiry(inquiry)
+
+      expect(result).to include({ type: "Agency", id: agency.id })
+      expect(result).not_to include({ type: "Customer", id: customer.id })
+      expect(result).not_to include({ type: "SalesRepresentative", id: rep.id })
+    end
+
+    it "is_visible_to_agent=falseとis_visible_to_customer=falseを同時に満たすと社内ルーティンググループのみ残る" do
+      agency = create(:agency, email_1: "agency@example.com")
+      customer = create(:customer, agency: agency, email: "cust@example.com")
+      rep = create(:sales_representative, agency: agency, email: "rep@example.com")
+      order = create(:order, agency: agency, customer: customer, sales_representative: rep)
+      inquiry = create(:inquiry, order: order, category: Inquiry::CATEGORY_AFTER,
+                                  is_visible_to_agent: false, is_visible_to_customer: false)
+
+      group = create(:recipient_group)
+      create(:inquiry_recipient_route, recipient_group: group,
+                                       category: Inquiry::CATEGORY_AFTER, status_code: inquiry.status)
+
+      result = described_class.recipients_for_inquiry(inquiry)
+
+      expect(result).to eq([ { type: "RecipientGroup", id: group.id } ])
+    end
   end
 end

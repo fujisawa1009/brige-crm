@@ -56,7 +56,7 @@ class Admin::InquiriesController < Admin::BaseController
 
   def inquiry_params
     params.require(:inquiry).permit(
-      :order_id, :title, :category, :status, :is_visible_to_agent,
+      :order_id, :title, :category, :status, :is_visible_to_agent, :is_visible_to_customer,
       :after_urgency, :after_type, :after_area, :reception_channel,
       :first_responder_name, :next_responder_name
     )
