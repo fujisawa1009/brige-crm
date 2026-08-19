@@ -79,7 +79,12 @@ Rails.application.routes.draw do
       collection { post :export } # CSV非同期エクスポート基盤（UserCsvImportJobと対）
     end
     resources :orders do
-      collection { post :export }
+      collection do
+        post :export
+        # R6-7: ガントチャート（受注日→契約開始日→納品日等の経過管理）。html/json両対応の1アクションで、
+        # htmlは骨組みのみ・jsonがfrappe-ganttへ渡すタスク配列を返す（Admin::OrdersController#gantt）。
+        get :gantt
+      end
       # R5-1: 契約ワークフロー状態機械のイベント投入（Order#transition_contract_to!）。
       resources :contract_reviews, only: %i[create]
     end

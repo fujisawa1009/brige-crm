@@ -8,6 +8,8 @@
     </div>
     <div class="flex gap-2">
       <% if policy(Order).index? %>
+        <%# R6-7: 受注日→契約開始日→納品日等の経過管理をガントチャートで表示する画面への導線。 %>
+        <%= link_to "ガント表示", gantt_admin_orders_path, class: "btn-secondary" %>
         <%= button_to "CSVエクスポート", export_admin_orders_path, method: :post,
               class: "btn-secondary" %>
       <% end %>

@@ -102,7 +102,10 @@ class RoleSeeder
   # （AGENCY_SCOPED_FULL_WRITE_CONTROLLERSと同じ「新規作成は内部運用限定」方針。CSVエクスポートは
   # 全ロール共通でexportアクションのみ、csv_exportsのダウンロードはindex/showを渡す）。
   R2_CRM_CONTROLLERS = %w[admin/customers admin/stores admin/orders].freeze
-  R2_CRM_AGENCY_ACTIONS = %w[index show edit update destroy export].freeze
+  # R6-7: ganttはadmin/orders専用の参照系アクション（他のR2_CRM_CONTROLLERSにはこのアクション自体が
+  # 存在せずクエリが単に0件になるだけなので、配列に混ぜても admin/customers・admin/stores 側への
+  # 影響はない）。index?と同じ参照権限で足りるためindex/showと同列に加える。
+  R2_CRM_AGENCY_ACTIONS = %w[index show edit update destroy export gantt].freeze
 
   # 04 R2: 商材・ステータス・営業資料マスタ。MasterDataPolicyの既定どおり、代理店/代理店グループは
   # 参照のみ（index/show）。作成・変更は実務運用者以上に限定する（商材構成・料金・ステータス体系の

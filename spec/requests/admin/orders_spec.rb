@@ -166,4 +166,92 @@ RSpec.describe "Admin::Orders", type: :request, seed_permission_catalog: true, s
       expect(response.body).not_to include(order_a1.order_number)
     end
   end
+
+  # R6-7: ガントチャート（受注日→契約開始日→納品日等の経過管理）。JSON API（Admin::OrdersController#gantt
+  # format: :json）がpolicy_scopeを迂回して他代理店のOrderを露出しないことを検証する
+  # （2026-08-19の認可監査で発見・是正した類似の脆弱性の再発防止が目的）。
+  describe "R6-7: ガントチャート" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:dated_order_a1) do
+      create(:order, agency: agency_a1, customer: customer_a1, contract_condition: cc_a1,
+                      ordered_at: Date.new(2026, 1, 10), work_completed_at: Date.new(2026, 2, 20))
+    end
+    let!(:dated_order_b) do
+      create(:order, agency: agency_b, customer: customer_b, contract_condition: cc_b,
+                      ordered_at: Date.new(2026, 1, 5), work_completed_at: Date.new(2026, 1, 25))
+    end
+
+    context "admin(super_admin)" do
+      before { sign_in_with_otp!(admin_user) }
+
+      it "html表示できる" do
+        get gantt_admin_orders_path
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "JSON APIは全代理店の日付ありOrderをタスクとして返す" do
+        get gantt_admin_orders_path(format: :json)
+        expect(response).to have_http_status(:ok)
+
+        ids = response.parsed_body.map { |task| task["id"] }
+        expect(ids).to include(dated_order_a1.id, dated_order_b.id)
+      end
+
+      it "受注日・契約開始日・納品日・解約日が全てnilの案件はガントに出さない" do
+        get gantt_admin_orders_path(format: :json)
+        ids = response.parsed_body.map { |task| task["id"] }
+        # order_a1（外側のletで定義。日付フィールド未設定）は対象外になる
+        expect(ids).not_to include(order_a1.id)
+      end
+
+      it "開始・終了日を欠損補完してISO8601形式で返す（終了=納品完了日を優先）" do
+        get gantt_admin_orders_path(format: :json)
+        task = response.parsed_body.find { |t| t["id"] == dated_order_a1.id }
+
+        expect(task["start"]).to eq("2026-01-10")
+        expect(task["end"]).to eq("2026-02-20")
+      end
+    end
+
+    context "代理店ユーザー" do
+      let!(:agency_user) { user_with_role("代理店用", agency: agency_a1) }
+
+      before { sign_in_with_otp!(agency_user) }
+
+      it "html表示できる" do
+        get gantt_admin_orders_path
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "JSON APIは自代理店のOrderのみ返し、他代理店のOrderは漏れない" do
+        get gantt_admin_orders_path(format: :json)
+        expect(response).to have_http_status(:ok)
+
+        ids = response.parsed_body.map { |task| task["id"] }
+        expect(ids).to include(dated_order_a1.id)
+        expect(ids).not_to include(dated_order_b.id)
+      end
+    end
+
+    describe "完了済みを含む検索（R6-6と同じCompletionStatusFilterを再利用）" do
+      let!(:completed_dated_order) do
+        create(:order, agency: agency_a1, customer: customer_a1, contract_condition: cc_a1, status: "16:完了",
+                        ordered_at: Date.new(2026, 1, 1), work_completed_at: Date.new(2026, 1, 15))
+      end
+
+      before { sign_in_with_otp!(admin_user) }
+
+      it "既定（include_completed未指定）では完了系ステータスの案件を除外する" do
+        get gantt_admin_orders_path(format: :json)
+        ids = response.parsed_body.map { |task| task["id"] }
+        expect(ids).not_to include(completed_dated_order.id)
+      end
+
+      it "include_completed=1を指定すると完了系ステータスの案件も表示される" do
+        get gantt_admin_orders_path(format: :json), params: { include_completed: "1" }
+        ids = response.parsed_body.map { |task| task["id"] }
+        expect(ids).to include(completed_dated_order.id)
+      end
+    end
+  end
 end

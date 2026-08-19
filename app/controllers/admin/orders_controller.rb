@@ -80,6 +80,19 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to admin_csv_exports_path, notice: "CSVエクスポートを開始しました（非同期処理）。完了後、一覧からダウンロードできます。"
   end
 
+  # R6-7: ガントチャート（Orderの日付＝受注日→契約開始日→納品日等の経過管理。2026-08-20 CEO決定。
+  # 決済・契約ワークフロー状態機械そのものには触れない）。indexと同じ参照権限（:index?）で足りるため
+  # 専用ポリシーアクションは増やさない。htmlは骨組みのみ返し、frappe-gantt(Stimulus)が
+  # このアクションのjson形式へfetchしてタスク配列を取得する（1アクションでhtml/json両対応）。
+  def gantt
+    authorize Order, :index?
+
+    respond_to do |format|
+      format.html
+      format.json { render json: gantt_tasks }
+    end
+  end
+
   private
 
   def set_order
@@ -124,5 +137,51 @@ class Admin::OrdersController < Admin::BaseController
       :google_ads_applied, :google_ads_count, :google_review_display, :review_heading, :reservation_system,
       :portal_site_applied, :remarks, :shared_notes
     )
+  end
+
+  # R6-7: frappe-ganttが要求する最小限のタスク形式（id/name/start/end/progress）に整形する。
+  # policy_scopeは一覧(#index)と同じ経路を必ず通す（ここを迂回すると他代理店のOrderが漏れる。
+  # 2026-08-19認可監査で発見した経路と同種の穴を作らないため必須）。既定で完了/終了系ステータスを
+  # 除外するCompletionStatusFilterも#indexと揃え、include_completedで全件表示に切り替えられるようにする。
+  def gantt_tasks
+    scope = policy_scope(Order).includes(:customer, :agency)
+    scope = scope.where("order_number ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
+    scope = CompletionStatusFilter.new(status_klass: OrderStatus).apply(scope, include_completed: params[:include_completed])
+
+    scope.filter_map { |order| gantt_task_json(order) }
+  end
+
+  def gantt_task_json(order)
+    dates = gantt_task_dates(order)
+    return nil if dates.nil?
+
+    start_date, end_date = dates
+    {
+      id: order.id,
+      name: "#{order.order_number} #{order.customer.name}",
+      start: start_date.iso8601,
+      end: end_date.iso8601,
+      # 進捗率までは持たない（依存関係リンクも持たないftlog踏襲の単純表示）。納品済み/解約済みなら
+      # 完了扱い(100)、それ以外は0のみの二値にとどめる（UI強化は後回しでよいという要件どおり）。
+      progress: (order.work_completed_at.present? || order.terminated_at.present?) ? 100 : 0,
+      url: admin_order_path(order)
+    }
+  end
+
+  # 開始＝ordered_at（無ければcontract_start_date、それも無ければ残りの日付列のうち最古の値）。
+  # 終了＝terminated_at（解約が案件の最終形）||work_completed_at（納品完了）||contract_start_date||
+  # 現在日、の優先順で欠損を補う（要件メモの例をそのまま採用）。4列すべてnilの案件は表示する情報が
+  # 無いためガントに出さない（nilを返す）。
+  def gantt_task_dates(order)
+    known_dates = [ order.ordered_at, order.contract_start_date, order.work_completed_at, order.terminated_at ].compact
+    return nil if known_dates.empty?
+
+    start_date = order.ordered_at || order.contract_start_date || known_dates.min
+    end_date = order.terminated_at || order.work_completed_at || order.contract_start_date || Date.current
+    # データ入力誤り等でend<startになるケース（例: contract_start_dateだけ未来日で誤登録）を
+    # frappe-gantt側の描画崩れを避けるため1日バーにクランプする。
+    end_date = start_date if end_date < start_date
+
+    [ start_date, end_date ]
   end
 end

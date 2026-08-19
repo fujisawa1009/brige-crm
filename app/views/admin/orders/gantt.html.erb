@@ -1,0 +1,51 @@
+<% content_for :page_title, "案件ガントチャート" %>
+
+<%# R6-7: frappe-ganttのCSSはCDNから読み込む（JS本体はbin/importmap pinでvendor/javascriptへ
+    ダウンロード済みのESモジュールをimportmap経由で読む。app/javascript/controllers/gantt_controller.js
+    参照）。ftlogのgantt/show.html.erbと同じ「CSSはCDN・JSはimportmap」構成。 %>
+<% content_for :head do %>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@1.2.2/dist/frappe-gantt.css">
+<% end %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">案件ガントチャート</h2>
+      <p class="text-sm text-slate-500">
+        受注日→契約開始日→納品日/解約日の経過を表示します（依存関係リンクは表示しません・参照専用）。
+      </p>
+    </div>
+    <%= link_to "一覧へ戻る", admin_orders_path, class: "btn-secondary" %>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <%= form_with url: gantt_admin_orders_path, method: :get, class: "grid grid-cols-1 gap-3 sm:grid-cols-3" do %>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">案件番号</label>
+        <%= text_field_tag :q, params[:q], placeholder: "案件番号で検索",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <!-- 一覧(#index)のR6-6と同じ既定挙動: 完了/終了系ステータスは既定で除外し、
+           include_completed=1で全件表示に切り替える。 -->
+      <div class="flex items-end">
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <%= check_box_tag :include_completed, "1", params[:include_completed].present?,
+                class: "h-4 w-4 rounded border-slate-300" %>
+          完了済みを含む
+        </label>
+      </div>
+
+      <div class="flex items-end">
+        <%= submit_tag "絞り込み", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+       data-controller="gantt"
+       data-gantt-tasks-url-value="<%= gantt_admin_orders_path(format: :json, q: params[:q], include_completed: params[:include_completed]) %>">
+    <p data-gantt-target="empty" class="hidden text-sm text-slate-500">日付情報を持つ案件が見つかりません。</p>
+    <div data-gantt-target="chart"></div>
+  </div>
+</div>
