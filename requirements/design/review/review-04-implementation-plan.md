@@ -4,7 +4,7 @@
 - 参照: `01-laravel-current-analysis.md`（§5未実装一覧・§8決定ポイント）/ `03-rails-architecture-proposal.md`（§8決定録）/
   Laravel側 `projects/boilerplate-vue-env/laravel/requirements/development-plan.md`・`design/release-readiness.md`・
   `design/payment-integration.md`・`design/customer-merge-design.md`・`design/board-implementation-options.md`・
-  `design/p3-12-13-confirmation-docs.md`・`design/ftlog-port.md`・`design/legacy-research/10-migration-mapping.md`
+  `design/contract-confirmation-docs.md`・`design/ftlog-port.md`・`design/legacy-research/10-migration-mapping.md`
 - 実施: 秘書委任によるCTOレビュー（rails new前・R0着手前の最終チェック）
 - 書込範囲: 本ファイルのみ。04本体・01/03・Laravel側requirementsは変更していない。
 
@@ -173,7 +173,7 @@ created_by）・9（テスト基盤の一部）のみで、以下は完了条件
    使えるかのように読めるため、R7着手時に読み替え作業をタスクとして明示するかどうかCEO/実装者の
    認識合わせが必要。
 4. **「重説チェック（P3-12）はP3-4（契約ワークフロー状態機械）の後に実装した方がよい」という内部順序の知見**
-   （`p3-12-13-confirmation-docs.md:165`「重説未実施の案件を不備チェックへ進めてよいかが状態機械の論点になる
+   （`contract-confirmation-docs.md:165`「重説未実施の案件を不備チェックへ進めてよいかが状態機械の論点になる
    ため、P3-4より先に単独実装すると手戻る」）が、04のR5では契約ワークフロー状態機械と重説チェックが同一箇条書き
    の中で並列に列挙されており（`04:82-84`）、フェーズ内の実装順序までは踏み込んでいない。R5をタスク分解する際に
    この順序知見を引き継ぐ必要があることをR5詳細セクションに一言残すべきか、CEO確認したい。
