@@ -36,6 +36,13 @@ Rails.application.configure do
   # このapplication.rbでは含まれていなかったため明示的に追加）。
   config.active_job.queue_adapter = :test
 
+  # ActiveRecord::Encryption の鍵はcredentials（master.key必須）に置いているが、CIはmaster.keyを
+  # 持たないため復号できず encrypts 対象モデル（Order#billing_password 等）のspecが落ちる。
+  # テスト環境に限りダミー鍵を明示する（railtieが credentials より config を優先するため上書きされる）。
+  config.active_record.encryption.primary_key = "test_primary_key_do_not_use_in_production"
+  config.active_record.encryption.deterministic_key = "test_deterministic_key_do_not_use_in_production"
+  config.active_record.encryption.key_derivation_salt = "test_key_derivation_salt_do_not_use_in_production"
+
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.

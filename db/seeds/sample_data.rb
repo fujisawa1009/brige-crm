@@ -22,7 +22,7 @@ PERSON_GIVEN_NAMES = %w[太郎 花子 一郎 恵子 健太 美咲 大輔 由美 
 
 def sample_company_name = "#{COMPANY_WORDS.sample}#{COMPANY_TYPES.sample}株式会社"
 def sample_person_name = "#{PERSON_FAMILY_NAMES.sample} #{PERSON_GIVEN_NAMES.sample}"
-def sample_phone = format("0#{[3, 6, 45, 52, 92].sample}-%04d-%04d", rand(1000..9999), rand(1000..9999))
+def sample_phone = format("0#{[ 3, 6, 45, 52, 92 ].sample}-%04d-%04d", rand(1000..9999), rand(1000..9999))
 
 puts "sample data seed: start"
 
