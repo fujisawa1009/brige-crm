@@ -117,5 +117,19 @@ RSpec.describe RecipientResolver, type: :service, seed_status_catalog: true do
       expect(result).to include({ type: "Customer", id: customer.id })
       expect(result).to include({ type: "RecipientGroup", id: group.id })
     end
+
+    it "is_visible_to_agent=falseの場合は代理店を宛先から除外する（2026-08-19 v5 CEO決定・R4追補）" do
+      agency = create(:agency, email_1: "agency@example.com")
+      customer = create(:customer, agency: agency, email: "cust@example.com")
+      rep = create(:sales_representative, agency: agency, email: "rep@example.com")
+      order = create(:order, agency: agency, customer: customer, sales_representative: rep)
+      inquiry = create(:inquiry, order: order, category: Inquiry::CATEGORY_AFTER, is_visible_to_agent: false)
+
+      result = described_class.recipients_for_inquiry(inquiry)
+
+      expect(result).not_to include({ type: "Agency", id: agency.id })
+      expect(result).to include({ type: "Customer", id: customer.id })
+      expect(result).to include({ type: "SalesRepresentative", id: rep.id })
+    end
   end
 end

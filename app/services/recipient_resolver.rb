@@ -65,8 +65,15 @@ class RecipientResolver
 
   # 種別×ステータスのルーティング結果（recipient_group）＋案件経由の自動解決結果（agency/
   # sales_representative/customer。メールが無い宛先は送信不能なので除外する）をマージして返す。
+  #
+  # 2026-08-19 v5 CEO決定（R4追補・notification-matrix.md §3-13）: is_visible_to_agent=false の
+  # 問い合わせ（社内限定のやり取り。InquiryPolicy#show?が代理店/代理店グループから不可視にする対象）は、
+  # 代理店へのメール送信も同様に止める（画面で見えないのにメールだけ届く食い違いを解消）。
+  # 営業担当者（SalesRepresentative）・顧客は InquiryPolicy の可視性制御の対象外（別モデル・別画面）
+  # のため対象外＝現行どおり全投稿で含める。
   def recipients_for_inquiry
     order_parties = resolve_from_order.to_a.compact.select(&:has_email)
+    order_parties = order_parties.reject { |party| party.type == "Agency" } unless inquiry.is_visible_to_agent?
     routed_groups = self.class.route_for(category: inquiry.category, status_code: inquiry.status)
 
     order_parties.map { |party| { type: party.type, id: party.id } } +
