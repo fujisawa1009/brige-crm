@@ -4,7 +4,7 @@ class Admin::OrdersController < Admin::BaseController
   before_action :set_order, only: %i[show edit update destroy]
 
   def index
-    scope = policy_scope(Order).order(order_number: :desc)
+    scope = policy_scope(Order).includes(:customer, :agency).order(order_number: :desc)
     scope = scope.where("order_number ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
     scope = scope.where(status: params[:status]) if params[:status].present?
     @pagy, @orders = pagy(scope)

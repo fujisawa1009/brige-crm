@@ -1,35 +1,119 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @order.order_number %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">契約顧客</dt><dd><%= link_to @order.customer.name, admin_customer_path(@order.customer) %></dd>
-    <dt class="font-bold">設置先店舗</dt><dd><%= @order.store&.store_name %></dd>
-    <dt class="font-bold">販売代理店</dt><dd><%= @order.agency.name %></dd>
-    <dt class="font-bold">契約条件</dt><dd><%= @order.contract_condition.name %></dd>
-    <dt class="font-bold">プラン</dt><dd><%= @order.plan&.name %></dd>
-    <dt class="font-bold">案件ステータス</dt><dd><%= @order.status %></dd>
-    <dt class="font-bold">受注日</dt><dd><%= @order.ordered_at %></dd>
-    <dt class="font-bold">契約開始日</dt><dd><%= @order.contract_start_date %></dd>
-  </dl>
+<% content_for :page_title, "案件詳細" %>
 
-  <h2 class="text-lg font-bold">GBP/SNS作業詳細</h2>
-  <% if @order.order_work_detail %>
-    <%= link_to "作業詳細を見る", "#", class: "underline w-fit" %>
-    <p class="text-xs text-gray-500">
-      システムアカウント/SNSアカウントのID・PASSはPII暗号化済みのためこの一覧・詳細画面には表示しない
-      （pii-handling-rules.md §1 分類B。参照が必要な運用フローはR3以降で個別に設計する）。
-    </p>
-  <% else %>
-    <p class="text-gray-500">作業詳細は未登録です。</p>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 font-mono"><%= @order.order_number %></h2>
+      <p class="text-sm text-slate-500"><%= @order.customer.name %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_orders_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@order).update? %>
+        <%= link_to "編集", edit_admin_order_path(@order),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">案件ステータス</dt>
+        <dd class="mt-1">
+          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= order_status_badge_class(@order.status) %>">
+            <%= order_status_label(@order.status) %>
+          </span>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">契約ステータス</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.contract_status.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">契約顧客</dt>
+        <dd class="mt-1"><%= link_to @order.customer.name, admin_customer_path(@order.customer), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">設置先店舗</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.store&.store_name || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">販売代理店</dt>
+        <dd class="mt-1"><%= link_to @order.agency.name, admin_agency_path(@order.agency), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">契約条件</dt>
+        <dd class="mt-1"><%= link_to @order.contract_condition.name, admin_contract_condition_path(@order.contract_condition), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">プラン</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.plan&.name || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">支払方法</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.payment_method.presence || "—" %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">日程</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <dt class="text-xs text-slate-500">受注日</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.ordered_at&.to_date || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">契約開始日</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.contract_start_date || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">作業完了日</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.work_completed_at || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">解約日</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.cancelled_at || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">終了日</dt>
+        <dd class="mt-1 text-slate-800"><%= @order.terminated_at || "—" %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if @order.remarks.present? || @order.shared_notes.present? %>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">備考</h3>
+      <% if @order.remarks.present? %>
+        <p class="text-sm text-slate-800"><span class="text-xs text-slate-500">備考:</span> <%= @order.remarks %></p>
+      <% end %>
+      <% if @order.shared_notes.present? %>
+        <p class="mt-2 text-sm text-slate-800"><span class="text-xs text-slate-500">共有事項:</span> <%= @order.shared_notes %></p>
+      <% end %>
+    </div>
   <% end %>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_orders_path, class: "underline" %>
-    <% if policy(@order).update? %>
-      <%= link_to "編集", edit_admin_order_path(@order), class: "underline" %>
-    <% end %>
-    <% if policy(@order).destroy? %>
-      <%= button_to "削除", admin_order_path(@order), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">GBP/SNS作業詳細</h3>
+    <% if @order.order_work_detail %>
+      <%= link_to "作業詳細を見る", "#", class: "text-sm text-indigo-600 hover:underline" %>
+      <p class="mt-2 text-xs text-slate-500">
+        システムアカウント/SNSアカウントのID・PASSはPII暗号化済みのためこの一覧・詳細画面には表示しません
+        （pii-handling-rules.md §1 分類B。参照が必要な運用フローはR3以降で個別に設計する）。
+      </p>
+    <% else %>
+      <p class="text-sm text-slate-500">作業詳細は未登録です。</p>
     <% end %>
   </div>
+
+  <% if policy(@order).destroy? %>
+    <div>
+      <%= button_to "この案件を削除", admin_order_path(@order), method: :delete,
+            form: { data: { turbo_confirm: "#{@order.order_number} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>
