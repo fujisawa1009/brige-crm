@@ -366,7 +366,7 @@ Phase 4（将来 → Rails版 R6）:
 
 | # | 内容 | 区分 | 推奨フェーズ |
 |---|---|---|---|
-| 1 | BRIDGE_PLUS 初期テンプレート（67フィールド）の投入手段の決定と投入（§7-9）。併せて OptionGroup（prefecture / payment_method / yes_no ほか）のシーダー | 未実装 | R3 残（R5 着手前に決定・投入。運用開始の前提） |
+| 1 | ~~BRIDGE_PLUS 初期テンプレート（67フィールド）の投入手段の決定と投入（§7-9）。併せて OptionGroup（prefecture / payment_method / yes_no ほか）のシーダー~~ | ✅ 2026-08-19 投入済み | (b) `app/services/bridge_plus_form_template_seeder.rb`（`db/seeds.rb`から全環境で呼び出し。冪等）で67フィールド・7ステップ・OptionGroup 8種を投入。営業担当者ログイン→全7ステップ描画まで通しで動作確認済み。**要確認**: `consent_status`/`business_proof`/`elderly_consent`/`business_auth_doc`/`applicant_type` の選択肢（§3）は業務未確定のため同ファイル記載の「選択肢案」を暫定投入。本番運用開始前に業務側の最終確認が必要 |
 | 2 | `FormField.allowed_target_columns_for("customer")` が Devise/OTP 認証列（`encrypted_password` `otp_code_digest` `otp_code_expires_at` `otp_attempts` `unlock_token` `locked_at` `failed_attempts`）と `netmove_member_id`（PII 分類C）を許可している。`SYSTEM_COLUMNS` 相当の除外リストへ追加を推奨（`spec/models/form_field_spec.rb` にケース追加） | セキュリティ（要対応） | R3 残・優先度高 |
 | 3 | §4 契約後スタッフ入力カラム（`serial_id` `accounting_month` 等）のホワイトリスト除外要否（§7-10） | 要確認（業務判断） | R3 残・中 |
 | 4 | yes_no 系 string(5) 列の保存値表記（§6-3・§7-6）。R7 移行元の値と整合させる | 要確認（業務） | R3/R7 |
