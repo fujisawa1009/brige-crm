@@ -3,10 +3,12 @@
 # CustomerPolicy参照）、更新は自代理店・配下代理店内の自己編集を許可。
 class Admin::CustomersController < Admin::BaseController
   before_action :set_customer, only: %i[show edit update destroy]
+  helper_method :customer_status_label
 
   def index
-    scope = policy_scope(Customer).order(:customer_number)
+    scope = policy_scope(Customer).includes(:agency, :sales_representative).order(:customer_number)
     scope = scope.where("name ILIKE :q OR customer_number ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
+    scope = scope.where(status: params[:status]) if params[:status].present?
     @pagy, @customers = pagy(scope)
   end
 
@@ -72,6 +74,14 @@ class Admin::CustomersController < Admin::BaseController
 
   def set_customer
     @customer = Customer.find(params[:id])
+  end
+
+  # Customer#statusはCustomerStatus.code（英字コード）を持つのみで表示ラベルを持たないため、
+  # 一覧・詳細で日本語ラベルに変換する。コード→ラベルの対応は小さいマスタなので1クエリで全件
+  # メモ化し、行数分のN+1を避ける。
+  def customer_status_label(code)
+    @customer_status_labels ||= CustomerStatus.pluck(:code, :label).to_h
+    @customer_status_labels.fetch(code, code)
   end
 
   # フォームのcollection_selectが代理店スコープを迂回していた穴の是正（2026-08-19 認可監査で発見）。

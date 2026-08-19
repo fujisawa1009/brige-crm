@@ -1,75 +1,152 @@
-<%= form_with model: customer, url: url, class: "flex flex-col gap-3 max-w-2xl" do |f| %>
+<%= form_with model: customer, url: url, class: "flex flex-col gap-6 max-w-4xl" do |f| %>
   <% if customer.errors.any? %>
-    <div class="text-red-700"><%= customer.errors.full_messages.to_sentence %></div>
+    <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= customer.errors.full_messages.to_sentence %></div>
   <% end %>
 
-  <% if policy(customer).staff_scope? %>
-    <div>
-      <%= f.label :agency_id, "所属代理店" %>
-      <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
-            { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">所属・ステータス</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <% if policy(customer).staff_scope? %>
+        <div>
+          <%= f.label :agency_id, "所属代理店", class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
+                { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+      <% end %>
+      <div>
+        <%= f.label :sales_representative_id, "担当営業担当者", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :sales_representative_id, @sales_representatives, :id, :name,
+              { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :status, "申込ステータス", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :status, CustomerStatus.ordered, :code, :label,
+              {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :applied_at, "お申込日", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.date_field :applied_at, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :contracted_at, "契約日", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.date_field :contracted_at, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
     </div>
-  <% end %>
-  <div>
-    <%= f.label :sales_representative_id, "担当営業担当者" %>
-    <%= f.collection_select :sales_representative_id, @sales_representatives, :id, :name,
-          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :name, "契約者名または法人名" %>
-    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :status, "申込ステータス" %>
-    <%= f.collection_select :status, CustomerStatus.ordered, :code, :label,
-          {}, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :applied_at, "お申込日" %>
-    <%= f.date_field :applied_at, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :contracted_at, "契約日" %>
-    <%= f.date_field :contracted_at, class: "border rounded px-2 py-1 w-full" %>
   </div>
 
-  <% [
-       [:applicant_type, "申込者区分"], [:agency_customer_code, "代理店用顧客コード"],
-       [:inventory_type, "在庫区分"], [:contractor_name_kana, "契約者名カナ"],
-       [:representative_name, "法人代表者名"], [:representative_name_kana, "法人代表者名カナ"],
-       [:contact_name, "担当者名"], [:contact_name_kana, "担当者名カナ"],
-       [:contact_title, "担当者役職"], [:contact_dept_phone, "担当部署電話番号"],
-       [:contact2_name, "担当者名_2"], [:contact2_name_kana, "担当者名_2カナ"],
-       [:contact2_title, "担当者役職_2"], [:contact2_dept_phone, "担当部署電話番号_2"],
-       [:postal_code, "郵便番号"], [:prefecture, "都道府県"], [:city, "市区郡"],
-       [:town, "町名"], [:address_detail, "番地・ビル・建物名"],
-       [:phone, "ご連絡先電話番号"], [:fax_number, "ご連絡先FAX番号"], [:mobile_phone, "携帯電話番号"],
-       [:mobile_contact_person, "携帯電話ご担当者"], [:email, "メールアドレス"],
-       [:industry, "業種"], [:industry_sub, "業種（小区分）"], [:years_in_business, "営業年数"],
-       [:num_employees, "従業員数"], [:num_offices, "営業所数"],
-       [:invoice_destination, "請求書送付先種別"], [:invoice_name, "請求書送付先名"],
-       [:invoice_name_kana, "請求書送付先名カナ"], [:invoice_postal_code, "請求書送付先郵便番号"],
-       [:invoice_address, "請求書送付先ご住所"], [:invoice_phone, "日中のご連絡先電話番号"],
-       [:invoice_other_phone, "その他の電話番号"],
-       [:confirm_staff_code, "確認担当者コード"], [:confirm_staff_name, "確認担当者名"],
-       [:appointer_code, "アポインター担当者コード"], [:appointer_name, "アポインター担当者名"],
-       [:lbc_code, "LBCコード"], [:sales_mgmt_customer_code, "販売管理S顧客CD"],
-       [:netmove_member_id, "ネットムーブ会員ID"], [:sms_mobile_number, "SMS送信用携帯番号"]
-     ].each do |field, label| %>
-    <div>
-      <%= f.label field, label %>
-      <%= f.text_field field, class: "border rounded px-2 py-1 w-full" %>
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div class="sm:col-span-2">
+        <%= f.label :name, "契約者名または法人名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.text_field :name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <% [
+           [:applicant_type, "申込者区分"], [:agency_customer_code, "代理店用顧客コード"],
+           [:inventory_type, "在庫区分"], [:contractor_name_kana, "契約者名カナ"],
+           [:representative_name, "法人代表者名"], [:representative_name_kana, "法人代表者名カナ"]
+         ].each do |field, label| %>
+        <div>
+          <%= f.label field, label, class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.text_field field, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+      <% end %>
     </div>
-  <% end %>
-
-  <div>
-    <%= f.label :netmove_registered_at, "ネットムーブ登録日" %>
-    <%= f.date_field :netmove_registered_at, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :consolidated_billing, "合算請求希望" %>
-    <%= f.check_box :consolidated_billing %>
   </div>
 
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">担当者情報</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <% [
+           [:contact_name, "担当者名"], [:contact_name_kana, "担当者名カナ"],
+           [:contact_title, "担当者役職"], [:contact_dept_phone, "担当部署電話番号"],
+           [:contact2_name, "担当者名_2"], [:contact2_name_kana, "担当者名_2カナ"],
+           [:contact2_title, "担当者役職_2"], [:contact2_dept_phone, "担当部署電話番号_2"]
+         ].each do |field, label| %>
+        <div>
+          <%= f.label field, label, class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.text_field field, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">住所・連絡先</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <% [
+           [:postal_code, "郵便番号"], [:prefecture, "都道府県"], [:city, "市区郡"],
+           [:town, "町名"], [:address_detail, "番地・ビル・建物名"],
+           [:phone, "ご連絡先電話番号"], [:fax_number, "ご連絡先FAX番号"], [:mobile_phone, "携帯電話番号"],
+           [:mobile_contact_person, "携帯電話ご担当者"], [:email, "メールアドレス"], [:sms_mobile_number, "SMS送信用携帯番号"]
+         ].each do |field, label| %>
+        <div>
+          <%= f.label field, label, class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.text_field field, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">事業者情報</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <% [
+           [:industry, "業種"], [:industry_sub, "業種（小区分）"], [:years_in_business, "営業年数"],
+           [:num_employees, "従業員数"], [:num_offices, "営業所数"]
+         ].each do |field, label| %>
+        <div>
+          <%= f.label field, label, class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.text_field field, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+      <% end %>
+    </div>
+    <div class="mt-4 flex items-center gap-2">
+      <%= f.check_box :consolidated_billing, class: "h-4 w-4 rounded border-slate-300" %>
+      <%= f.label :consolidated_billing, "合算請求希望", class: "text-sm font-medium text-slate-700" %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">請求先情報</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <% [
+           [:invoice_destination, "請求書送付先種別"], [:invoice_name, "請求書送付先名"],
+           [:invoice_name_kana, "請求書送付先名カナ"], [:invoice_postal_code, "請求書送付先郵便番号"],
+           [:invoice_address, "請求書送付先ご住所"], [:invoice_phone, "日中のご連絡先電話番号"],
+           [:invoice_other_phone, "その他の電話番号"]
+         ].each do |field, label| %>
+        <div>
+          <%= f.label field, label, class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.text_field field, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">外部連携コード</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <% [
+           [:confirm_staff_code, "確認担当者コード"], [:confirm_staff_name, "確認担当者名"],
+           [:appointer_code, "アポインター担当者コード"], [:appointer_name, "アポインター担当者名"],
+           [:lbc_code, "LBCコード"], [:sales_mgmt_customer_code, "販売管理S顧客CD"],
+           [:netmove_member_id, "ネットムーブ会員ID"]
+         ].each do |field, label| %>
+        <div>
+          <%= f.label field, label, class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.text_field field, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+      <% end %>
+      <div>
+        <%= f.label :netmove_registered_at, "ネットムーブ登録日", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.date_field :netmove_registered_at, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex gap-2">
+    <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <%= link_to "キャンセル", admin_customers_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+  </div>
 <% end %>

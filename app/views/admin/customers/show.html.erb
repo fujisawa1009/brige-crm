@@ -1,42 +1,121 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @customer.name %>（<%= @customer.customer_number %>）</h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">所属代理店</dt><dd><%= @customer.agency.name %></dd>
-    <dt class="font-bold">担当営業担当者</dt><dd><%= @customer.sales_representative&.name %></dd>
-    <dt class="font-bold">申込ステータス</dt><dd><%= @customer.status %></dd>
-    <dt class="font-bold">お申込日</dt><dd><%= @customer.applied_at %></dd>
-    <dt class="font-bold">契約日</dt><dd><%= @customer.contracted_at %></dd>
-    <dt class="font-bold">連絡先電話番号</dt><dd><%= @customer.phone %></dd>
-    <dt class="font-bold">メールアドレス</dt><dd><%= @customer.email %></dd>
-    <dt class="font-bold">住所</dt>
-    <dd><%= [@customer.prefecture, @customer.city, @customer.town, @customer.address_detail].join %></dd>
-  </dl>
+<% content_for :page_title, "顧客詳細" %>
 
-  <h2 class="text-lg font-bold">店舗</h2>
-  <ul class="list-disc list-inside">
-    <% @customer.stores.each do |store| %>
-      <li><%= link_to store.store_name, admin_customer_store_path(@customer, store) %></li>
-    <% end %>
-  </ul>
-  <% if policy(Store.new(customer: @customer)).create? %>
-    <%= link_to "店舗を追加", new_admin_customer_store_path(@customer), class: "underline w-fit" %>
-  <% end %>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @customer.name %></h2>
+      <p class="text-sm text-slate-500 font-mono"><%= @customer.customer_number %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_customers_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@customer).update? %>
+        <%= link_to "編集", edit_admin_customer_path(@customer),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
+  </div>
 
-  <h2 class="text-lg font-bold">案件</h2>
-  <ul class="list-disc list-inside">
-    <% @customer.orders.each do |order| %>
-      <li><%= link_to order.order_number, admin_order_path(order) %></li>
-    <% end %>
-  </ul>
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">申込ステータス</dt>
+        <dd class="mt-1">
+          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= customer_status_badge_class(@customer.status) %>">
+            <%= customer_status_label(@customer.status) %>
+          </span>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">所属代理店</dt>
+        <dd class="mt-1"><%= link_to @customer.agency.name, admin_agency_path(@customer.agency), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">担当営業担当者</dt>
+        <dd class="mt-1 text-slate-800"><%= @customer.sales_representative&.name || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">お申込日</dt>
+        <dd class="mt-1 text-slate-800"><%= @customer.applied_at || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">契約日</dt>
+        <dd class="mt-1 text-slate-800"><%= @customer.contracted_at || "—" %></dd>
+      </div>
+    </dl>
+  </div>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_customers_path, class: "underline" %>
-    <% if policy(@customer).update? %>
-      <%= link_to "編集", edit_admin_customer_path(@customer), class: "underline" %>
-    <% end %>
-    <% if policy(@customer).destroy? %>
-      <%= button_to "削除", admin_customer_path(@customer), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">連絡先</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">担当者名</dt>
+        <dd class="mt-1 text-slate-800"><%= @customer.contact_name.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">連絡先電話番号</dt>
+        <dd class="mt-1 text-slate-800"><%= @customer.phone.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">メールアドレス</dt>
+        <dd class="mt-1 text-slate-800"><%= @customer.email.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">携帯電話番号</dt>
+        <dd class="mt-1 text-slate-800"><%= @customer.mobile_phone.presence || "—" %></dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-slate-500">住所</dt>
+        <dd class="mt-1 text-slate-800">
+          <% address = [ @customer.postal_code, @customer.prefecture, @customer.city, @customer.town, @customer.address_detail ].compact_blank.join(" ") %>
+          <%= address.presence || "—" %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="mb-4 flex items-center justify-between">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">店舗（<%= @customer.stores.size %>件）</h3>
+      <% if policy(Store.new(customer: @customer)).create? %>
+        <%= link_to "店舗を追加", new_admin_customer_store_path(@customer), class: "text-sm text-indigo-600 hover:underline" %>
+      <% end %>
+    </div>
+    <% if @customer.stores.any? %>
+      <ul class="divide-y divide-slate-100">
+        <% @customer.stores.each do |store| %>
+          <li class="py-2 text-sm">
+            <%= link_to store.store_name, admin_customer_store_path(@customer, store), class: "font-medium text-slate-800 hover:underline" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-slate-500">店舗はまだ登録されていません。</p>
     <% end %>
   </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">案件（<%= @customer.orders.size %>件）</h3>
+    <% if @customer.orders.any? %>
+      <ul class="divide-y divide-slate-100">
+        <% @customer.orders.each do |order| %>
+          <li class="flex items-center justify-between py-2 text-sm">
+            <%= link_to order.order_number, admin_order_path(order), class: "font-mono font-medium text-slate-800 hover:underline" %>
+            <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= order_status_badge_class(order.status) %>"><%= order_status_label(order.status) %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-slate-500">案件はまだ登録されていません。</p>
+    <% end %>
+  </div>
+
+  <% if policy(@customer).destroy? %>
+    <div>
+      <%= button_to "この顧客を削除", admin_customer_path(@customer), method: :delete,
+            form: { data: { turbo_confirm: "#{@customer.name} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>
