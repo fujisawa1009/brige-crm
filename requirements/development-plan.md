@@ -29,7 +29,8 @@
 | `design/export-profile-design.md` | CSV 出力プロファイル汎用化（R6・P4-12） | 同上 |
 | `design/board-implementation-options.md` | 掲示板4種→問い合わせ統合の決定根拠（R4 実装済み・R7 アーカイブ） | 参照のみ |
 | `design/status-naming-analysis.md` | ステータス呼称（Q-B）分析。実装は `order_statuses` 側のみ適用済み | Q-B 完了時 |
-| `design/master-data-design-policy.md` | **マスタデータ設計方針**（専用テーブル＝状態・区分コード表／選択肢マスタ `OptionGroup`・`OptionValue`／エンティティマスタ の3分類と判定フロー） | 新しい選択肢・区分値を追加するとき必ず参照 |
+| `design/master-data-guide.md` | **【入口・平易版】専用テーブルにするか選択肢グループに入れるかの判断ガイド**（たとえ話・ひとつの質問・チェックリスト） | 新しい選択肢・区分値を追加するとき**まずこれを読む** |
+| `design/master-data-design-policy.md` | 上記の詳細版（3分類の定義・実装手順・設計判断の背景・現行全マスタの分類結果） | 実装時・設計背景を知りたいとき |
 | `design/notification-matrix.md` | 通知受信者マトリクス（Q-21。R4 実装先行・未決セルあり） | 業務確認時 |
 | `design/pii-handling-rules.md` | PII 取扱ルール（Q-A/Q-D） | ルール確定時 |
 | `design/name-matching-process.md` | 掲示板投稿者名寄せ手順（R7） | R7 設計時 |
