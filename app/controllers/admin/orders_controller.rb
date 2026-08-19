@@ -17,10 +17,12 @@ class Admin::OrdersController < Admin::BaseController
   def new
     @order = Order.new
     authorize @order
+    load_select_options
   end
 
   def edit
     authorize @order
+    load_select_options
   end
 
   def create
@@ -30,6 +32,7 @@ class Admin::OrdersController < Admin::BaseController
     if @order.save
       redirect_to admin_order_path(@order), notice: "案件を作成しました。"
     else
+      load_select_options
       render :new, status: :unprocessable_entity
     end
   end
@@ -43,6 +46,7 @@ class Admin::OrdersController < Admin::BaseController
     if @order.update(permitted)
       redirect_to admin_order_path(@order), notice: "案件を更新しました。"
     else
+      load_select_options
       render :edit, status: :unprocessable_entity
     end
   end
@@ -69,6 +73,17 @@ class Admin::OrdersController < Admin::BaseController
 
   def set_order
     @order = Order.find(params[:id])
+  end
+
+  # フォームのcollection_selectが代理店スコープを迂回して全件を露出していた穴の是正
+  # （2026-08-19 認可監査で発見。customer_id/store_id/contract_condition_id/sales_representative_idの
+  # 4フィールドがビュー内で直接Model.orderを呼んでおり、他代理店の顧客・店舗・契約条件・営業担当者名が
+  # 選択肢に混入していた）。agency_idはビュー側でstaff_scope?時のみ表示するため対象外。
+  def load_select_options
+    @customers = policy_scope(Customer).order(:customer_number)
+    @stores = policy_scope(Store).order(:store_name)
+    @contract_conditions = policy_scope(ContractCondition).order(:name)
+    @sales_representatives = policy_scope(SalesRepresentative).order(:name)
   end
 
   # Column.md §10準拠の全フィールド（billing_passwordはPII暗号化対象だが、代理店の請求パスワードの

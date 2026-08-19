@@ -84,6 +84,16 @@ RSpec.describe "Admin::Customers", type: :request, seed_permission_catalog: true
       patch admin_customer_path(customer_a1), params: { customer: { name: "x", agency_id: agency_b.id } }
       expect(customer_a1.reload.agency_id).to eq(agency_a1.id)
     end
+
+    it "編集フォームの選択肢に他代理店の営業担当者が混入しない（2026-08-19 認可監査で発見・是正）" do
+      sales_rep_a1 = create(:sales_representative, agency: agency_a1)
+      sales_rep_b = create(:sales_representative, agency: agency_b)
+
+      get edit_admin_customer_path(customer_a1)
+
+      expect(response.body).to include(sales_rep_a1.name)
+      expect(response.body).not_to include(sales_rep_b.name)
+    end
   end
 
   describe "代理店グループユーザーは配下代理店の顧客のみ" do

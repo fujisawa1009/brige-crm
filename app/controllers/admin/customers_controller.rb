@@ -17,10 +17,12 @@ class Admin::CustomersController < Admin::BaseController
   def new
     @customer = Customer.new
     authorize @customer
+    load_select_options
   end
 
   def edit
     authorize @customer
+    load_select_options
   end
 
   def create
@@ -30,6 +32,7 @@ class Admin::CustomersController < Admin::BaseController
     if @customer.save
       redirect_to admin_customer_path(@customer), notice: "顧客を作成しました。"
     else
+      load_select_options
       render :new, status: :unprocessable_entity
     end
   end
@@ -41,6 +44,7 @@ class Admin::CustomersController < Admin::BaseController
     if @customer.update(permitted)
       redirect_to admin_customer_path(@customer), notice: "顧客を更新しました。"
     else
+      load_select_options
       render :edit, status: :unprocessable_entity
     end
   end
@@ -68,6 +72,13 @@ class Admin::CustomersController < Admin::BaseController
 
   def set_customer
     @customer = Customer.find(params[:id])
+  end
+
+  # フォームのcollection_selectが代理店スコープを迂回していた穴の是正（2026-08-19 認可監査で発見）。
+  # sales_representative_idがビュー内で直接SalesRepresentative.orderを呼んでおり、他代理店の営業担当者名が
+  # 選択肢に混入していた。agency_idはビュー側でstaff_scope?時のみ表示するため対象外。
+  def load_select_options
+    @sales_representatives = policy_scope(SalesRepresentative).order(:name)
   end
 
   def customer_params

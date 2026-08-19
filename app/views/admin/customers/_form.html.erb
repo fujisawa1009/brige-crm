@@ -12,7 +12,7 @@
   <% end %>
   <div>
     <%= f.label :sales_representative_id, "担当営業担当者" %>
-    <%= f.collection_select :sales_representative_id, SalesRepresentative.order(:name), :id, :name,
+    <%= f.collection_select :sales_representative_id, @sales_representatives, :id, :name,
           { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <div>

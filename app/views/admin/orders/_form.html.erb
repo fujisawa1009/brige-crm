@@ -5,12 +5,12 @@
 
   <div>
     <%= f.label :customer_id, "契約顧客" %>
-    <%= f.collection_select :customer_id, Customer.order(:customer_number), :id, :name,
+    <%= f.collection_select :customer_id, @customers, :id, :name,
           { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <div>
     <%= f.label :store_id, "設置先店舗" %>
-    <%= f.collection_select :store_id, Store.order(:store_name), :id, :store_name,
+    <%= f.collection_select :store_id, @stores, :id, :store_name,
           { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <% if policy(order).staff_scope? %>
@@ -22,12 +22,12 @@
   <% end %>
   <div>
     <%= f.label :contract_condition_id, "契約条件" %>
-    <%= f.collection_select :contract_condition_id, ContractCondition.order(:name), :id, :name,
+    <%= f.collection_select :contract_condition_id, @contract_conditions, :id, :name,
           { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <div>
     <%= f.label :sales_representative_id, "担当営業担当者" %>
-    <%= f.collection_select :sales_representative_id, SalesRepresentative.order(:name), :id, :name,
+    <%= f.collection_select :sales_representative_id, @sales_representatives, :id, :name,
           { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <div>

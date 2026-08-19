@@ -98,6 +98,22 @@ RSpec.describe "Admin::Orders", type: :request, seed_permission_catalog: true, s
       expect(order_a1.customer_id).to eq(customer_a1.id)
       expect(order_a1.store_id).not_to eq(store_b.id)
     end
+
+    it "編集フォームの選択肢に他代理店の顧客・契約条件・営業担当者が混入しない（2026-08-19 認可監査で発見・是正）" do
+      store_b = create(:store, customer: customer_b)
+      sales_rep_a1 = create(:sales_representative, agency: agency_a1)
+      sales_rep_b = create(:sales_representative, agency: agency_b)
+
+      get edit_admin_order_path(order_a1)
+
+      expect(response.body).to include(customer_a1.name)
+      expect(response.body).not_to include(customer_b.name)
+      expect(response.body).to include(cc_a1.name)
+      expect(response.body).not_to include(cc_b.name)
+      expect(response.body).not_to include(store_b.store_name)
+      expect(response.body).to include(sales_rep_a1.name)
+      expect(response.body).not_to include(sales_rep_b.name)
+    end
   end
 
   describe "代理店グループユーザーは配下代理店の案件のみ" do
