@@ -1,41 +1,71 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">IP許可リスト</h1>
-  <p class="text-sm text-gray-500">空リストの間は全員がメールOTP必須です（フェイルセーフ。P4-17）。</p>
+<% content_for :page_title, "IP許可リスト" %>
 
-  <table class="border-collapse w-full text-sm">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1 text-left">CIDR</th>
-        <th class="border px-2 py-1 text-left">メモ</th>
-        <th class="border px-2 py-1"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @entries.each do |entry| %>
-        <tr>
-          <td class="border px-2 py-1"><%= entry.cidr %></td>
-          <td class="border px-2 py-1"><%= entry.note %></td>
-          <td class="border px-2 py-1">
-            <%= button_to "削除", admin_ip_allowlist_entry_path(entry), method: :delete,
-                  form: { data: { turbo_confirm: "削除しますか？" } } %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+<div class="flex flex-col gap-6">
+  <div>
+    <h2 class="text-xl font-bold text-slate-900">IP許可リスト</h2>
+    <p class="text-sm text-slate-500">登録したCIDRからの接続はメールOTPをスキップできます（admin専有機能）。</p>
+  </div>
 
-  <%= form_with model: @entry, url: admin_ip_allowlist_entries_path, class: "flex flex-col gap-3 max-w-md" do |f| %>
-    <% if @entry.errors.any? %>
-      <div class="text-red-700"><%= @entry.errors.full_messages.to_sentence %></div>
-    <% end %>
-    <div>
-      <%= f.label :cidr, "CIDR" %>
-      <%= f.text_field :cidr, placeholder: "192.0.2.0/24", class: "border rounded px-2 py-1 w-full" %>
+  <% if @entries.empty? %>
+    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <p class="font-semibold">許可リストは空です</p>
+      <p class="mt-1">空リストの間は全員がメールOTP必須です（フェイルセーフ）。誤って全接続元を許可扱いにしてしまうことを防ぐため、意図的な設計です。</p>
     </div>
-    <div>
-      <%= f.label :note, "メモ" %>
-      <%= f.text_field :note, class: "border rounded px-2 py-1 w-full" %>
+  <% else %>
+    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+      登録したCIDRからの接続はメールOTPが免除されます。一覧にないIPからの接続は引き続きOTP必須です。
     </div>
-    <%= f.submit "追加", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
   <% end %>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">新規追加</h3>
+    <%= form_with model: @entry, url: admin_ip_allowlist_entries_path, class: "flex flex-col gap-4 max-w-md" do |f| %>
+      <% if @entry.errors.any? %>
+        <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= @entry.errors.full_messages.to_sentence %></div>
+      <% end %>
+      <div>
+        <%= f.label :cidr, "CIDR", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.text_field :cidr, placeholder: "192.0.2.0/24",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono" %>
+      </div>
+      <div>
+        <%= f.label :note, "メモ", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.text_field :note, placeholder: "例: 本社オフィス",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <%= f.submit "追加", class: "w-fit rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">CIDR</th>
+          <th class="px-4 py-3">メモ</th>
+          <th class="px-4 py-3">登録日時</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @entries.empty? %>
+          <tr>
+            <td colspan="4" class="px-4 py-8 text-center text-slate-500">登録されているIPはありません</td>
+          </tr>
+        <% end %>
+        <% @entries.each do |entry| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono font-medium text-slate-800"><%= entry.cidr %></td>
+            <td class="px-4 py-3 text-slate-600"><%= entry.note.presence || "—" %></td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-500"><%= entry.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td class="px-4 py-3 text-right">
+              <%= button_to "削除", admin_ip_allowlist_entry_path(entry), method: :delete,
+                    form: { data: { turbo_confirm: "#{entry.cidr} を許可リストから削除しますか？" } },
+                    class: "text-red-600 hover:underline" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>
