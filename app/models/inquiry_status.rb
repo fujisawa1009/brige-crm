@@ -12,6 +12,7 @@
 #  category      :string           not null
 #  code          :string           not null
 #  is_active     :boolean          default(TRUE), not null
+#  is_completed  :boolean          default(FALSE), not null
 #  is_system     :boolean          default(FALSE), not null
 #  label         :string           not null
 #  sort_order    :integer          default(0), not null
@@ -45,6 +46,8 @@ class InquiryStatus < ApplicationRecord
   scope :active, -> { where(is_active: true) }
   scope :ordered, -> { order(:sort_order) }
   scope :for_category, ->(category) { where(category: category) }
+  # 一覧の「完了済みを含む」検索（R6-6・CompletionStatusFilter）が参照する終端ステータス。
+  scope :completed, -> { where(is_completed: true) }
 
   private
 

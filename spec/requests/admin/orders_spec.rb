@@ -137,4 +137,33 @@ RSpec.describe "Admin::Orders", type: :request, seed_permission_catalog: true, s
       expect(response).to have_http_status(:forbidden)
     end
   end
+
+  # R6-6: 一覧の「完了済みを含む」検索。CompletionStatusFilter(status_klass: OrderStatus)が
+  # コントローラーの#indexへ正しく結線されていることを確認する（単体ロジック自体は
+  # spec/services/completion_status_filter_spec.rbで検証済み）。
+  describe "R6-6: 完了済みを含む検索" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:completed_order) do
+      create(:order, agency: agency_a1, customer: customer_a1, contract_condition: cc_a1, status: "16:完了")
+    end
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "既定（include_completed未指定）では完了系ステータスの案件が一覧から除外される" do
+      get admin_orders_path
+      expect(response.body).not_to include(completed_order.order_number)
+      expect(response.body).to include(order_a1.order_number)
+    end
+
+    it "include_completed=1を指定すると完了系ステータスの案件も表示される" do
+      get admin_orders_path, params: { include_completed: "1" }
+      expect(response.body).to include(completed_order.order_number)
+    end
+
+    it "既存のstatus絞り込みと併用でき、完了ステータスを明示指定すればそのステータスの案件が見える" do
+      get admin_orders_path, params: { status: "16:完了" }
+      expect(response.body).to include(completed_order.order_number)
+      expect(response.body).not_to include(order_a1.order_number)
+    end
+  end
 end

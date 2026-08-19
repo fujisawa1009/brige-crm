@@ -5,6 +5,7 @@
 #  id            :uuid             not null, primary key
 #  code          :string           not null
 #  is_active     :boolean          default(TRUE), not null
+#  is_completed  :boolean          default(FALSE), not null
 #  is_system     :boolean          default(FALSE), not null
 #  label         :string           not null
 #  sort_order    :integer          default(0), not null

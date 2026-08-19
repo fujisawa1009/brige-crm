@@ -7,6 +7,10 @@ class Admin::InquiriesController < Admin::BaseController
   def index
     scope = policy_scope(Inquiry).includes(:order).order(created_at: :desc)
     scope = scope.for_category(params[:category]) if params[:category].present?
+    # R6-6: 既定で完了/終了系ステータス（InquiryStatus#is_completed）を除外し、
+    # include_completed=1（一覧のチェックボックス）で全件表示に切り替える。Order一覧と同じ
+    # CompletionStatusFilterを共用する（ロジックの二重実装を避ける）。
+    scope = CompletionStatusFilter.new(status_klass: InquiryStatus).apply(scope, include_completed: params[:include_completed])
     @pagy, @inquiries = pagy(scope)
   end
 

@@ -60,6 +60,8 @@ class Admin::InquiryStatusesController < Admin::BaseController
   end
 
   def inquiry_status_params
-    params.require(:inquiry_status).permit(:category, :code, :label, :sort_order, :is_active)
+    # is_completed（R6-6）: 問い合わせ一覧の「完了済みを含む」検索が既定除外する終端ステータスかどうかの
+    # フラグ。ステータス追加・見直し時に運用側で切り替えられるよう編集画面から更新可能にする。
+    params.require(:inquiry_status).permit(:category, :code, :label, :sort_order, :is_active, :is_completed)
   end
 end

@@ -5,24 +5,24 @@
 #
 # Table name: inquiries
 #
-#  id                   :uuid             not null, primary key
-#  after_area           :string
-#  after_type           :string
-#  after_urgency        :string
-#  category             :string           not null
-#  first_responder_name :string
-#  inquiry_number       :string           not null
-#  is_visible_to_agent  :boolean          default(TRUE), not null
-#  is_visible_to_customer :boolean        default(TRUE), not null
-#  next_responder_name  :string
-#  reception_channel    :string
-#  status               :string           not null
-#  title                :string
-#  created_at           :datetime         not null
-#  updated_at           :datetime         not null
-#  created_by_id        :uuid
-#  order_id             :uuid             not null
-#  updated_by_id        :uuid
+#  id                     :uuid             not null, primary key
+#  after_area             :string
+#  after_type             :string
+#  after_urgency          :string
+#  category               :string           not null
+#  first_responder_name   :string
+#  inquiry_number         :string           not null
+#  is_visible_to_agent    :boolean          default(TRUE), not null
+#  is_visible_to_customer :boolean          default(TRUE), not null
+#  next_responder_name    :string
+#  reception_channel      :string
+#  status                 :string           not null
+#  title                  :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  created_by_id          :uuid
+#  order_id               :uuid             not null
+#  updated_by_id          :uuid
 #
 # Indexes
 #

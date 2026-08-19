@@ -30,6 +30,9 @@
             <%= badge_tag "組み込み（コード変更不可）", color: "slate" %>
           <% end %>
           <%= active_badge(@order_status.is_active?) %>
+          <% if @order_status.is_completed? %>
+            <%= badge_tag "完了/終了系", color: "slate" %>
+          <% end %>
         </dd>
       </div>
     </dl>

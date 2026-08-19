@@ -7,6 +7,7 @@
 #  id            :uuid             not null, primary key
 #  code          :string           not null
 #  is_active     :boolean          default(TRUE), not null
+#  is_completed  :boolean          default(FALSE), not null
 #  is_system     :boolean          default(FALSE), not null
 #  label         :string           not null
 #  sort_order    :integer          default(0), not null
@@ -32,4 +33,7 @@ class OrderStatus < ApplicationRecord
   CODE_ORDERED = "0:受注"
 
   has_many :orders, foreign_key: :status, primary_key: :code, inverse_of: false
+
+  # 一覧の「完了済みを含む」検索（R6-6・CompletionStatusFilter）が参照する終端ステータス。
+  scope :completed, -> { where(is_completed: true) }
 end

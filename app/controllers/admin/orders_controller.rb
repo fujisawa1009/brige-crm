@@ -6,7 +6,18 @@ class Admin::OrdersController < Admin::BaseController
   def index
     scope = policy_scope(Order).includes(:customer, :agency).order(order_number: :desc)
     scope = scope.where("order_number ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
-    scope = scope.where(status: params[:status]) if params[:status].present?
+
+    if params[:status].present?
+      # ステータスを明示指定した場合はそれを優先する（例: 「16:完了」を選んだのに完了系除外の
+      # 既定フィルタと衝突して0件になる、という事故を避けるため。「完了済みを含む」チェックボックスは
+      # あくまでデフォルト表示の切り替えであり、明示的な絞り込みより弱い）。
+      scope = scope.where(status: params[:status])
+    else
+      # R6-6: 既定で完了/終了系ステータス（OrderStatus#is_completed）を除外し、
+      # include_completed=1（一覧のチェックボックス）で全件表示に切り替える。
+      scope = CompletionStatusFilter.new(status_klass: OrderStatus).apply(scope, include_completed: params[:include_completed])
+    end
+
     @pagy, @orders = pagy(scope)
   end
 

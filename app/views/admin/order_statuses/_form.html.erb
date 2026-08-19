@@ -24,6 +24,10 @@
       <%= f.check_box :is_active, class: "h-4 w-4 rounded border-slate-300" %>
       <%= f.label :is_active, "有効", class: "text-sm font-medium text-slate-700" %>
     </div>
+    <div class="flex items-center gap-2">
+      <%= f.check_box :is_completed, class: "h-4 w-4 rounded border-slate-300" %>
+      <%= f.label :is_completed, "完了/終了系（案件一覧で既定除外）", class: "text-sm font-medium text-slate-700" %>
+    </div>
 
     <div class="flex gap-2 pt-2">
       <%= f.submit "保存", class: "btn-primary" %>

@@ -31,6 +31,16 @@
               include_blank: "すべて", class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
 
+      <!-- R6-6: 既定は完了/終了系ステータス（OrderStatus#is_completed）を除外して表示する。
+           チェックを入れると include_completed=1 が送信され、CompletionStatusFilterが絞り込みを外す。 -->
+      <div class="flex items-end">
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <%= check_box_tag :include_completed, "1", params[:include_completed].present?,
+                class: "h-4 w-4 rounded border-slate-300" %>
+          完了済みを含む
+        </label>
+      </div>
+
       <div class="col-span-full flex items-center justify-between pt-1">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">

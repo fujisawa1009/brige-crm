@@ -57,6 +57,9 @@
                   <%= badge_tag "組み込み", color: "slate" %>
                 <% end %>
                 <%= active_badge(status.is_active?) %>
+                <% if status.is_completed? %>
+                  <%= badge_tag "完了/終了系", color: "slate" %>
+                <% end %>
               </div>
             </td>
             <td class="px-4 py-3 text-right whitespace-nowrap">

@@ -30,6 +30,13 @@ class StatusSeeder
   #   - 「0:受注」は精査結果では削除候補だったが、2026-08-19 v5 CEO決定（DM-6）で
   #     現状維持（新システムの正式な初期状態として使い続ける）が確定したため維持する
   # code文字列はLaravel原本のまま採用する（R7移行時の旧→新マッピングを値変換不要にするため）。
+  #
+  # is_completed（2026-08-20 R6-6追加）: 一覧の「完了済みを含む」検索で既定除外する行の判定に使う
+  # フラグ。「16:完了」「20:キャンセル」「21:解約」「22:強制解約」「100:CLOSE」の5件を終端状態とし
+  # is_completed: true にする。「23〜34:解約処理待ち（N月度解約案件）」は解約自体は決定済みだが
+  # 月次バッチ処理が完了するまで実務上まだ対応が残るステータスのため、ここでは終端扱いにしない
+  # （デフォルト一覧から消えると処理待ちの案件を見落とす恐れがあるため。運用で見解が変われば
+  # order_statuses編集画面からis_completedを個別に切り替えられる）。
   ORDER_STATUSES = [
     { code: OrderStatus::CODE_ORDERED,                    label: "受注",                              is_system: true },
     { code: "1:不備チェック依頼",                         label: "不備チェック依頼" },
@@ -45,10 +52,10 @@ class StatusSeeder
     { code: "13:検収確認コール依頼",                      label: "検収確認コール依頼" },
     { code: "14:検収確認コール対応中",                    label: "検収確認コール対応中" },
     { code: "15:検収確認コールNG",                        label: "検収確認コールNG" },
-    { code: "16:完了",                                    label: "完了" },
-    { code: "20:キャンセル",                              label: "キャンセル" },
-    { code: "21:解約",                                    label: "解約" },
-    { code: "22:強制解約",                                label: "強制解約" },
+    { code: "16:完了",                                    label: "完了",                              is_completed: true },
+    { code: "20:キャンセル",                              label: "キャンセル",                        is_completed: true },
+    { code: "21:解約",                                    label: "解約",                              is_completed: true },
+    { code: "22:強制解約",                                label: "強制解約",                          is_completed: true },
     { code: "23:解約処理待ち（1月度解約案件）",           label: "解約処理待ち（1月度解約案件）" },
     { code: "24:解約処理待ち（2月度解約案件）",           label: "解約処理待ち（2月度解約案件）" },
     { code: "25:解約処理待ち（3月度解約案件）",           label: "解約処理待ち（3月度解約案件）" },
@@ -61,7 +68,7 @@ class StatusSeeder
     { code: "32:解約処理待ち（10月度解約案件）",          label: "解約処理待ち（10月度解約案件）" },
     { code: "33:解約処理待ち（11月度解約案件）",          label: "解約処理待ち（11月度解約案件）" },
     { code: "34:解約処理待ち（12月度解約案件）",          label: "解約処理待ち（12月度解約案件）" },
-    { code: "100:CLOSE",                                  label: "CLOSE" }
+    { code: "100:CLOSE",                                  label: "CLOSE",                             is_completed: true }
   ].freeze
 
   # R5-1（basic-design.md §9〜§12「契約ワークフロー状態機械」）: 不備チェック/差戻し/確認コール/
@@ -99,6 +106,16 @@ class StatusSeeder
     Inquiry::CATEGORY_AFTER        => %w[未対応 対応中 対応済 完了]
   }.freeze
 
+  # is_completed（2026-08-20 R6-6追加）: カテゴリごとの終端コード。各カテゴリとも「対応OK」系の
+  # 成功終端と「キャンセル」の2つで一覧を締めるコード構成（アフター問合せのみキャンセル無しで
+  # 「完了」が終端）になっているため、その並びに沿って明示的に列挙する。
+  INQUIRY_COMPLETED_CODES = {
+    Inquiry::CATEGORY_POST_CONFIRM => %w[後確OK キャンセル],
+    Inquiry::CATEGORY_PRODUCTION   => %w[制作OK キャンセル],
+    Inquiry::CATEGORY_INSPECTION   => %w[検収コールOK キャンセル],
+    Inquiry::CATEGORY_AFTER        => %w[完了]
+  }.freeze
+
   def call
     seed(CustomerStatus, CUSTOMER_STATUSES)
     seed(OrderStatus, ORDER_STATUSES)
@@ -115,6 +132,9 @@ class StatusSeeder
       record.label      = attrs[:label] if record.new_record?
       record.is_system  = attrs.fetch(:is_system, false)
       record.sort_order = index + 1 if record.sort_order.blank? || record.new_record?
+      # is_completedはOrderStatusにしか無い列（CustomerStatus/ContractStatus/PaymentMethodは
+      # R6-6の対象外）のため、respond_to?で列の有無を見てから代入する。
+      record.is_completed = attrs.fetch(:is_completed, false) if record.respond_to?(:is_completed=)
       record.save!
     end
   end
@@ -125,9 +145,10 @@ class StatusSeeder
     INQUIRY_STATUSES.each do |category, codes|
       codes.each_with_index do |code, index|
         record = InquiryStatus.find_or_initialize_by(category: category, code: code)
-        record.label      = code if record.new_record?
-        record.is_system  = code == Inquiry::DEFAULT_STATUS_CODES.fetch(category)
-        record.sort_order = index + 1 if record.sort_order.blank? || record.new_record?
+        record.label        = code if record.new_record?
+        record.is_system    = code == Inquiry::DEFAULT_STATUS_CODES.fetch(category)
+        record.sort_order   = index + 1 if record.sort_order.blank? || record.new_record?
+        record.is_completed = INQUIRY_COMPLETED_CODES.fetch(category, []).include?(code)
         record.save!
       end
     end

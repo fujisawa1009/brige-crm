@@ -235,4 +235,25 @@ RSpec.describe "Admin::Inquiries", type: :request, seed_permission_catalog: true
       expect(message.inquiry_template_id).to be_nil
     end
   end
+
+  # R6-6: 一覧の「完了済みを含む」検索。CompletionStatusFilter(status_klass: InquiryStatus)が
+  # コントローラーの#indexへ正しく結線されていることを確認する（単体ロジック自体は
+  # spec/services/completion_status_filter_spec.rbで検証済み）。
+  describe "R6-6: 完了済みを含む検索" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:completed_inquiry) { create(:inquiry, order: order_a1, category: Inquiry::CATEGORY_AFTER, status: "完了") }
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "既定（include_completed未指定）では完了系ステータスの問い合わせが一覧から除外される" do
+      get admin_inquiries_path
+      expect(response.body).not_to include(completed_inquiry.inquiry_number)
+      expect(response.body).to include(inquiry_a1.inquiry_number)
+    end
+
+    it "include_completed=1を指定すると完了系ステータスの問い合わせも表示される" do
+      get admin_inquiries_path, params: { include_completed: "1" }
+      expect(response.body).to include(completed_inquiry.inquiry_number)
+    end
+  end
 end

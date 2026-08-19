@@ -60,6 +60,20 @@ RSpec.describe StatusSeeder do
 
       expect(OrderStatus.count).to eq(31)
     end
+
+    it "R6-6: 完了/終了系5件（完了・キャンセル・解約・強制解約・CLOSE）だけis_completed=trueになる" do
+      described_class.call
+
+      completed_codes = OrderStatus.where(is_completed: true).pluck(:code)
+      expect(completed_codes).to match_array(%w[16:完了 20:キャンセル 21:解約 22:強制解約 100:CLOSE])
+    end
+
+    it "R6-6: 解約処理待ち（月度別）はまだ処理が残るためis_completed=falseのまま投入される" do
+      described_class.call
+
+      expect(OrderStatus.find_by(code: "23:解約処理待ち（1月度解約案件）").is_completed).to be false
+      expect(OrderStatus.find_by(code: "34:解約処理待ち（12月度解約案件）").is_completed).to be false
+    end
   end
 
   describe "ContractStatus" do
@@ -80,6 +94,28 @@ RSpec.describe StatusSeeder do
 
       system_codes = ContractStatus.where(is_system: true).pluck(:code)
       expect(system_codes).to match_array(%w[pending_check contracted])
+    end
+  end
+
+  describe "InquiryStatus (R6-6 is_completed)" do
+    it "各掲示板種別の終端コード（OK系/キャンセル、アフターのみ完了）だけis_completed=trueになる" do
+      described_class.call
+
+      expect(InquiryStatus.where(category: Inquiry::CATEGORY_POST_CONFIRM, is_completed: true).pluck(:code))
+        .to match_array(%w[後確OK キャンセル])
+      expect(InquiryStatus.where(category: Inquiry::CATEGORY_PRODUCTION, is_completed: true).pluck(:code))
+        .to match_array(%w[制作OK キャンセル])
+      expect(InquiryStatus.where(category: Inquiry::CATEGORY_INSPECTION, is_completed: true).pluck(:code))
+        .to match_array(%w[検収コールOK キャンセル])
+      expect(InquiryStatus.where(category: Inquiry::CATEGORY_AFTER, is_completed: true).pluck(:code))
+        .to match_array(%w[完了])
+    end
+
+    it "非終端コード（対応中系）はis_completed=falseのまま投入される" do
+      described_class.call
+
+      expect(InquiryStatus.find_by(category: Inquiry::CATEGORY_AFTER, code: "対応中").is_completed).to be false
+      expect(InquiryStatus.find_by(category: Inquiry::CATEGORY_AFTER, code: "対応済").is_completed).to be false
     end
   end
 
