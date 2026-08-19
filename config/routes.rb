@@ -61,6 +61,12 @@ Rails.application.routes.draw do
     resources :login_histories, only: [ :index ]
     resources :ip_allowlist_entries, only: [ :index, :create, :destroy ]
 
+    # R6-9: 代理店横断ダッシュボード（会社全体を横断する集計。system_admin専有）。
+    # idパラメータを持たない単数resourceで、常に「全代理店」を対象にする
+    # （admin/system_settingsと同じ形。1レコードではなく1集計ビューが対象という違いはあるが、
+    # どちらも代理店スコープの概念を持たない画面という点は共通）。
+    resource :agency_overview, only: [ :show ], controller: "agency_overview"
+
     # 04 R1: 組織・アカウント（AgencyGroup/Agency/SalesRepresentative/ContractCondition/User）のCRUD。
     resources :agency_groups
     resources :agencies

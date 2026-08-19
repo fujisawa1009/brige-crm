@@ -42,12 +42,17 @@ class RoleSeeder
   # （ftlogのSYSTEM_ADMIN_ONLY_CONTROLLERSに実在した理由をそのまま踏襲）。
   # R6-3: admin/system_settings（問い合わせ添付上限等のシステム設定）も同じ理由でadmin専有にする
   # （実務運用者以下に開放すると、添付ファイルサイズ上限を自己申告で緩められてしまうため）。
+  # R6-9: admin/agency_overview（代理店横断ダッシュボード）も同じ理由でadmin専有にする。全代理店の
+  # 案件状況を横断して見せる集計画面のため、代理店ユーザー・代理店グループユーザー自身は当然、
+  # 実務運用者にも開放せず会社全体を見るsystem_adminに限定する（要件の「代理店ユーザー自身には
+  # 見せない」に加え、実務運用者は個別代理店の案件一覧で足りるためadmin専有とした。CTO判断）。
   SYSTEM_ADMIN_ONLY_CONTROLLERS = %w[
     admin/role_management
     admin/permission_management
     admin/login_histories
     admin/ip_allowlist_entries
     admin/system_settings
+    admin/agency_overview
   ].freeze
 
   # 全ロール共通の「自分の状態」系コントローラー（ftlog踏襲。ログイン後に必ず到達できる画面）。

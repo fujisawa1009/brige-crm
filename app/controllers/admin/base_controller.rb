@@ -41,6 +41,9 @@ class Admin::BaseController < ApplicationController
   #   - system_settings（R6-3）: idパラメータを持たない単数resourceで、常に唯一のSystemSettingレコード
   #     （テナント・所有者の概念を持たないシステム全体設定）のみを対象にする。ip_allowlist_entriesと
   #     同じ「代理店スコープの概念を持たない、RBACのみで守られるシステム管理画面」に該当する。
+  #   - agency_overview（R6-9）: 全代理店を横断して集計する管理者向けダッシュボード。dashboardと同じ
+  #     「複数リソースの集計表示で単一のpolicy対象を持たない」画面。system_admin専有
+  #     （RoleSeeder::SYSTEM_ADMIN_ONLY_CONTROLLERS）で代理店スコープの概念自体が無い。
   PUNDIT_VERIFICATION_EXEMPT_CONTROLLERS = %w[
     admin/dashboard
     admin/login_histories
@@ -49,6 +52,7 @@ class Admin::BaseController < ApplicationController
     admin/role_management
     admin/notification_settings
     admin/system_settings
+    admin/agency_overview
   ].freeze
 
   def pundit_verification_exempt?

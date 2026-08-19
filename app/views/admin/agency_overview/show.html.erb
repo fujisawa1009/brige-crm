@@ -1,0 +1,52 @@
+<% content_for :page_title, "代理店横断ダッシュボード" %>
+
+<div class="flex flex-col gap-6">
+  <div>
+    <h2 class="text-xl font-bold text-slate-900">代理店横断ダッシュボード</h2>
+    <p class="text-sm text-slate-500">
+      全代理店の案件状況を横断集計します（詳細レポートは対象外・単純集計のみ）。
+      「遅延」は未完了なのに作業完了日（見込み）を過ぎている案件数の目安です。
+    </p>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">代理店</th>
+          <th class="px-4 py-3">代理店グループ</th>
+          <th class="px-4 py-3 text-right">メンバー数</th>
+          <th class="px-4 py-3 text-right">稼働中案件</th>
+          <th class="px-4 py-3 text-right">完了案件</th>
+          <th class="px-4 py-3 text-right">案件数（計）</th>
+          <th class="px-4 py-3 text-right">遅延案件</th>
+          <th class="px-4 py-3">最終更新</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @rows.each do |row| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-800">
+              <%= link_to row[:agency].name, admin_agency_path(row[:agency]), class: "hover:underline" %>
+            </td>
+            <td class="px-4 py-3 text-slate-600"><%= row[:agency].agency_group.name %></td>
+            <td class="px-4 py-3 text-right text-slate-600"><%= row[:member_count] %></td>
+            <td class="px-4 py-3 text-right text-slate-600"><%= row[:active_orders] %></td>
+            <td class="px-4 py-3 text-right text-slate-600"><%= row[:completed_orders] %></td>
+            <td class="px-4 py-3 text-right font-semibold text-slate-800"><%= row[:total_orders] %></td>
+            <td class="px-4 py-3 text-right">
+              <% if row[:delayed_orders].positive? %>
+                <%= badge_tag "#{row[:delayed_orders]}件", color: "red" %>
+              <% else %>
+                <span class="text-slate-400">0</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-slate-600">
+              <%= row[:last_updated_at]&.strftime("%Y-%m-%d %H:%M") || "—" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

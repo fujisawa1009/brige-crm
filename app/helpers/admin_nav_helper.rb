@@ -28,6 +28,8 @@ module AdminNavHelper
                           controller: "admin/system_settings", action: "show")
       ]),
       AdminNavSection.new(title: "組織", items: [
+        AdminNavItem.new(label: "代理店横断ダッシュボード", path: admin_agency_overview_path,
+                          controller: "admin/agency_overview", action: "show"),
         AdminNavItem.new(label: "代理店グループ", path: admin_agency_groups_path,
                           controller: "admin/agency_groups", action: "index"),
         AdminNavItem.new(label: "代理店", path: admin_agencies_path, controller: "admin/agencies", action: "index"),
