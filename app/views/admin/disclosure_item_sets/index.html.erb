@@ -1,0 +1,52 @@
+<% content_for :page_title, "重説項目セット" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">重説項目セット</h2>
+      <p class="text-sm text-slate-500">重要事項説明チェックの項目を版管理します。</p>
+    </div>
+    <% if policy(DisclosureItemSet).create? %>
+      <%= link_to "新規作成", new_admin_disclosure_item_set_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">版</th>
+          <th class="px-4 py-3">適用開始日</th>
+          <th class="px-4 py-3">項目数</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @disclosure_item_sets.empty? %>
+          <tr>
+            <td colspan="4" class="px-4 py-8 text-center text-slate-500">重説項目セットが登録されていません</td>
+          </tr>
+        <% end %>
+        <% @disclosure_item_sets.each do |item_set| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to "v#{item_set.version}", admin_disclosure_item_set_path(item_set), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= item_set.effective_from %></td>
+            <td class="px-4 py-3 text-slate-600"><%= item_set.disclosure_items.count %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_disclosure_item_set_path(item_set), class: "text-indigo-600 hover:underline" %>
+              <% if policy(item_set).update? %>
+                <%= link_to "編集", edit_admin_disclosure_item_set_path(item_set), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(item_set).destroy? %>
+                <%= button_to "削除", admin_disclosure_item_set_path(item_set), method: :delete,
+                      form: { data: { turbo_confirm: "v#{item_set.version} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

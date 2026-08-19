@@ -1,0 +1,52 @@
+<% content_for :page_title, "重説項目セット詳細" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">v<%= @disclosure_item_set.version %></h2>
+      <p class="text-sm text-slate-500">適用開始日: <%= @disclosure_item_set.effective_from %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_disclosure_item_sets_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@disclosure_item_set).update? %>
+        <%= link_to "編集", edit_admin_disclosure_item_set_path(@disclosure_item_set),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">項目</h3>
+    <div class="overflow-x-auto rounded-lg border border-slate-200">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th class="px-3 py-2">表示順</th>
+            <th class="px-3 py-2">見出し</th>
+            <th class="px-3 py-2">本文</th>
+            <th class="px-3 py-2">必須</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @disclosure_item_set.disclosure_items.each do |item| %>
+            <tr>
+              <td class="px-3 py-2 text-slate-600"><%= item.sort_order %></td>
+              <td class="px-3 py-2 text-slate-800"><%= item.title %></td>
+              <td class="px-3 py-2 text-slate-600"><%= truncate(item.body, length: 60) %></td>
+              <td class="px-3 py-2"><%= item.is_required? ? "必須" : "任意" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <% if policy(@disclosure_item_set).destroy? %>
+    <div>
+      <%= button_to "この項目セットを削除", admin_disclosure_item_set_path(@disclosure_item_set), method: :delete,
+            form: { data: { turbo_confirm: "v#{@disclosure_item_set.version} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
+</div>

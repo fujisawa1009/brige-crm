@@ -1,0 +1,6 @@
+<% content_for :page_title, "重説項目セット編集" %>
+
+<div class="flex flex-col gap-4">
+  <h2 class="text-xl font-bold text-slate-900">重説項目セット編集</h2>
+  <%= render "form", disclosure_item_set: @disclosure_item_set, url: admin_disclosure_item_set_path(@disclosure_item_set) %>
+</div>

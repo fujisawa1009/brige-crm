@@ -1,0 +1,45 @@
+<%= form_with model: disclosure_item_set, url: url, scope: :disclosure_item_set, class: "flex flex-col gap-6 max-w-4xl" do |f| %>
+  <% if disclosure_item_set.errors.any? %>
+    <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= disclosure_item_set.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <div class="flex flex-col gap-4 max-w-md">
+      <div>
+        <%= f.label :version, "版番号", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.number_field :version, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :effective_from, "適用開始日", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.date_field :effective_from, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+    </div>
+  </div>
+
+  <%# R5-13: 項目の動的追加・削除（form_templatesと同じnested-formコントローラ）。 %>
+  <div data-controller="nested-form" data-nested-form-placeholder-value="NEW_ITEM_RECORD"
+       class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">項目</h3>
+
+    <div data-nested-form-target="container" class="flex flex-col gap-4">
+      <%= f.fields_for :disclosure_items do |item_f| %>
+        <%= render "item_fields", f: item_f %>
+      <% end %>
+    </div>
+
+    <template data-nested-form-target="template">
+      <%= f.fields_for :disclosure_items, DisclosureItem.new, child_index: "NEW_ITEM_RECORD" do |item_f| %>
+        <%= render "item_fields", f: item_f %>
+      <% end %>
+    </template>
+
+    <button type="button" data-action="nested-form#add"
+            class="mt-4 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">項目を追加</button>
+  </div>
+
+  <div class="flex gap-2">
+    <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <%= link_to "キャンセル", admin_disclosure_item_sets_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+  </div>
+<% end %>
