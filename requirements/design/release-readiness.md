@@ -122,7 +122,7 @@ R0〜R6 は**機能**の計画。本書は「機能が全部できても、こ�
 | D-6 | 課金・請求の締め処理 | ✅ 方針決定（Q-24/D-P8）: 月次売上処理は TBSS 運用継続。新システムは**請求用受注データ CSV エクスポートのみ**必須 → 実装先（R5 決済の一部 or R6 P4-12 プロファイル汎用化）を R5 着手時に確定（04 R5 追記） |
 | D-7 | 違約金計算ロジック（パラメータ化） | ⬜ 未実装（`legacy-research/07` §3）。R5/R6 |
 | D-8 | 決済ジョブの隔離（Rails版で追加） | ⬜ 未着手（R5）: 決済専用キュー＋自動リトライ無効化（payment §4-2）。Solid Queue の `queue.yml` worker 定義分離と `retry_on` 不使用を設計に含める |
-| D-9 | ネットムーブ会員ID・カード引継ぎ | 🔶 カラム（`customers.netmove_member_id` / `netmove_registered_at`）は R2 実装済み。採番連続性・`member-modify` 導線・ETL 取込枠は R5/R7（`netmove-card-migration.md`） |
+| D-9 | ネットムーブ会員ID・カード引継ぎ | 🔶 カラム（`customers.netmove_member_id` / `netmove_registered_at`）は R2 実装済み。採番連続性・`member-modify` 導線・ETL 取込枠は R5/R7（`netmove-card-migration.md`）。**⚠️ 「引き継がれる前提」は決済会社契約が同一条件で継続することが土台。契約巻き直し（SSS経由・`development-plan.md` Q-48）の内容次第で前提が揺らぐ可能性があり、S-3改（HMACキー社内回収）の結果と合わせて要再確認**（`payment-integration.md` R-13） |
 
 ---
 
@@ -256,3 +256,4 @@ R0〜R6 は**機能**の計画。本書は「機能が全部できても、こ�
 | 2026-07-24 | 資料調査を反映：M-1（決済API）・M-2（現行DB）・M-3 が資料内で解消。B にデータ移行の整形（`legacy-research/09`）を反映、B-3a（CSV破損是正）追加 |
 | 2026-07-27 | requirements横断見直しを反映。Q-C/Q-B/Q-22/MySQL 8.4/カットオーバーN-1/AWS/SES/PII/監視/Go-No-Go/UATのチェック項目を更新 |
 | 2026-08-19 | **Rails版へ全面改訂**（brige-crm へ集約後）。基盤スタックの正を 03§2 と明記。A-1 の MySQL 8.4 決定を「Laravel側限定の旧決定」として PostgreSQL 16 へ置換。Redis/Horizon/Reverb/SES/S3/TrustProxies を Solid Queue/Cache/Cable・ActionMailer SMTP・Active Storage・`RemoteIp`/`assume_ssl` へ読み替え。CI 実態（brakeman/bundler-audit/importmap audit/rubocop/rspec on PostgreSQL 16/authorization_guard）を反映。全項目に状態ラベル（実装済み／部分実装／未着手（R8）／要決定）を付与。Rails 版で追加: A-14 Ruby版差異、C-13 セッション/Cookie ハードニング、C-14 ログマスク、D-8 決済キュー隔離、D-9 会員ID引継ぎ、E-10 監査ログ画面、F-10 Pundit verify、I-6 初期データ投入。削除済みファイル（`basic-cost.md` `remaining-tasks.md` `ftlog-port.md`）への参照を差し替え |
+| 2026-08-19（2回目） | D-9 に、ネットムーブ決済会社契約の巻き直し（SSS経由・`development-plan.md` Q-48）次第で「引き継がれる前提」が揺らぐ可能性がある旨を追記（出典: `payment-integration.md` R-13） |
