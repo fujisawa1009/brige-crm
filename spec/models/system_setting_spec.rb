@@ -3,6 +3,23 @@ require "rails_helper"
 # R6-3: システム設定（システム全体で1行のみのシングルトン）。
 # SystemSetting.current が常に同一の1行を返すこと、上限値のバリデーション、
 # 2件目の直接作成が弾かれることを検証する。
+# == Schema Information
+#
+# Table name: system_settings
+#
+#  id                             :uuid             not null, primary key
+#  inquiry_attachment_max_count   :integer          default(5), not null
+#  inquiry_attachment_max_size_mb :integer          default(50), not null
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  created_by_id                  :uuid
+#  updated_by_id                  :uuid
+#
+# Foreign Keys
+#
+#  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (updated_by_id => users.id)
+#
 RSpec.describe SystemSetting, type: :model do
   describe ".current" do
     it "レコードが存在しなければDefault値で1件作成する" do

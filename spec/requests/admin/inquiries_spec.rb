@@ -133,4 +133,50 @@ RSpec.describe "Admin::Inquiries", type: :request, seed_permission_catalog: true
       }.to have_enqueued_job(InquiryMessageMailJob)
     end
   end
+
+  # R6-4: 問い合わせ返信テンプレート機能。テンプレート由来かどうかのメタ情報を記録しつつ、
+  # 「テンプレート未選択でも新規作成できてしまう」というftlogの弱点を踏まえ、存在しない
+  # テンプレートIDを申告する不正なリクエストはサーバー側で弾かれることを確認する。
+  describe "R6-4: テンプレートによる返信" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:inquiry_template) { create(:inquiry_template, name: "テスト用FAQテンプレ") }
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "返信画面にテンプレート選択肢が表示される" do
+      get admin_inquiry_path(inquiry_a1)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("テスト用FAQテンプレ")
+    end
+
+    it "inquiry_template_idを指定して返信すると、テンプレート由来のメタ情報が記録される" do
+      expect {
+        post admin_inquiry_inquiry_messages_path(inquiry_a1),
+             params: { inquiry_message: { body: "テンプレから作成した返信", inquiry_template_id: inquiry_template.id } }
+      }.to change { inquiry_a1.inquiry_messages.count }.by(1)
+
+      message = inquiry_a1.inquiry_messages.order(:created_at).last
+      expect(message.inquiry_template_id).to eq(inquiry_template.id)
+    end
+
+    it "存在しないinquiry_template_id（直叩き等の不正なID）を指定すると保存されず、メッセージも増えない" do
+      expect {
+        post admin_inquiry_inquiry_messages_path(inquiry_a1),
+             params: { inquiry_message: { body: "改ざんされたテンプレID", inquiry_template_id: SecureRandom.uuid } }
+      }.not_to change { inquiry_a1.inquiry_messages.count }
+
+      expect(response).to redirect_to(admin_inquiry_path(inquiry_a1))
+      follow_redirect!
+      expect(response.body).to include("見つかりません")
+    end
+
+    it "inquiry_template_idを指定しない通常の返信は従来どおり保存できる" do
+      expect {
+        post admin_inquiry_inquiry_messages_path(inquiry_a1), params: { inquiry_message: { body: "自由記述の返信" } }
+      }.to change { inquiry_a1.inquiry_messages.count }.by(1)
+
+      message = inquiry_a1.inquiry_messages.order(:created_at).last
+      expect(message.inquiry_template_id).to be_nil
+    end
+  end
 end

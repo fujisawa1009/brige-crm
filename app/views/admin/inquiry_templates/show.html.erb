@@ -1,0 +1,37 @@
+<% content_for :page_title, "問い合わせ返信テンプレート詳細" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-bold text-slate-900"><%= @inquiry_template.name %></h2>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_inquiry_templates_path,
+            class: "btn-secondary" %>
+      <% if policy(@inquiry_template).update? %>
+        <%= link_to "編集", edit_admin_inquiry_template_path(@inquiry_template),
+              class: "btn-primary" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4">
+      <div>
+        <dt class="text-xs text-slate-500">カテゴリ</dt>
+        <dd class="mt-1"><%= badge_tag @inquiry_template.category, color: "slate" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">本文（差し込み変数はそのまま表示。実際の返信画面では展開されます）</dt>
+        <dd class="mt-1 text-slate-800"><%= simple_format(@inquiry_template.body) %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if policy(@inquiry_template).destroy? %>
+    <div>
+      <%= button_to "このテンプレートを削除", admin_inquiry_template_path(@inquiry_template), method: :delete,
+            form: { data: { turbo_confirm: "#{@inquiry_template.name} を削除しますか？" } },
+            class: "btn-danger" %>
+    </div>
+  <% end %>
+</div>

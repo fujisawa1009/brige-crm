@@ -109,6 +109,8 @@ Rails.application.routes.draw do
     end
     resources :inquiry_statuses
     resources :inquiry_recipient_routes
+    # R6-4: 問い合わせ返信テンプレート（FAQ 12カテゴリ×本文。差し込み変数対応）。
+    resources :inquiry_templates
 
     # 04 R4タスク3: 一斉通知（宛先グループ・テンプレート・スケジュール送信）。
     resources :recipient_groups

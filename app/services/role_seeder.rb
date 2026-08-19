@@ -139,6 +139,13 @@ class RoleSeeder
     admin/recipient_groups admin/notification_templates admin/notifications
   ].freeze
 
+  # R6-4: 問い合わせ返信テンプレート（FAQ 12カテゴリマスタ）管理。NotificationTemplate同様の
+  # 内部運用マスタのため、R4_INTERNAL_CONTROLLERSと同じ扱い（実務運用者専有・代理店/代理店グループへは
+  # 参照権限すら渡さない）。なお返信画面(admin/inquiries#show)でのテンプレ選択・差し込み自体は
+  # InquiryTemplateを直接読むだけ（InquiryStatusと同じ参照専用データ）でこの権限を要さないため、
+  # 代理店ユーザーもテンプレートを"使う"ことはできる（管理=作成/編集/削除のみが実務運用者専有）。
+  R6_INQUIRY_TEMPLATE_CONTROLLERS = %w[admin/inquiry_templates].freeze
+
   # 04 R5-1/R5-13: 契約ワークフロー（不備チェック/確認コール/契約確定）イベント投入・重説項目セットの
   # 版管理は、basic-design.mdが一貫して「管理者が」行う工程として記述する社内工程のため、
   # R3_FORM_BUILDER_CONTROLLERSと同じく代理店/代理店グループロールへは参照権限すら渡さない
@@ -164,6 +171,8 @@ class RoleSeeder
     grant(roles["実務運用者"], admin_permissions.where(controller: R4_INQUIRY_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: R4_INQUIRY_MESSAGE_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: R4_INTERNAL_CONTROLLERS).pluck(:id))
+    # R6-4: 問い合わせ返信テンプレート管理も内部運用マスタのため実務運用者専有。
+    grant(roles["実務運用者"], admin_permissions.where(controller: R6_INQUIRY_TEMPLATE_CONTROLLERS).pluck(:id))
     # 04 R5: 契約ワークフロー・重説項目セットは内部工程のため実務運用者専有。
     grant(roles["実務運用者"], admin_permissions.where(controller: R5_CONTRACT_WORKFLOW_CONTROLLERS).pluck(:id))
 

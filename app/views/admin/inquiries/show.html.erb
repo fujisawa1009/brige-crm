@@ -42,6 +42,9 @@
             ・<%= message.created_at.strftime("%Y-%m-%d %H:%M") %>
           </p>
           <p class="mt-1 whitespace-pre-wrap text-sm text-slate-800"><%= message.body %></p>
+          <% if message.inquiry_template.present? %>
+            <p class="mt-1 text-xs text-indigo-600">テンプレート「<%= message.inquiry_template.name %>」より作成</p>
+          <% end %>
           <% if message.inquiry_message_recipients.any? %>
             <p class="mt-2 text-xs text-slate-500">
               宛先: <%= message.inquiry_message_recipients.map { |r| r.recipient&.name || r.recipient_type }.join(", ") %>
@@ -54,10 +57,31 @@
 
   <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">返信</h3>
-    <%= form_with model: @inquiry_message, url: admin_inquiry_inquiry_messages_path(@inquiry), class: "flex flex-col gap-4 max-w-md" do |f| %>
+    <%
+      # R6-4: テンプレート選択→本文差し込み。差し込み変数の展開はサーバー側(InquiryTemplateRenderer)で
+      # 済ませ、JS(inquiry_template_controller.js)は展開済み文字列を挿入するだけにする
+      # （置換ロジックの二重実装を避ける）。
+      inquiry_template_bodies = @inquiry_templates.index_with { |t| InquiryTemplateRenderer.render(t, @inquiry) }
+      grouped_template_options = @inquiry_templates.group_by(&:category).transform_values { |ts| ts.map { |t| [ t.name, t.id ] } }
+    %>
+    <%= form_with model: @inquiry_message, url: admin_inquiry_inquiry_messages_path(@inquiry),
+          data: { controller: "inquiry-template",
+                  inquiry_template_bodies_value: inquiry_template_bodies.transform_keys(&:to_s).to_json },
+          class: "flex flex-col gap-4 max-w-md" do |f| %>
+      <% if @inquiry_templates.any? %>
+        <div>
+          <%= label_tag "inquiry_message_inquiry_template_id", "返信テンプレート（任意）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.select :inquiry_template_id,
+                grouped_options_for_select(grouped_template_options, @inquiry_message.inquiry_template_id),
+                { include_blank: "テンプレートを使用しない" },
+                data: { inquiry_template_target: "select", action: "change->inquiry-template#apply" },
+                class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+          <p class="mt-1 text-xs text-slate-500">選択すると本文へ差し込まれます（送信前に自由に編集できます）。</p>
+        </div>
+      <% end %>
       <div>
         <%= f.label :body, "返信本文", class: "mb-1 block text-sm font-medium text-slate-700" %>
-        <%= f.text_area :body, rows: 4, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        <%= f.text_area :body, rows: 4, data: { inquiry_template_target: "body" }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
       <div>
         <%= label_tag :status, "ステータス変更（任意）", class: "mb-1 block text-sm font-medium text-slate-700" %>

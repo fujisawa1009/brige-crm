@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_030100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -419,9 +419,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_020000) do
     t.datetime "created_at", null: false
     t.uuid "created_by_id"
     t.uuid "inquiry_id", null: false
+    t.uuid "inquiry_template_id"
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
     t.index ["inquiry_id", "created_at"], name: "index_inquiry_messages_on_inquiry_and_created_at"
+    t.index ["inquiry_template_id"], name: "index_inquiry_messages_on_inquiry_template_id"
   end
 
   create_table "inquiry_recipient_routes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -449,6 +451,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_020000) do
     t.uuid "updated_by_id"
     t.index ["category", "code"], name: "index_inquiry_statuses_on_category_and_code", unique: true
     t.index ["category", "is_active", "sort_order"], name: "index_inquiry_statuses_on_category_active_order"
+  end
+
+  create_table "inquiry_templates", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body", null: false
+    t.string "category", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["category"], name: "index_inquiry_templates_on_category"
   end
 
   create_table "ip_allowlist_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1096,6 +1109,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_020000) do
   add_foreign_key "inquiries", "users", column: "updated_by_id"
   add_foreign_key "inquiry_message_recipients", "inquiry_messages", on_delete: :cascade
   add_foreign_key "inquiry_messages", "inquiries", on_delete: :cascade
+  add_foreign_key "inquiry_messages", "inquiry_templates", on_delete: :nullify
   add_foreign_key "inquiry_messages", "users", column: "created_by_id"
   add_foreign_key "inquiry_messages", "users", column: "updated_by_id"
   add_foreign_key "inquiry_recipient_routes", "recipient_groups", on_delete: :cascade
@@ -1103,6 +1117,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_020000) do
   add_foreign_key "inquiry_recipient_routes", "users", column: "updated_by_id"
   add_foreign_key "inquiry_statuses", "users", column: "created_by_id"
   add_foreign_key "inquiry_statuses", "users", column: "updated_by_id"
+  add_foreign_key "inquiry_templates", "users", column: "created_by_id"
+  add_foreign_key "inquiry_templates", "users", column: "updated_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "created_by_id"
   add_foreign_key "ip_allowlist_entries", "users", column: "updated_by_id"
   add_foreign_key "notification_recipients", "notifications", on_delete: :cascade

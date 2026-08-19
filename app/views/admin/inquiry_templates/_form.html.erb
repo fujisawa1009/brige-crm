@@ -1,0 +1,32 @@
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: inquiry_template, url: url, class: "flex flex-col gap-4 max-w-lg" do |f| %>
+    <% if inquiry_template.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= inquiry_template.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <div>
+      <%= f.label :category, "カテゴリ", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.select :category, InquiryTemplate::CATEGORIES, { include_blank: "選択してください" },
+            class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :name, "テンプレート名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :body, "本文", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_area :body, rows: 8, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono" %>
+      <p class="mt-1 text-xs text-slate-500">
+        差し込み変数（返信画面で選択すると自動展開されます）:
+        <% InquiryTemplateRenderer::VARIABLES.each do |key, label| %>
+          <code class="rounded bg-slate-100 px-1 py-0.5"><%= "%{#{key}}" %></code>（<%= label %>）
+        <% end %>
+      </p>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "btn-primary" %>
+      <%= link_to "キャンセル", admin_inquiry_templates_path, class: "btn-secondary" %>
+    </div>
+  <% end %>
+</div>

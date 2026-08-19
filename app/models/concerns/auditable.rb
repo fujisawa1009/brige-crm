@@ -51,7 +51,10 @@ module Auditable
     "CustomerNotificationSetting" => %w[customer_id event_type app_enabled email_enabled],
     # R6-3: システム設定（シングルトン。admin専有で書き換え頻度は低いが、値の変更が問い合わせ添付の
     # アップロード可否に直結するため変更履歴を残す）。
-    "SystemSetting" => %w[inquiry_attachment_max_count inquiry_attachment_max_size_mb]
+    "SystemSetting" => %w[inquiry_attachment_max_count inquiry_attachment_max_size_mb],
+    # R6-4: 問い合わせ返信テンプレート。bodyはFAQ回答文の全文でノイズが大きいため他モデルのbody/本文と
+    # 同じ理由で追跡対象から外し、分類・名称のみ追う。
+    "InquiryTemplate" => %w[category name]
   }.freeze
 
   included do

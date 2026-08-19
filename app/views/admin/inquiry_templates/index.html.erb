@@ -1,0 +1,65 @@
+<% content_for :page_title, "問い合わせ返信テンプレート" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">問い合わせ返信テンプレート</h2>
+      <p class="text-sm text-slate-500">FAQカテゴリごとの回答テンプレートを管理します（問い合わせ返信画面で選択・差し込みできます）。</p>
+    </div>
+    <% if policy(InquiryTemplate).create? %>
+      <%= link_to "新規作成", new_admin_inquiry_template_path,
+            class: "btn-primary" %>
+    <% end %>
+  </div>
+
+  <%= form_with url: admin_inquiry_templates_path, method: :get, class: "flex items-end gap-2" do %>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-slate-700">カテゴリ絞り込み</label>
+      <%= select_tag :category,
+            options_for_select(InquiryTemplate::CATEGORIES, params[:category]),
+            include_blank: "すべて",
+            class: "rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <%= submit_tag "絞り込み", class: "btn-secondary" %>
+  <% end %>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">カテゴリ</th>
+          <th class="px-4 py-3">テンプレート名</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @inquiry_templates.empty? %>
+          <tr>
+            <td colspan="3" class="px-4 py-8 text-center text-slate-500">テンプレートが登録されていません</td>
+          </tr>
+        <% end %>
+        <% @inquiry_templates.each do |template| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3">
+              <%= badge_tag template.category, color: "slate" %>
+            </td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to template.name, admin_inquiry_template_path(template), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_inquiry_template_path(template), class: "text-indigo-600 hover:underline" %>
+              <% if policy(template).update? %>
+                <%= link_to "編集", edit_admin_inquiry_template_path(template), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(template).destroy? %>
+                <%= button_to "削除", admin_inquiry_template_path(template), method: :delete,
+                      form: { data: { turbo_confirm: "#{template.name} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

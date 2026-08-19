@@ -1,5 +1,25 @@
 require "rails_helper"
 
+# == Schema Information
+#
+# Table name: customer_notification_settings
+#
+#  id            :uuid             not null, primary key
+#  app_enabled   :boolean          default(TRUE), not null
+#  email_enabled :boolean          default(TRUE), not null
+#  event_type    :string           not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  customer_id   :uuid             not null
+#
+# Indexes
+#
+#  index_customer_notification_settings_on_customer_and_event  (customer_id,event_type) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (customer_id => customers.id) ON DELETE => cascade
+#
 RSpec.describe CustomerNotificationSetting, seed_status_catalog: true do
   let!(:customer) { create(:customer) }
 

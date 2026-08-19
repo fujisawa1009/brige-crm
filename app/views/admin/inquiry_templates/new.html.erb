@@ -1,0 +1,6 @@
+<% content_for :page_title, "問い合わせ返信テンプレート新規作成" %>
+
+<div class="flex flex-col gap-4">
+  <h2 class="text-xl font-bold text-slate-900">問い合わせ返信テンプレート新規作成</h2>
+  <%= render "form", inquiry_template: @inquiry_template, url: admin_inquiry_templates_path %>
+</div>

@@ -72,6 +72,8 @@ module AdminNavHelper
                           controller: "admin/notifications", action: "index"),
         AdminNavItem.new(label: "通知テンプレート", path: admin_notification_templates_path,
                           controller: "admin/notification_templates", action: "index"),
+        AdminNavItem.new(label: "問い合わせ返信テンプレート", path: admin_inquiry_templates_path,
+                          controller: "admin/inquiry_templates", action: "index"),
         AdminNavItem.new(label: "宛先グループ", path: admin_recipient_groups_path,
                           controller: "admin/recipient_groups", action: "index")
       ]),

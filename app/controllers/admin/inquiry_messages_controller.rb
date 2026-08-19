@@ -34,6 +34,8 @@ class Admin::InquiryMessagesController < Admin::BaseController
   end
 
   def inquiry_message_params
-    params.require(:inquiry_message).permit(:body, attachments: [])
+    # inquiry_template_id はR6-4のテンプレート由来メタ情報。存在しないIDが送られた場合は
+    # InquiryMessage#inquiry_templateのpresenceバリデーションで弾く（モデル側で担保）。
+    params.require(:inquiry_message).permit(:body, :inquiry_template_id, attachments: [])
   end
 end

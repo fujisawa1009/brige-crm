@@ -12,8 +12,12 @@ class Admin::InquiriesController < Admin::BaseController
 
   def show
     authorize @inquiry
-    @inquiry_messages = @inquiry.inquiry_messages.includes(:inquiry_message_recipients)
+    @inquiry_messages = @inquiry.inquiry_messages.includes(:inquiry_message_recipients, :inquiry_template)
     @inquiry_message = InquiryMessage.new
+    # R6-4: 返信テンプレート選択UI用の参照データ。InquiryStatusの取得(下のビュー)と同じく、
+    # 参照専用のマスタ読み出しのためauthorize/policy_scopeは通さない（InquiryTemplatePolicyは
+    # 別途Admin::InquiryTemplatesController側のCRUD操作を守る）。
+    @inquiry_templates = InquiryTemplate.order(:category, :name)
   end
 
   def new

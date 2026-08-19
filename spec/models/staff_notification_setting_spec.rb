@@ -1,5 +1,25 @@
 require "rails_helper"
 
+# == Schema Information
+#
+# Table name: staff_notification_settings
+#
+#  id            :uuid             not null, primary key
+#  app_enabled   :boolean          default(TRUE), not null
+#  email_enabled :boolean          default(TRUE), not null
+#  event_type    :string           not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  user_id       :uuid             not null
+#
+# Indexes
+#
+#  index_staff_notification_settings_on_user_and_event  (user_id,event_type) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (user_id => users.id) ON DELETE => cascade
+#
 RSpec.describe StaffNotificationSetting do
   let!(:user) { create(:user) }
 

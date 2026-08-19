@@ -14,13 +14,13 @@
 #
 # Table name: system_settings
 #
-#  id                              :uuid             not null, primary key
-#  inquiry_attachment_max_count    :integer          default(5), not null
-#  inquiry_attachment_max_size_mb  :integer          default(50), not null
-#  created_at                      :datetime         not null
-#  updated_at                      :datetime         not null
-#  created_by_id                   :uuid
-#  updated_by_id                   :uuid
+#  id                             :uuid             not null, primary key
+#  inquiry_attachment_max_count   :integer          default(5), not null
+#  inquiry_attachment_max_size_mb :integer          default(50), not null
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  created_by_id                  :uuid
+#  updated_by_id                  :uuid
 #
 # Foreign Keys
 #
