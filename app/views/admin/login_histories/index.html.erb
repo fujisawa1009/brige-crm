@@ -1,25 +1,66 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">ログイン履歴</h1>
-  <p class="text-sm text-gray-500">専用テーブルではなく監査ログ（AuditLog）を認証系アクションで絞り込んだ画面です。</p>
+<% content_for :page_title, "ログイン履歴" %>
 
-  <table class="border-collapse w-full text-sm">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1 text-left">日時</th>
-        <th class="border px-2 py-1 text-left">ユーザー</th>
-        <th class="border px-2 py-1 text-left">イベント</th>
-        <th class="border px-2 py-1 text-left">IP</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @audit_logs.each do |log| %>
-        <tr>
-          <td class="border px-2 py-1"><%= l(log.created_at, format: :long) rescue log.created_at %></td>
-          <td class="border px-2 py-1"><%= log.resource_label %></td>
-          <td class="border px-2 py-1"><%= log.action %></td>
-          <td class="border px-2 py-1"><%= log.ip_address %></td>
+<div class="flex flex-col gap-6">
+  <div>
+    <h2 class="text-xl font-bold text-slate-900">ログイン履歴</h2>
+    <p class="text-sm text-slate-500">専用テーブルではなく監査ログ（AuditLog）を認証系イベントで絞り込んだ画面です（直近200件まで）。</p>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <%= form_with url: admin_login_histories_path, method: :get, class: "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" do %>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">ユーザー</label>
+        <%= text_field_tag :q, params[:q], placeholder: "氏名・メールで検索",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">イベント種別</label>
+        <%= select_tag :event_type,
+              options_for_select([ [ "すべて", "" ] ] + AuthAuditable::AUTH_ACTIONS.map { |a| [ auth_event_label(a), a ] }, params[:event_type]),
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <div class="col-span-full flex items-center justify-between pt-1">
+        <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@audit_logs.size) %> 件（上限200件）</span>
+        <div class="flex gap-2">
+          <%= link_to "クリア", admin_login_histories_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">日時</th>
+          <th class="px-4 py-3">ユーザー</th>
+          <th class="px-4 py-3">種別</th>
+          <th class="px-4 py-3">イベント</th>
+          <th class="px-4 py-3">IPアドレス</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @audit_logs.empty? %>
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">該当する履歴が見つかりません</td>
+          </tr>
+        <% end %>
+        <% @audit_logs.each do |log| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 whitespace-nowrap text-slate-600"><%= log.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= log.resource_label.presence || "—" %></td>
+            <td class="px-4 py-3 text-slate-500"><%= log.user_type == "Customer" ? "顧客" : "管理画面" %></td>
+            <td class="px-4 py-3">
+              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= auth_event_badge_class(log.action) %>">
+                <%= auth_event_label(log.action) %>
+              </span>
+            </td>
+            <td class="px-4 py-3 font-mono text-xs text-slate-500"><%= log.ip_address %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>
