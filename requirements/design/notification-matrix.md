@@ -82,7 +82,7 @@
 | C4 | メール件名は `[案件番号] 顧客名（ステータス変更）` 形式で統一 | ftlog-port §6-4 | **差分**: 問い合わせメールは `【問い合わせ】<タイトル>（INQ-xxxxxx）`（`InquiryMailer`。Laravel envelope 踏襲）、一斉通知は `subject` or `title`、申込は `[brige-crm] お申込みを受け付けました`／`[brige-crm] 新規申込がありました（<案件番号>）`。案件番号・顧客名・ステータスを件名に載せる統一形式は未適用 → 要確認（統一するなら R4 追補） |
 | C5 | 通知ルーティングは「掲示板種別 × ステータス（or 対応者）→ 宛先」のマスタ（実装済み `recipient_groups`）で表現 | 05 §5 設計への示唆 | **実装済み（ステータス側）**: `InquiryRecipientRoute`（category × status_code → recipient_group）＋管理画面 `/admin/inquiry_recipient_routes`。対応者（次回対応者）側は未実装（E10）。マスタ行の初期投入なし |
 | C6 | **通知の要否とステータスを分離**する（現行は「通知を飛ばすためだけに実態と違うステータスを選ぶ」運用が存在） | business-flow-analysis §4/§7 | **未実装**: 投稿ごとに必ず通知（メール＋アプリ内）が発火。「通知しない投稿」「ステータスだけ変える」の選択肢は無い。業務確認（`board-implementation-options.md` §5 チェック3）後に「通知しない」チェックボックス等を追加するか判断 |
-| C7 | 問い合わせ回答テンプレ318件（12カテゴリ）を差し込み変数化して投入 | legacy-research/13 §0〜§2 | **未実装**（04 R4 未実装ギャップ）: `NotificationTemplate` に `template_type=inquiry` の区分があるのみ。FAQ カテゴリマスタ・差し込み変数・返信画面でのテンプレ選択 UI（`inquiry_messages_controller` から未参照）は無い。実装要否とフェーズ（R4後続／R6／R7）は CEO 確認事項 |
+| C7 | 問い合わせ回答テンプレ318件（12カテゴリ）を差し込み変数化して投入 | legacy-research/13 §0〜§2 | **未実装**（04 R4 未実装ギャップ）: `NotificationTemplate` に `template_type=inquiry` の区分があるのみ。FAQ カテゴリマスタ・差し込み変数・返信画面でのテンプレ選択 UI（`inquiry_messages_controller` から未参照）は無い。実装要否とフェーズ（R4後続／R6／R7）は 決定者 確認事項 |
 
 ---
 

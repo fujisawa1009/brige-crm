@@ -7,7 +7,7 @@
 >
 > **Rails版改訂: 2026-08-19。** 旧Laravelプロジェクト（`boilerplate-vue-env/laravel/requirements/design/legacy-research/13-faq-templates.md`）を
 > brige-crm（Rails 8.1）の現行実装（R4 通知・問い合わせ）と 03/04 の決定に合わせて見直し。
-> **フェーズ対応: 旧 P4-14 → R4（問い合わせ・通知。実装済み）＋ 未実装分は R4後続 / R6 / R7 のいずれか（04 で未決・CEO確認事項）。**
+> **フェーズ対応: 旧 P4-14 → R4（問い合わせ・通知。実装済み）＋ 未実装分は R4後続 / R6 / R7 のいずれか（04 で未決・決定者確認事項）。**
 > - 調査事実（FAQ 318件・12カテゴリ・テンプレ構造）は改変していない。改訂したのは §3〜§5 の「新システム側の対応先」。
 > - **R4 実装との突合結果（`app/models/notification_template.rb` / `admin/notification_templates_controller.rb` / `admin/inquiry_messages_controller.rb`）**:
 >   - 実装済み: `NotificationTemplate`（`name` / `subject` / `body` / `template_type` の4列。`template_type` は `notification` / `inquiry` / `common` の3値）と管理画面 CRUD。一斉通知（`Admin::NotificationsController`）ではテンプレ選択→件名・本文コピーが動く（`notification` / `common` のみ）。
@@ -83,7 +83,7 @@
 | F-4 | テンプレートは**問い合わせ返信時に選択・差し込み**（現行の「回答集から探してコピペ」を廃止） | **未実装**。`Admin::InquiryMessagesController#create` は `body`・添付のみ。返信フォーム（`admin/inquiries/show.html.erb`）にテンプレ選択 UI なし。一斉通知側（`Admin::NotificationsController`）には同等の選択→コピー機構が実装済みなので**流用可能** | R4後続 / R6 |
 | F-5 | 外部システムFAQである旨のタグ付け（新システム操作FAQと混在させない） | **未実装**（F-1 のカテゴリ/タグ列で兼ねる） | F-1 と同時 |
 
-> **実装フェーズは 04 で未決**（04 R4「未実装ギャップ」・「次のアクション」5: 実装要否と実施フェーズ（R4後続 / R6 / R7）を CEO・業務側に確認）。
+> **実装フェーズは 04 で未決**（04 R4「未実装ギャップ」・「次のアクション」5: 実装要否と実施フェーズ（R4後続 / R6 / R7）を 決定者・業務側に確認）。
 > 本書は「投入方針」であり、上記の要否判断が済むまで実装に着手しない。
 
 > **現行の運用**：BWが「回答集Excelから該当FAQを探してコピペ→会社名を手で置換」している。
@@ -107,7 +107,7 @@
 
 | 反映先 | 内容 | Rails版（2026-08-19） |
 |---|---|---|
-| `development-plan.md` P4-14 | 問い合わせテンプレートの初期データ＝FAQ318件（12カテゴリ）を投入 | → `04-rails-implementation-plan.md` R4「未実装ギャップ」に反映済み（実装要否・フェーズは CEO確認事項） |
+| `development-plan.md` P4-14 | 問い合わせテンプレートの初期データ＝FAQ318件（12カテゴリ）を投入 | → `04-rails-implementation-plan.md` R4「未実装ギャップ」に反映済み（実装要否・決定者ズは CEO確認事項） |
 | `basic-design.md` §17-4 | テンプレート管理の初期データ源として本FAQを明記 | 継続（basic-design.md は別エージェント改訂） |
 | `Inquiry-email.md` | 問い合わせカテゴリ（12分類）とテンプレート差し込み変数の設計 | **削除済み（旧Laravel側に残存）**。代替: 本書 §2〜§3 ＋ 04 R4。設計が必要になった時点で `NotificationTemplate` 拡張案（category 列・差し込み変数・返信画面選択 UI）を新規に起こす |
 

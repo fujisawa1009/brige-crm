@@ -21,7 +21,7 @@
 - **§4 アプリ構造**: forms/・decorators/不在、controllers/の名前空間（platform_admin/portal/projects/users）、concerns（Auditable/AuthAuditable/UserAdminAuditable/CustomSignInRedirect/WikiFeatureGuard）すべて実在確認
 - **§6 テストハーネス**: `spec/support/system_permission_authorization.rb`の既定=実認可・`:skip_system_authorization`タグでのスタブ・`:seed_permission_catalog`タグでのSyncService実行・`grant_system_permissions!`ヘルパー、いずれも記載通り実装されている
 - **§末尾 主要参照ファイル一覧**: 列挙された15ファイルすべて実在を確認（`app/models/current.rb`, `permission_management_controller.rb`, `role_management_controller.rb`, `permission_management/index.html.erb`, `system_permission_authorization_spec.rb`含む）
-- **§7 単一テナント簡素化の妥当性**: `projects/brige-crm/requirements/design/03-rails-architecture-proposal.md:15`で実際に「acts_as_tenantは移植しない」「単一テナント前提」がCEO決定済み。02の提案方向性は後続の03決定と整合しており、技術判断として妥当だったことが裏付けられる
+- **§7 単一テナント簡素化の妥当性**: `projects/brige-crm/requirements/design/03-rails-architecture-proposal.md:15`で実際に「acts_as_tenantは移植しない」「単一テナント前提」が決定者決定済み。02の提案方向性は後続の03決定と整合しており、技術判断として妥当だったことが裏付けられる
 
 ---
 
@@ -65,9 +65,9 @@
 
 ---
 
-## ❓ 要CEO確認・未決事項
+## ❓ 要決定者確認・未決事項
 
-1. **02は03の意思決定より前のスナップショットとして扱われているか**: `03-rails-architecture-proposal.md`では既にsection数を2→3（admin/form/mypage）に拡張し、OrganizationRoleSeederを組織スコープなしの`RoleSeeder`に単純化する方針まで確定している（決定は2026-08-14）。02はその参考資料として作られた経緯上、内容が03と矛盾しない限り更新不要と考えるが、上記⚠️の`login_histories`誤解が03側（90行目）にも伝播している可能性があるため、**03の該当記述も合わせて確認・訂正するか**はCEO判断を仰ぎたい
+1. **02は03の意思決定より前のスナップショットとして扱われているか**: `03-rails-architecture-proposal.md`では既にsection数を2→3（admin/form/mypage）に拡張し、OrganizationRoleSeederを組織スコープなしの`RoleSeeder`に単純化する方針まで確定している（決定は2026-08-14）。02はその参考資料として作られた経緯上、内容が03と矛盾しない限り更新不要と考えるが、上記⚠️の`login_histories`誤解が03側（90行目）にも伝播している可能性があるため、**03の該当記述も合わせて確認・訂正するか**は決定者判断を仰ぎたい
 2. **本レビューで見つかった➕の情報を02本体に反映するか**: 今回の権限（読み取り自由・書き込みはreviewファイルのみ）の範囲では02は変更していない。EXCLUDED_ACTIONS・SEALED_PORTAL_CONTROLLERS・fail_open_request_specs.txt等をR0着手前に02へ追記するか、もしくは03/04側で直接手当てするかの方針決定が必要
 3. **`ip_allowlist_entries`のSA専有ルール（2FA回避防止）のような「歴史的教訓」をbrige-crmでどう継承するか**: brige-crmには2FA自体は移植予定（03 §4）だが、同種の「PAが自分に有利な設定を入れて認証を弱める」経路が無いかは新規に洗い出しが必要。02のレベルではこの種の教訓が要約で失われているため、原典（`organization_role_seeder.rb`のコメント群）を読む工程をR0タスクに明示すべきか確認したい
 

@@ -42,7 +42,7 @@
 | `10-migration-mapping.md` | **新旧カラムマッピング表（DM-2）**（グループ/代理店/営業/店舗/掲示板の列対応・サンプル検証） | ✅ | **R7** | 同上 |
 | `11-order-field-mapping.md` | **案件238フィールド → 新スキーマ**（移行の紐づけの起点・参照解決・新規要否） | ✅ | **R7**（R2 スキーマとの整合） | 同上 |
 | `12-schema-gap.md` | **設計/実装ギャップ**（旧 jasmin_customers は設計63/実装23。P2-4 の全容） | ✅ | R2（**解消済み・歴史的記録**） | 同上。`customers` 38カラム未実装は R2 で解消済み（04 R7 注記） |
-| `13-faq-templates.md` | **問い合わせ回答集（FAQ318件・12カテゴリ）**（P4-14 テンプレートの元データ） | ✅ | R4 後続 / R6 / R7（**未実装ギャップ**） | 同上。返信テンプレート機能の要否・フェーズは CEO 確認待ち（04 R4） |
+| `13-faq-templates.md` | **問い合わせ回答集（FAQ318件・12カテゴリ）**（P4-14 テンプレートの元データ） | ✅ | R4 後続 / R6 / R7（**未実装ギャップ**） | 同上。返信テンプレート機能の要否・フェーズは 決定者 確認待ち（04 R4） |
 | `14-remaining-materials.md` | **残り資料のクロージング**（解約抑止TimeRex・クレカNG顧客・業務割振り・画像資料の扱い） | ✅ | R6 / R7 | 同上 |
 | `15-test-purchase-20260728.md` | **テスト購入 記録ログ**（2026-07-28。新旧API判別・1桁問題・ret_url 実物の確定） | ✅ | R5 | 同上（PIIルール厳守。`../netmove-card-migration.md` と対） |
 
@@ -140,14 +140,14 @@
 | ステータス・掲示板 | 03・05 = 現行の統廃合指針・4掲示板・転送先 | R4 `Inquiry`/`InquiryStatus`/`InquiryRecipientRoute`（`../board-implementation-options.md` 決定 D-11）、`StatusSeeder` | R4 実装済み。案件状態機械は R5、遷移バリデーションは R6 |
 | 要件・要望 | 01・04・06 = 機能64件・現場要望・BW手作業 | `../04-rails-implementation-plan.md` R6（運用強化）、`../basic-design.md` | R6 未実装（P4-18〜25 相当） |
 | プラン・請求 | 07 | R2 `Plan`/`ProductInitialFee`/`ContractCondition`、R5 決済・請求 | R2 済み／R5 未実装 |
-| FAQ テンプレート | 13 | R4 `NotificationTemplate`（`template_type: inquiry` のみ） | 未実装ギャップ（要否・フェーズ CEO 確認待ち） |
+| FAQ テンプレート | 13 | R4 `NotificationTemplate`（`template_type: inquiry` のみ） | 未実装ギャップ（要否・フェーズ 決定者 確認待ち） |
 | スキーマギャップ | 12 | R2 で解消済み | 歴史的記録として読む |
 
 ---
 
 ## 5. 検証ログ（まとめ後の再確認）
 
-作成したノートを元資料と複数回照合した記録（CEO指示：まとめたら繰り返し再確認）。
+作成したノートを元資料と複数回照合した記録（決定者指示：まとめたら繰り返し再確認）。
 
 | パス | 照合対象 | 結果 |
 |---|---|---|

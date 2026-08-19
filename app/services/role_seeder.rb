@@ -56,7 +56,7 @@ class RoleSeeder
   # AgencyScoped（app/policies/concerns/agency_scoped.rb）のPundit判定と対になる方針:
   #   - create（new含む）は原則スタッフのみ。組織構造・契約条件・アカウント発行は内部運用の管轄とし、
   #     代理店側からの新規作成パラメータによる権限昇格の経路を作らない（04 R1本文には明記が無いため、
-  #     CEO不在下のCTO判断。理由はcommit message参照）。
+  #     決定者不在下のCTO判断。理由はcommit message参照）。
   #   - AgencyScopedがupdate?/destroy?をstaff_scope?のみに縮める AgencyGroup/ContractCondition は
   #     RBACレイヤーでも「そもそも到達できるアクション」を index/show に絞り、意図を明示する
   #     （Pundit側の二重防御と揃える）。

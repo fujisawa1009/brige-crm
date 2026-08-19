@@ -178,7 +178,7 @@ Application →(生成) JasminCustomer + JasminOrder
 
 | ファイル | 役割 |
 |---|---|
-| `requirements/development-plan.md` | **フェーズ管理の単一入口**。実装済み/未実装マトリクス、負債T-1〜5、未決Q一覧、CEO決定D-1〜13 |
+| `requirements/development-plan.md` | **フェーズ管理の単一入口**。実装済み/未実装マトリクス、負債T-1〜5、未決Q一覧、決定者決定D-1〜13 |
 | `design/basic-design.md`（1136行） | **機能仕様の正**。18章・項番1-64 |
 | `design/Column.md` | スキーマ（カラム）設計の正 |
 | `design/payment-integration.md` | ネットムーブ決済設計（リダイレクト型・HMAC-SHA256・非保持/非通過・7状態遷移） |

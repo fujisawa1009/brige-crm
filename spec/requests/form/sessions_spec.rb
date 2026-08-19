@@ -1,7 +1,7 @@
 require "rails_helper"
 
 # 04 R3タスク1・2: 受注入力ログイン（代理店CD＋営業担当者CD→メールOTP）。
-# IP許可リストによるOTP免除（CEO判断・R0/R3非対称の解消）: Users::SessionsController
+# IP許可リストによるOTP免除（決定者判断・R0/R3非対称の解消）: Users::SessionsController
 # （spec/requests/users/sessions_spec.rb）と同じ判定（IpAllowlistEntry.allows?(request.remote_ip)）
 # をForm::SessionsControllerにも入れたため、対称性を検証する：許可リスト一致でOTPスキップ・
 # 不一致は従来どおりOTP必須（フェイルセーフ）。

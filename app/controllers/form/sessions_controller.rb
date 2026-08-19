@@ -2,7 +2,7 @@
 # SalesForm/AuthController踏襲。01§4「受注入力: Laravelガード不使用。セッション＋独自ミドルウェア」）。
 # ここではまだセッションを確立しない（03§8-2 Q-23: 必ずメールOTPを挟む。完了はForm::OtpsController）。
 #
-# IP許可リストによるOTP免除（CEO判断）: Users::SessionsController と同じ判定
+# IP許可リストによるOTP免除（決定者判断）: Users::SessionsController と同じ判定
 # （IpAllowlistEntry.allows?(request.remote_ip)）をここにも適用する。admin画面だけOTPを免除できて
 # form画面はできない、という非対称を解消するため。IpAllowlistEntryは空リスト時に必ずfalseを返す
 # フェイルセーフ設計（app/models/ip_allowlist_entry.rb参照）なので、未設定なら従来どおり全員OTP必須。

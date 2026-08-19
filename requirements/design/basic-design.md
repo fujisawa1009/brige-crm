@@ -250,7 +250,7 @@
 
 **処理内容**
 
-全画面（管理画面・受注入力・マイページ）でログイン後にメールOTPによる二要素認証を必須とする（development-plan Q-23「全画面必須」・CEO決定 2026-07-26。TOTP方式は Q-19 で廃止しメールOTPに統一）。接続元IPが IP許可リストに一致する場合のみOTPを免除できる。
+全画面（管理画面・受注入力・マイページ）でログイン後にメールOTPによる二要素認証を必須とする（development-plan Q-23「全画面必須」・決定者決定 2026-07-26。TOTP方式は Q-19 で廃止しメールOTPに統一）。接続元IPが IP許可リストに一致する場合のみOTPを免除できる。
 
 **実装状況**
 
@@ -448,7 +448,7 @@
 旧Laravel版では「顧客テーブルはサービスごとに分離し、本システムは **`jasmin_customers`**、将来サービスは `[service]_customers`」とする方針だった。
 
 > ✅ **Rails版（決定D・03§8 / §8-2 D-補足）**: `jasmin_` プレフィックスを外し、テーブル名 **`customers`**・モデル名 **`Customer`** で実装（R2）。新規サービス名称（プロダクト名）は未定で、名称確定後も内部モデル名は汎用名を維持する。将来サービス別分離が必要になった場合は **テーブル名プレフィックスではなく Rails の namespace（モジュール）で対応**する。
-> 「Customer が契約主体とマイページログイン主体を兼ねている」点（T-4）は設計負債として認識済みで、再分割要否は R2完了後に CEO へ提案する形で持ち越し（03§8-2）。
+> 「Customer が契約主体とマイページログイン主体を兼ねている」点（T-4）は設計負債として認識済みで、再分割要否は R2完了後に 決定者 へ提案する形で持ち越し（03§8-2）。
 
 ```
 customers            ← 本システムの顧客（Devise Customer スコープ = マイページログイン主体を兼ねる）
@@ -1269,7 +1269,7 @@ customers            ← 本システムの顧客（Devise Customer スコープ
 **実装状況**
 
 > ⚠️ **差分 / 未実装（R4 後続 or R6 or R7。フェーズ未確定）**: R4 の `NotificationTemplate`（`template_type`: `notification`（通知用）/ `inquiry`（問い合わせ用）/ `common`（共通）。`Admin::NotificationTemplatesController` CRUD）に **「問い合わせ用」区分は存在する**が、`Admin::InquiryMessagesController` から未参照で、返信画面でのテンプレ選択 UI・差し込み変数の展開・FAQ 12 カテゴリのマスタ（`legacy-research/13-faq-templates.md`）は未実装（04 R4 未実装ギャップ）。
-> **Rails版実装方針**: `NotificationTemplate`（inquiry 区分）に `category`（FAQ カテゴリ）列を追加し、`Admin::InquiryMessagesController` の返信フォームに Stimulus でテンプレ選択 → 本文差し込み（変数展開は `Mustache` 風の `{{customer_name}}` 等をサーバ側で `NotificationTemplate#render(context)`）を追加。FAQ 318 件の実データ投入は R7 のデータ投入と連動。**実装要否とフェーズは CEO・業務側の確認事項**（04 次のアクション 5）。
+> **Rails版実装方針**: `NotificationTemplate`（inquiry 区分）に `category`（FAQ カテゴリ）列を追加し、`Admin::InquiryMessagesController` の返信フォームに Stimulus でテンプレ選択 → 本文差し込み（変数展開は `Mustache` 風の `{{customer_name}}` 等をサーバ側で `NotificationTemplate#render(context)`）を追加。FAQ 318 件の実データ投入は R7 のデータ投入と連動。**実装要否とフェーズは 決定者・業務側の確認事項**（04 次のアクション 5）。
 
 ---
 

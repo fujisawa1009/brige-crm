@@ -96,6 +96,11 @@
 - **rack-attack スロットルの適用範囲拡張**: 現状 `/users/password` `/users/otp*` のみで、`/users/sign_in`・`/form/login`・`/form/otp`・`/mypage/login`・`/mypage/otp` が未適用（代理店CD＋営業担当者CD の総当たり対策が無い）。R5着手前の小改修として実施（出典: `release-readiness.md` C-6、`basic-design.md` §2-3）。
 - マイページ側は IP許可リストによる OTP 免除を適用していない（意図的な非対称）。方針として妥当かをCEO確認（`basic-design.md` §2-4）。
 
+**R0 認可RBAC 3回独立監査の指摘（2026-08-19追記）**: 実装済みと判断（R0完了条件は満たす）。ただし将来のフットガンとして以下3件を記録。優先度は低〜中、いずれも現状は無害:
+- **CI `authorization_guard` の検出正規表現に死角**: `skip_before_action`／`def skip_system_permission_authorization?` の2パターンしか見ておらず、`authorize_system_permission!` メソッド自体を再定義（オーバーライド）する手口は検知できない。現に `Mypage::BaseController` がこの手法で実装済み（中身は正しいので実害なし）。正規表現の拡張を推奨。
+- **`skip_system_permission_authorization?` の `Users::` 名前空間判定が「クラス名前方一致」で、`devise_controller?` とは別条件のOR**（`application_controller.rb`）。現状 `Users::` 配下は全てDevise由来コントローラのため無害だが、将来ここに非Devise業務コントローラを置くとRBACを完全スキップする穴になる。`devise_controller?` 単独判定への統一を推奨。
+- **`SystemPermissionChecker` 自体の単体テストが無い**（正当性の検証は request spec 経由の間接検証のみ）。また「403＋監査ログ記録」を両方セットで検証しているのは `dashboard_spec.rb` のみで、他15画面は403のみ検証し監査ログ記録までは確認していない。単体テスト追加と検証範囲の横展開はR1以降で対応可。
+
 ## R1: 組織・アカウント
 
 - AgencyGroup / Agency / SalesRepresentative / ContractCondition / User のCRUD

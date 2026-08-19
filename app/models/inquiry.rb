@@ -82,7 +82,7 @@ class Inquiry < ApplicationRecord
 
   # アフター問合せ以外ではアフター固有列を使わない運用だが、DB制約では強制しない
   # （後から他種別で使いたくなった場合の拡張余地を残す。board-implementation-options.md §5の
-  # 確認事項「アフター掲示板のカテゴリ3軸は全部必要か」がCEO/業務確認待ちのため、厳格な
+  # 確認事項「アフター掲示板のカテゴリ3軸は全部必要か」が決定者/業務確認待ちのため、厳格な
   # 排他バリデーションは時期尚早と判断）。
 
   scope :visible_to_agent, -> { where(is_visible_to_agent: true) }
