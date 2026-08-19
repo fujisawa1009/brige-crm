@@ -20,7 +20,7 @@
     <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <div>
-    <%= f.label :status, "ステータス" %>
+    <%= f.label :status, "申込ステータス" %>
     <%= f.collection_select :status, CustomerStatus.ordered, :code, :label,
           {}, class: "border rounded px-2 py-1 w-full" %>
   </div>

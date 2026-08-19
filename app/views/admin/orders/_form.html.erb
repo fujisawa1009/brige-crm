@@ -41,7 +41,7 @@
           { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
   </div>
   <div>
-    <%= f.label :status, "ステータス" %>
+    <%= f.label :status, "案件ステータス" %>
     <%= f.collection_select :status, OrderStatus.ordered, :code, :label,
           {}, class: "border rounded px-2 py-1 w-full" %>
   </div>

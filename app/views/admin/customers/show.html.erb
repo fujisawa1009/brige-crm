@@ -3,7 +3,7 @@
   <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
     <dt class="font-bold">所属代理店</dt><dd><%= @customer.agency.name %></dd>
     <dt class="font-bold">担当営業担当者</dt><dd><%= @customer.sales_representative&.name %></dd>
-    <dt class="font-bold">ステータス</dt><dd><%= @customer.status %></dd>
+    <dt class="font-bold">申込ステータス</dt><dd><%= @customer.status %></dd>
     <dt class="font-bold">お申込日</dt><dd><%= @customer.applied_at %></dd>
     <dt class="font-bold">契約日</dt><dd><%= @customer.contracted_at %></dd>
     <dt class="font-bold">連絡先電話番号</dt><dd><%= @customer.phone %></dd>

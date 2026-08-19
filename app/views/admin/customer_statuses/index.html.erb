@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">顧客ステータス</h1>
+  <h1 class="text-2xl font-bold">申込ステータス</h1>
   <% if policy(CustomerStatus).create? %><%= link_to "新規作成", new_admin_customer_status_path, class: "underline w-fit" %><% end %>
   <table class="border-collapse w-full text-sm">
     <thead><tr><th class="border px-2 py-1 text-left">コード</th><th class="border px-2 py-1 text-left">表示名</th><th class="border px-2 py-1 text-left">システム定義</th></tr></thead>
