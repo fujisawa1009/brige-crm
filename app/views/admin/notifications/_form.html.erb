@@ -3,34 +3,47 @@
     コピーする。保存されるのは notifications 側の subject/body 列（＝コピー・スナップショット）で、
     テンプレート編集の影響を受けないライブ参照ではない。 %>
 <% templates_map = (@notification_templates || []).to_h { |t| [ t.id, { subject: t.subject.to_s, body: t.body.to_s } ] } %>
-<%= form_with model: notification, url: url, class: "flex flex-col gap-3 max-w-md",
-      data: { controller: "notification-template",
-              notification_template_templates_value: templates_map.to_json } do |f| %>
-  <% if notification.errors.any? %><div class="text-red-700"><%= notification.errors.full_messages.to_sentence %></div><% end %>
-  <% if @notification_templates.present? %>
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: notification, url: url, class: "flex flex-col gap-4 max-w-md",
+        data: { controller: "notification-template",
+                notification_template_templates_value: templates_map.to_json } do |f| %>
+    <% if notification.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= notification.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <% if @notification_templates.present? %>
+      <div>
+        <%= f.label :notification_template_id, "テンプレート（任意）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.select :notification_template_id,
+              @notification_templates.map { |t| [ t.name, t.id ] },
+              { include_blank: "テンプレートを使わない" },
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm",
+              data: { notification_template_target: "select", action: "change->notification-template#apply" } %>
+      </div>
+    <% end %>
     <div>
-      <%= f.label :notification_template_id, "テンプレート（任意）" %>
-      <%= f.select :notification_template_id,
-            @notification_templates.map { |t| [ t.name, t.id ] },
-            { include_blank: "テンプレートを使わない" },
-            class: "border rounded px-2 py-1 w-full",
-            data: { notification_template_target: "select", action: "change->notification-template#apply" } %>
+      <%= f.label :title, "タイトル", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :title, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :subject, "件名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :subject, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm",
+            data: { notification_template_target: "subject" } %>
+    </div>
+    <div>
+      <%= f.label :body, "本文", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_area :body, rows: 6, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm",
+            data: { notification_template_target: "body" } %>
+    </div>
+    <div>
+      <%= f.label :target_type, "宛先種別", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.select :target_type, Notification::TARGET_TYPES.map { |t| [ notification_target_label(t), t ] }, {},
+            class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= link_to "キャンセル", admin_notifications_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
     </div>
   <% end %>
-  <div><%= f.label :title, "タイトル" %><%= f.text_field :title, class: "border rounded px-2 py-1 w-full" %></div>
-  <div>
-    <%= f.label :subject, "件名" %>
-    <%= f.text_field :subject, class: "border rounded px-2 py-1 w-full",
-          data: { notification_template_target: "subject" } %>
-  </div>
-  <div>
-    <%= f.label :body, "本文" %>
-    <%= f.text_area :body, rows: 6, class: "border rounded px-2 py-1 w-full",
-          data: { notification_template_target: "body" } %>
-  </div>
-  <div>
-    <%= f.label :target_type, "宛先種別" %>
-    <%= f.select :target_type, Notification::TARGET_TYPES, {}, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-<% end %>
+</div>

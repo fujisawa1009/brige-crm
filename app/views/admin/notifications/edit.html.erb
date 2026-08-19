@@ -1,4 +1,6 @@
+<% content_for :page_title, "一斉通知編集" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">一斉通知の編集</h1>
+  <h2 class="text-xl font-bold text-slate-900">一斉通知編集</h2>
   <%= render "form", notification: @notification, url: admin_notification_path(@notification) %>
 </div>
