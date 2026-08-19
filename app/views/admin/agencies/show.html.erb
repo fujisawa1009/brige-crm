@@ -1,21 +1,99 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @agency.name %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">代理店CD</dt><dd><%= @agency.agency_code %></dd>
-    <dt class="font-bold">所属グループ</dt><dd><%= @agency.agency_group.name %></dd>
-    <dt class="font-bold">店所担当者</dt><dd><%= @agency.contact_person %></dd>
-    <dt class="font-bold">通知先メール1</dt><dd><%= @agency.email_1 %></dd>
-    <dt class="font-bold">電子契約</dt><dd><%= @agency.electronic_contract_enabled %></dd>
-  </dl>
+<% content_for :page_title, "代理店詳細" %>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_agencies_path, class: "underline" %>
-    <% if policy(@agency).update? %>
-      <%= link_to "編集", edit_admin_agency_path(@agency), class: "underline" %>
-    <% end %>
-    <% if policy(@agency).destroy? %>
-      <%= button_to "削除", admin_agency_path(@agency), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @agency.name %></h2>
+      <p class="text-sm text-slate-500 font-mono"><%= @agency.agency_code %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_agencies_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@agency).update? %>
+        <%= link_to "編集", edit_admin_agency_path(@agency),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">所属グループ</dt>
+        <dd class="mt-1"><%= link_to @agency.agency_group.name, admin_agency_group_path(@agency.agency_group), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">店所担当者</dt>
+        <dd class="mt-1 text-slate-800"><%= @agency.contact_person.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">通知先メール</dt>
+        <dd class="mt-1 text-slate-800">
+          <% emails = [ @agency.email_1, @agency.email_2, @agency.email_3, @agency.email_4, @agency.email_5 ].compact_blank %>
+          <%= emails.any? ? emails.join(" / ") : "—" %>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">電子契約</dt>
+        <dd class="mt-1 text-slate-800">
+          <% if @agency.electronic_contract_enabled.nil? %>
+            未設定
+          <% else %>
+            <%= @agency.electronic_contract_enabled? ? "利用可能" : "利用不可" %>
+          <% end %>
+        </dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-slate-500">販売許可商材</dt>
+        <dd class="mt-1">
+          <% if @agency.products.any? %>
+            <div class="flex flex-wrap gap-1">
+              <% @agency.products.each do |product| %>
+                <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600"><%= product.name %></span>
+              <% end %>
+            </div>
+          <% else %>
+            <span class="text-slate-400">—</span>
+          <% end %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">現行契約条件</h3>
+    <% if @agency.current_contract_condition %>
+      <p class="text-sm text-slate-800">
+        <%= @agency.current_contract_condition.name %>
+        <span class="ml-2 text-xs text-slate-500">（<%= @agency.current_contract_condition.effective_from %>〜）</span>
+      </p>
+    <% else %>
+      <p class="text-sm text-slate-500">現行の契約条件は登録されていません。</p>
     <% end %>
   </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">営業担当者（<%= @agency.sales_representatives.size %>人）</h3>
+    <% if @agency.sales_representatives.any? %>
+      <ul class="divide-y divide-slate-100">
+        <% @agency.sales_representatives.order(:name).each do |rep| %>
+          <li class="flex items-center justify-between py-2 text-sm">
+            <span class="font-medium text-slate-800"><%= rep.name %></span>
+            <span class="text-xs <%= rep.is_active? ? "text-green-600" : "text-slate-400" %>"><%= rep.is_active? ? "有効" : "無効" %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-slate-500">営業担当者はまだ登録されていません。</p>
+    <% end %>
+  </div>
+
+  <% if policy(@agency).destroy? %>
+    <div>
+      <%= button_to "この代理店を削除", admin_agency_path(@agency), method: :delete,
+            form: { data: { turbo_confirm: "#{@agency.name} を削除しますか？（営業担当者や顧客が存在する場合は削除できません）" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>

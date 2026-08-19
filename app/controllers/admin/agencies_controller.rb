@@ -5,7 +5,27 @@ class Admin::AgenciesController < Admin::BaseController
   before_action :set_agency, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @agencies = policy_scope(Agency).order(:name)
+    scope = policy_scope(Agency).includes(:agency_group, :products).order(:name)
+    scope = scope.where("agencies.name ILIKE :q OR agencies.agency_code ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
+    scope = scope.where("agencies.contact_person ILIKE :q", q: "%#{params[:contact_person]}%") if params[:contact_person].present?
+    if params[:email].present?
+      scope = scope.where(
+        "agencies.email_1 ILIKE :q OR agencies.email_2 ILIKE :q OR agencies.email_3 ILIKE :q OR agencies.email_4 ILIKE :q OR agencies.email_5 ILIKE :q",
+        q: "%#{params[:email]}%"
+      )
+    end
+    if params[:group_q].present?
+      scope = scope.joins(:agency_group)
+                   .where("agency_groups.name ILIKE :q OR agency_groups.group_code ILIKE :q", q: "%#{params[:group_q]}%")
+    end
+    if params[:product_id].present?
+      scope = scope.joins(:agency_products).where(agency_products: { product_id: params[:product_id] }).distinct
+    end
+    scope = scope.where(electronic_contract_enabled: tri_state_param(params[:electronic_contract_enabled])) if params[:electronic_contract_enabled].present?
+    scope = scope.where(csv_download_visible: tri_state_param(params[:csv_download_visible])) if params[:csv_download_visible].present?
+
+    @pagy, @agencies = pagy(scope)
+    @products = Product.order(:name)
   end
 
   def show
@@ -54,6 +74,14 @@ class Admin::AgenciesController < Admin::BaseController
   end
 
   private
+
+  # 電子契約フラグ・CSVダウンロード表示は nullable boolean（未設定/true/false）のため、
+  # セレクトの "null" は明示的にnilを、"true"/"false"はそれぞれの真偽値を返す。
+  def tri_state_param(value)
+    return nil if value == "null"
+
+    ActiveModel::Type::Boolean.new.cast(value)
+  end
 
   def set_agency
     @agency = Agency.find(params[:id])
