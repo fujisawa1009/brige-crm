@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_orders_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@order).update? %>
         <%= link_to "編集", edit_admin_order_path(@order),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -21,19 +21,11 @@
     <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <dt class="text-xs text-slate-500">案件ステータス</dt>
-        <dd class="mt-1">
-          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= order_status_badge_class(@order.status) %>">
-            <%= order_status_label(@order.status) %>
-          </span>
-        </dd>
+        <dd class="mt-1"><%= order_status_badge(@order.status) %></dd>
       </div>
       <div>
         <dt class="text-xs text-slate-500">契約ステータス</dt>
-        <dd class="mt-1">
-          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= contract_status_badge_class(@order.contract_status) %>">
-            <%= contract_status_label(@order.contract_status) %>
-          </span>
-        </dd>
+        <dd class="mt-1"><%= contract_status_badge(@order.contract_status) %></dd>
       </div>
       <div>
         <dt class="text-xs text-slate-500">契約顧客</dt>
@@ -88,7 +80,7 @@
             <%= f.label :comment, "コメント", class: "mb-1 block text-sm font-medium text-slate-700" %>
             <%= f.text_area :comment, rows: 2, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
           </div>
-          <%= f.submit "イベントを投入", class: "self-start rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+          <%= f.submit "イベントを投入", class: "self-start btn-primary" %>
         <% end %>
       <% else %>
         <p class="text-sm text-slate-500">現在のステータス（<%= contract_status_label(@order.contract_status) %>）から遷移可能なイベントはありません。</p>
@@ -179,7 +171,7 @@
     <div>
       <%= button_to "この案件を削除", admin_order_path(@order), method: :delete,
             form: { data: { turbo_confirm: "#{@order.order_number} を削除しますか？" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

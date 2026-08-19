@@ -8,7 +8,7 @@
     </div>
     <% if policy(NotificationTemplate).create? %>
       <%= link_to "新規作成", new_admin_notification_template_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -32,7 +32,7 @@
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-3 font-medium text-slate-800"><%= link_to template.name, admin_notification_template_path(template), class: "hover:underline" %></td>
             <td class="px-4 py-3">
-              <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"><%= NotificationTemplate::TEMPLATE_TYPES[template.template_type] %></span>
+              <%= badge_tag NotificationTemplate::TEMPLATE_TYPES[template.template_type], color: "slate" %>
             </td>
             <td class="px-4 py-3 text-slate-600"><%= template.subject.presence || "—" %></td>
             <td class="px-4 py-3 text-right whitespace-nowrap">

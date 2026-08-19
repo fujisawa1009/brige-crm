@@ -7,10 +7,16 @@ module Admin::UsersHelper
     "社内"
   end
 
-  def user_account_type_badge_class(user)
-    return "bg-green-100 text-green-700" if user.agency_id.present?
-    return "bg-orange-100 text-orange-700" if user.agency_group_id.present?
+  def user_account_type_badge(user)
+    color =
+      if user.agency_id.present?
+        "green"
+      elsif user.agency_group_id.present?
+        "orange"
+      else
+        "slate"
+      end
 
-    "bg-slate-100 text-slate-600"
+    badge_tag(user_account_type_label(user), color: color)
   end
 end

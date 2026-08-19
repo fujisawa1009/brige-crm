@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_notifications_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@notification).update? %>
         <%= link_to "編集", edit_admin_notification_path(@notification),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -19,7 +19,7 @@
   <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
     <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <p class="text-xs text-slate-500">状態</p>
-      <p class="mt-1"><span class="rounded-full px-2 py-0.5 text-xs font-medium <%= notification_status_badge_class(@notification.status) %>"><%= notification_status_label(@notification.status) %></span></p>
+      <p class="mt-1"><%= notification_status_badge(@notification.status) %></p>
     </div>
     <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <p class="text-xs text-slate-500">合計件数</p>
@@ -65,7 +65,7 @@
           <label class="mb-1 block text-xs font-medium text-slate-500">予約日時（空なら即時送信）</label>
           <input type="datetime-local" name="scheduled_at" class="rounded-md border border-slate-300 px-3 py-2 text-sm">
         </div>
-        <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">送信登録</button>
+        <button type="submit" class="btn-primary">送信登録</button>
       <% end %>
     </div>
   <% end %>
@@ -74,7 +74,7 @@
     <div>
       <%= button_to "この通知を削除", admin_notification_path(@notification), method: :delete,
             form: { data: { turbo_confirm: "#{@notification.title} を削除しますか？" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

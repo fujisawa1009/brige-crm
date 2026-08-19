@@ -7,7 +7,7 @@
       <p class="text-sm text-slate-500">ロールごとに許可する操作を設定します。admin（super_admin）は常に全許可です。</p>
     </div>
     <%= button_to "ルート定義からカタログを同期", sync_admin_permission_management_path, method: :post,
-          class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+          class: "btn-secondary" %>
   </div>
 
   <div class="flex items-center justify-between">
@@ -56,6 +56,6 @@
       </table>
     </div>
 
-    <%= submit_tag "保存", class: "mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <%= submit_tag "保存", class: "mt-4 btn-primary" %>
   <% end %>
 </div>

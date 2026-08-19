@@ -8,12 +8,12 @@ module Admin::NotificationsHelper
     Notification::STATUS_FAILED => "失敗"
   }.freeze
 
-  STATUS_BADGE_CLASSES = {
-    Notification::STATUS_DRAFT => "bg-slate-100 text-slate-600",
-    Notification::STATUS_SCHEDULED => "bg-blue-100 text-blue-700",
-    Notification::STATUS_SENDING => "bg-amber-100 text-amber-700",
-    Notification::STATUS_SENT => "bg-green-100 text-green-700",
-    Notification::STATUS_FAILED => "bg-red-100 text-red-700"
+  STATUS_BADGE_COLORS = {
+    Notification::STATUS_DRAFT => "slate",
+    Notification::STATUS_SCHEDULED => "blue",
+    Notification::STATUS_SENDING => "amber",
+    Notification::STATUS_SENT => "green",
+    Notification::STATUS_FAILED => "red"
   }.freeze
 
   TARGET_LABELS = {
@@ -22,6 +22,10 @@ module Admin::NotificationsHelper
   }.freeze
 
   def notification_status_label(status) = STATUS_LABELS.fetch(status, status)
-  def notification_status_badge_class(status) = STATUS_BADGE_CLASSES.fetch(status, "bg-slate-100 text-slate-600")
+
+  def notification_status_badge(status)
+    badge_tag(notification_status_label(status), color: STATUS_BADGE_COLORS.fetch(status, "slate"))
+  end
+
   def notification_target_label(target_type) = TARGET_LABELS.fetch(target_type, target_type)
 end

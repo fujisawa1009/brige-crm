@@ -8,7 +8,7 @@
     </div>
     <% if policy(Agency).create? %>
       <%= link_to "新規作成", new_admin_agency_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -55,7 +55,7 @@
       <div class="col-span-full flex items-center justify-between pt-1">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
-          <%= link_to "クリア", admin_agencies_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= link_to "クリア", admin_agencies_path, class: "btn-secondary" %>
           <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
         </div>
       </div>
@@ -94,9 +94,9 @@
               <% if agency.electronic_contract_enabled.nil? %>
                 <span class="text-slate-400">未設定</span>
               <% elsif agency.electronic_contract_enabled? %>
-                <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">利用可能</span>
+                <%= badge_tag "利用可能", color: "green" %>
               <% else %>
-                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">利用不可</span>
+                <%= badge_tag "利用不可", color: "slate" %>
               <% end %>
             </td>
             <td class="px-4 py-3 text-right whitespace-nowrap">

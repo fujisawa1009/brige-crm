@@ -9,9 +9,9 @@
     <% if policy(User).create? %>
       <div class="flex gap-2">
         <%= link_to "CSV一括アップロード", import_admin_users_path,
-              class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+              class: "btn-secondary" %>
         <%= link_to "新規作成", new_admin_user_path,
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       </div>
     <% end %>
   </div>
@@ -57,7 +57,7 @@
       <div class="col-span-full flex items-center justify-between pt-1">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
-          <%= link_to "クリア", admin_users_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= link_to "クリア", admin_users_path, class: "btn-secondary" %>
           <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
         </div>
       </div>
@@ -88,9 +88,7 @@
             <td class="px-4 py-3 font-medium text-slate-800"><%= link_to user.name, admin_user_path(user), class: "hover:underline" %></td>
             <td class="px-4 py-3 text-slate-600"><%= user.email %></td>
             <td class="px-4 py-3">
-              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= user_account_type_badge_class(user) %>">
-                <%= user_account_type_label(user) %>
-              </span>
+              <%= user_account_type_badge(user) %>
             </td>
             <td class="px-4 py-3 text-slate-600"><%= user.agency&.name || user.agency_group&.name || "—" %></td>
             <td class="px-4 py-3 text-slate-600">
@@ -104,11 +102,7 @@
                 <span class="text-slate-400">—</span>
               <% end %>
             </td>
-            <td class="px-4 py-3">
-              <span class="inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium <%= user.is_active? ? "border-green-500 text-green-600" : "border-slate-300 text-slate-400" %>">
-                <%= user.is_active? ? "有効" : "無効" %>
-              </span>
-            </td>
+            <td class="px-4 py-3"><%= active_badge(user.is_active?) %></td>
             <td class="px-4 py-3 text-right whitespace-nowrap">
               <%= link_to "詳細", admin_user_path(user), class: "text-indigo-600 hover:underline" if policy(user).show? %>
               <% if policy(user).update? %>

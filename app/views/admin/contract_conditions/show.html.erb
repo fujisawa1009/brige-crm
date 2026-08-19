@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_contract_conditions_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@contract_condition).update? %>
         <%= link_to "編集", edit_admin_contract_condition_path(@contract_condition),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -27,9 +27,9 @@
         <dt class="text-xs text-slate-500">状態</dt>
         <dd class="mt-1">
           <% if @contract_condition.current? %>
-            <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">現行</span>
+            <%= badge_tag "現行", color: "green" %>
           <% else %>
-            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">過去分</span>
+            <%= badge_tag "過去分", color: "slate" %>
           <% end %>
         </dd>
       </div>
@@ -53,7 +53,7 @@
     <div>
       <%= button_to "この契約条件を削除", admin_contract_condition_path(@contract_condition), method: :delete,
             form: { data: { turbo_confirm: "#{@contract_condition.name} を削除しますか？" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

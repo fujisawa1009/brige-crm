@@ -23,7 +23,7 @@
       <div class="col-span-full flex items-center justify-between pt-1">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@audit_logs.size) %> 件（上限200件）</span>
         <div class="flex gap-2">
-          <%= link_to "クリア", admin_login_histories_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= link_to "クリア", admin_login_histories_path, class: "btn-secondary" %>
           <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
         </div>
       </div>
@@ -53,9 +53,7 @@
             <td class="px-4 py-3 font-medium text-slate-800"><%= log.resource_label.presence || "—" %></td>
             <td class="px-4 py-3 text-slate-500"><%= log.user_type == "Customer" ? "顧客" : "管理画面" %></td>
             <td class="px-4 py-3">
-              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= auth_event_badge_class(log.action) %>">
-                <%= auth_event_label(log.action) %>
-              </span>
+              <%= auth_event_badge(log.action) %>
             </td>
             <td class="px-4 py-3 font-mono text-xs text-slate-500"><%= log.ip_address %></td>
           </tr>

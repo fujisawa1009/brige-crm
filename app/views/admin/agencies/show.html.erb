@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_agencies_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@agency).update? %>
         <%= link_to "編集", edit_admin_agency_path(@agency),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -93,7 +93,7 @@
     <div>
       <%= button_to "この代理店を削除", admin_agency_path(@agency), method: :delete,
             form: { data: { turbo_confirm: "#{@agency.name} を削除しますか？（営業担当者や顧客が存在する場合は削除できません）" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

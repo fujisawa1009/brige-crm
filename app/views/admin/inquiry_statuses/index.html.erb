@@ -8,7 +8,7 @@
     </div>
     <% if policy(InquiryStatus).create? %>
       <%= link_to "新規作成", new_admin_inquiry_status_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -20,7 +20,7 @@
               include_blank: "すべて", class: "w-56 rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
       <span class="ml-auto text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
-      <%= link_to "クリア", admin_inquiry_statuses_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+      <%= link_to "クリア", admin_inquiry_statuses_path, class: "btn-secondary" %>
       <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
     <% end %>
   </div>
@@ -46,7 +46,7 @@
         <% @inquiry_statuses.each do |status| %>
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-3">
-              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= inquiry_category_badge_class(status.category) %>"><%= status.category %></span>
+              <%= inquiry_category_badge(status.category) %>
             </td>
             <td class="px-4 py-3 font-mono text-slate-600"><%= status.code %></td>
             <td class="px-4 py-3 font-medium text-slate-800"><%= link_to status.label, admin_inquiry_status_path(status), class: "hover:underline" %></td>
@@ -54,11 +54,9 @@
             <td class="px-4 py-3">
               <div class="flex flex-wrap gap-1">
                 <% if status.is_system? %>
-                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">組み込み</span>
+                  <%= badge_tag "組み込み", color: "slate" %>
                 <% end %>
-                <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= status.is_active? ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500" %>">
-                  <%= status.is_active? ? "有効" : "無効" %>
-                </span>
+                <%= active_badge(status.is_active?) %>
               </div>
             </td>
             <td class="px-4 py-3 text-right whitespace-nowrap">

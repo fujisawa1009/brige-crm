@@ -26,11 +26,7 @@
         <% @csv_exports.each do |export| %>
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-3 font-medium text-slate-800"><%= export.resource_type %></td>
-            <td class="px-4 py-3">
-              <% badge_class = { "completed" => "bg-green-100 text-green-700", "failed" => "bg-red-100 text-red-700" }.fetch(export.status, "bg-amber-100 text-amber-700") %>
-              <% badge_label = { "completed" => "完了", "failed" => "失敗", "pending" => "処理中" }.fetch(export.status, export.status) %>
-              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= badge_class %>"><%= badge_label %></span>
-            </td>
+            <td class="px-4 py-3"><%= csv_export_status_badge(export.status) %></td>
             <td class="px-4 py-3 text-slate-600"><%= export.row_count.presence || "—" %></td>
             <td class="px-4 py-3 whitespace-nowrap text-slate-600"><%= export.created_at.strftime("%Y-%m-%d %H:%M") %></td>
             <td class="px-4 py-3 text-right">

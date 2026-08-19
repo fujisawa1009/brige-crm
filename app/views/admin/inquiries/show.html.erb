@@ -7,7 +7,7 @@
       <p class="text-sm text-slate-500 font-mono"><%= @inquiry.inquiry_number %></p>
     </div>
     <%= link_to "一覧に戻る", admin_inquiries_path,
-          class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+          class: "btn-secondary" %>
   </div>
 
   <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -15,7 +15,7 @@
     <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <dt class="text-xs text-slate-500">掲示板種別</dt>
-        <dd class="mt-1"><span class="rounded-full px-2 py-0.5 text-xs font-medium <%= inquiry_category_badge_class(@inquiry.category) %>"><%= @inquiry.category %></span></dd>
+        <dd class="mt-1"><%= inquiry_category_badge(@inquiry.category) %></dd>
       </div>
       <div>
         <dt class="text-xs text-slate-500">状態</dt>
@@ -65,7 +65,7 @@
               options_for_select(InquiryStatus.for_category(@inquiry.category).ordered.pluck(:label, :code), @inquiry.status),
               class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
-      <%= f.submit "送信", class: "w-fit rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= f.submit "送信", class: "w-fit btn-primary" %>
     <% end %>
   </div>
 </div>

@@ -2,10 +2,6 @@
 # マスタ系画面で共通の有効/無効バッジ。
 module Admin::MasterDataHelper
   def active_badge(active)
-    if active
-      content_tag :span, "有効", class: "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
-    else
-      content_tag :span, "無効", class: "rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500"
-    end
+    active ? badge_tag("有効", color: "green") : badge_tag("無効", color: "slate-muted")
   end
 end

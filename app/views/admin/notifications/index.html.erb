@@ -8,7 +8,7 @@
     </div>
     <% if policy(Notification).create? %>
       <%= link_to "新規作成", new_admin_notification_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -34,7 +34,7 @@
             <td class="px-4 py-3 font-medium text-slate-800"><%= link_to n.title, admin_notification_path(n), class: "hover:underline" %></td>
             <td class="px-4 py-3 text-slate-600"><%= notification_target_label(n.target_type) %></td>
             <td class="px-4 py-3">
-              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= notification_status_badge_class(n.status) %>"><%= notification_status_label(n.status) %></span>
+              <%= notification_status_badge(n.status) %>
             </td>
             <td class="px-4 py-3 text-slate-600">
               <% if n.status == Notification::STATUS_SENT %>

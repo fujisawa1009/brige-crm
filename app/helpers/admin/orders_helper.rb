@@ -10,14 +10,18 @@ module Admin::OrdersHelper
     @order_status_labels.fetch(code, code)
   end
 
-  def order_status_badge_class(code)
+  def order_status_badge_color(code)
     case code
-    when OrderStatus::CODE_ORDERED then "bg-blue-100 text-blue-700"
-    when "10:作業進行中" then "bg-amber-100 text-amber-700"
-    when "21:解約", "22:強制解約" then "bg-red-100 text-red-700"
-    when "100:CLOSE" then "bg-green-100 text-green-700"
-    else "bg-slate-100 text-slate-600"
+    when OrderStatus::CODE_ORDERED then "blue"
+    when "10:作業進行中" then "amber"
+    when "21:解約", "22:強制解約" then "red"
+    when "100:CLOSE" then "green"
+    else "slate"
     end
+  end
+
+  def order_status_badge(code)
+    badge_tag(order_status_label(code), color: order_status_badge_color(code))
   end
 
   # R5-1: contract_statusも同じ理由（コードのみ保持）でラベル変換が必要。
@@ -28,14 +32,18 @@ module Admin::OrdersHelper
     @contract_status_labels.fetch(code, code)
   end
 
-  def contract_status_badge_class(code)
+  def contract_status_badge_color(code)
     case code
-    when ContractStatus::CODE_CONTRACTED then "bg-green-100 text-green-700"
-    when ContractStatus::CODE_RETURNED, ContractStatus::CODE_BEING_CORRECTED then "bg-red-100 text-red-700"
-    when ContractStatus::CODE_NEEDS_RECONFIRMATION then "bg-amber-100 text-amber-700"
-    when nil then "bg-slate-100 text-slate-500"
-    else "bg-blue-100 text-blue-700"
+    when ContractStatus::CODE_CONTRACTED then "green"
+    when ContractStatus::CODE_RETURNED, ContractStatus::CODE_BEING_CORRECTED then "red"
+    when ContractStatus::CODE_NEEDS_RECONFIRMATION then "amber"
+    when nil then "slate-muted"
+    else "blue"
     end
+  end
+
+  def contract_status_badge(code)
+    badge_tag(contract_status_label(code), color: contract_status_badge_color(code))
   end
 
   # R5-1: 現在のcontract_statusから遷移可能なevent一覧（Admin::ContractReviewsController#createの

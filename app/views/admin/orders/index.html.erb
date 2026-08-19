@@ -9,11 +9,11 @@
     <div class="flex gap-2">
       <% if policy(Order).index? %>
         <%= button_to "CSVエクスポート", export_admin_orders_path, method: :post,
-              class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+              class: "btn-secondary" %>
       <% end %>
       <% if policy(Order).create? %>
         <%= link_to "新規作成", new_admin_order_path,
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -34,7 +34,7 @@
       <div class="col-span-full flex items-center justify-between pt-1">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
-          <%= link_to "クリア", admin_orders_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= link_to "クリア", admin_orders_path, class: "btn-secondary" %>
           <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
         </div>
       </div>
@@ -66,9 +66,7 @@
             <td class="px-4 py-3 text-slate-600"><%= order.agency.name %></td>
             <td class="px-4 py-3 text-slate-600"><%= order.ordered_at&.to_date || "—" %></td>
             <td class="px-4 py-3">
-              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= order_status_badge_class(order.status) %>">
-                <%= order_status_label(order.status) %>
-              </span>
+              <%= order_status_badge(order.status) %>
             </td>
             <td class="px-4 py-3 text-right whitespace-nowrap">
               <%= link_to "詳細", admin_order_path(order), class: "text-indigo-600 hover:underline" %>

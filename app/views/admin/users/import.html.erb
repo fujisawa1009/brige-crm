@@ -13,8 +13,8 @@
           multipart: true, class: "flex flex-col gap-4 max-w-md" do |f| %>
       <%= f.file_field :csv_file, accept: "text/csv", class: "block w-full text-sm text-slate-600 file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200" %>
       <div class="flex gap-2">
-        <%= f.submit "アップロード", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
-        <%= link_to "一覧に戻る", admin_users_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+        <%= f.submit "アップロード", class: "btn-primary" %>
+        <%= link_to "一覧に戻る", admin_users_path, class: "btn-secondary" %>
       </div>
     <% end %>
   </div>

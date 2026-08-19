@@ -1,12 +1,17 @@
-# admin/customers の申込ステータスバッジ配色。
+# admin/customers の申込ステータスバッジ。R6-2でtag.spanを返す形に統一
+# （呼び出し側は<span class="...">でラップせず、この戻り値をそのまま埋め込む）。
 module Admin::CustomersHelper
-  def customer_status_badge_class(code)
+  def customer_status_badge_color(code)
     case code
-    when CustomerStatus::CODE_APPLIED then "bg-blue-100 text-blue-700"
-    when "contracted" then "bg-green-100 text-green-700"
-    when "withdrawn" then "bg-slate-100 text-slate-500"
-    when "returned", "needs_correction", "needs_reconfirmation" then "bg-amber-100 text-amber-700"
-    else "bg-slate-100 text-slate-600"
+    when CustomerStatus::CODE_APPLIED then "blue"
+    when "contracted" then "green"
+    when "withdrawn" then "slate-muted"
+    when "returned", "needs_correction", "needs_reconfirmation" then "amber"
+    else "slate"
     end
+  end
+
+  def customer_status_badge(code)
+    badge_tag(customer_status_label(code), color: customer_status_badge_color(code))
   end
 end

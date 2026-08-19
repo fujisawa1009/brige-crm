@@ -8,7 +8,7 @@
     </div>
     <% if policy(InquiryRecipientRoute).create? %>
       <%= link_to "新規作成", new_admin_inquiry_recipient_route_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -20,7 +20,7 @@
               include_blank: "すべて", class: "w-56 rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
       <span class="ml-auto text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
-      <%= link_to "クリア", admin_inquiry_recipient_routes_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+      <%= link_to "クリア", admin_inquiry_recipient_routes_path, class: "btn-secondary" %>
       <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
     <% end %>
   </div>
@@ -44,7 +44,7 @@
         <% @inquiry_recipient_routes.each do |route| %>
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-3">
-              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= inquiry_category_badge_class(route.category) %>"><%= route.category %></span>
+              <%= inquiry_category_badge(route.category) %>
             </td>
             <td class="px-4 py-3 font-medium text-slate-800"><%= link_to route.status_code, admin_inquiry_recipient_route_path(route), class: "hover:underline" %></td>
             <td class="px-4 py-3 text-slate-600"><%= route.recipient_group.name %></td>

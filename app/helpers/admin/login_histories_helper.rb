@@ -20,10 +20,16 @@ module Admin::LoginHistoriesHelper
     EVENT_LABELS.fetch(action, action)
   end
 
-  def auth_event_badge_class(action)
-    return "bg-red-100 text-red-700" if FAILURE_EVENTS.include?(action)
-    return "bg-green-100 text-green-700" if SUCCESS_EVENTS.include?(action)
+  def auth_event_badge(action)
+    color =
+      if FAILURE_EVENTS.include?(action)
+        "red"
+      elsif SUCCESS_EVENTS.include?(action)
+        "green"
+      else
+        "slate"
+      end
 
-    "bg-slate-100 text-slate-600"
+    badge_tag(auth_event_label(action), color: color)
   end
 end

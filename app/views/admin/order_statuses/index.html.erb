@@ -8,7 +8,7 @@
     </div>
     <% if policy(OrderStatus).create? %>
       <%= link_to "新規作成", new_admin_order_status_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -32,7 +32,7 @@
             <td class="px-4 py-3">
               <div class="flex flex-wrap gap-1">
                 <% if status.is_system? %>
-                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">組み込み</span>
+                  <%= badge_tag "組み込み", color: "slate" %>
                 <% end %>
                 <%= active_badge(status.is_active?) %>
               </div>

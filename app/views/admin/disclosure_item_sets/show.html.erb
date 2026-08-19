@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_disclosure_item_sets_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@disclosure_item_set).update? %>
         <%= link_to "編集", edit_admin_disclosure_item_set_path(@disclosure_item_set),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -46,7 +46,7 @@
     <div>
       <%= button_to "この項目セットを削除", admin_disclosure_item_set_path(@disclosure_item_set), method: :delete,
             form: { data: { turbo_confirm: "v#{@disclosure_item_set.version} を削除しますか？" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

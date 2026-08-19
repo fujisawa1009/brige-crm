@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_agency_groups_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@agency_group).update? %>
         <%= link_to "編集", edit_admin_agency_group_path(@agency_group),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -21,11 +21,7 @@
     <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <dt class="text-xs text-slate-500">サービス種別</dt>
-        <dd class="mt-1">
-          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= @agency_group.service_type == "BridgePlus" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700" %>">
-            <%= @agency_group.service_type %>
-          </span>
-        </dd>
+        <dd class="mt-1"><%= badge_tag @agency_group.service_type, color: (@agency_group.service_type == "BridgePlus" ? "purple" : "blue") %></dd>
       </div>
       <div>
         <dt class="text-xs text-slate-500">連絡先メール</dt>
@@ -76,7 +72,7 @@
     <div>
       <%= button_to "この代理店グループを削除", admin_agency_group_path(@agency_group), method: :delete,
             form: { data: { turbo_confirm: "#{@agency_group.name} を削除しますか？（配下に代理店が存在する場合は削除できません）" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

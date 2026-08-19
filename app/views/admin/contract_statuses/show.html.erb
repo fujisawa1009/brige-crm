@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_contract_statuses_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@contract_status).update? %>
         <%= link_to "編集", edit_admin_contract_status_path(@contract_status),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -27,7 +27,7 @@
         <dt class="text-xs text-slate-500">状態</dt>
         <dd class="mt-1 flex gap-1">
           <% if @contract_status.is_system? %>
-            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">組み込み（コード変更不可）</span>
+            <%= badge_tag "組み込み（コード変更不可）", color: "slate" %>
           <% end %>
           <%= active_badge(@contract_status.is_active?) %>
         </dd>
@@ -39,7 +39,7 @@
     <div>
       <%= button_to "このステータスを削除", admin_contract_status_path(@contract_status), method: :delete,
             form: { data: { turbo_confirm: "#{@contract_status.label} を削除しますか？" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

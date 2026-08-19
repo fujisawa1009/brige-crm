@@ -8,10 +8,10 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧に戻る", admin_inquiry_recipient_routes_path,
-            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+            class: "btn-secondary" %>
       <% if policy(@inquiry_recipient_route).update? %>
         <%= link_to "編集", edit_admin_inquiry_recipient_route_path(@inquiry_recipient_route),
-              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+              class: "btn-primary" %>
       <% end %>
     </div>
   </div>
@@ -22,7 +22,7 @@
       <div>
         <dt class="text-xs text-slate-500">掲示板種別</dt>
         <dd class="mt-1">
-          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= inquiry_category_badge_class(@inquiry_recipient_route.category) %>"><%= @inquiry_recipient_route.category %></span>
+          <%= inquiry_category_badge(@inquiry_recipient_route.category) %>
         </dd>
       </div>
       <div>
@@ -40,7 +40,7 @@
     <div>
       <%= button_to "このルーティングを削除", admin_inquiry_recipient_route_path(@inquiry_recipient_route), method: :delete,
             form: { data: { turbo_confirm: "#{@inquiry_recipient_route.category} / #{@inquiry_recipient_route.status_code} のルーティングを削除しますか？" } },
-            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+            class: "btn-danger" %>
     </div>
   <% end %>
 </div>

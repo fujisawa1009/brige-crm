@@ -8,7 +8,7 @@
     </div>
     <% if policy(ContractCondition).create? %>
       <%= link_to "新規作成", new_admin_contract_condition_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -34,7 +34,7 @@
       <div class="col-span-full flex items-center justify-between pt-1">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
-          <%= link_to "クリア", admin_contract_conditions_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= link_to "クリア", admin_contract_conditions_path, class: "btn-secondary" %>
           <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
         </div>
       </div>
@@ -65,7 +65,7 @@
             <td class="px-4 py-3 text-slate-600"><%= contract_condition.effective_from %></td>
             <td class="px-4 py-3">
               <% if contract_condition.current? %>
-                <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">現行</span>
+                <%= badge_tag "現行", color: "green" %>
               <% else %>
                 <span class="text-slate-600"><%= contract_condition.effective_until %></span>
               <% end %>

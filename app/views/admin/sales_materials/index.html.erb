@@ -8,7 +8,7 @@
     </div>
     <% if policy(SalesMaterial).create? %>
       <%= link_to "新規作成", new_admin_sales_material_path,
-            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+            class: "btn-primary" %>
     <% end %>
   </div>
 
@@ -34,9 +34,9 @@
             <td class="px-4 py-3 text-slate-600"><%= material.category.presence || "—" %></td>
             <td class="px-4 py-3">
               <% if material.is_published? %>
-                <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">公開</span>
+                <%= badge_tag "公開", color: "green" %>
               <% else %>
-                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">非公開</span>
+                <%= badge_tag "非公開", color: "slate-muted" %>
               <% end %>
             </td>
             <td class="px-4 py-3 text-right whitespace-nowrap">
