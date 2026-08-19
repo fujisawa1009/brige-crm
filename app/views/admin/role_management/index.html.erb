@@ -1,32 +1,62 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">ロール管理</h1>
-  <%= link_to "新規ロール作成", new_admin_role_management_path, class: "underline w-fit" %>
+<% content_for :page_title, "ロール管理" %>
 
-  <table class="border-collapse w-full text-sm">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1 text-left">内部名</th>
-        <th class="border px-2 py-1 text-left">表示名</th>
-        <th class="border px-2 py-1">super_admin</th>
-        <th class="border px-2 py-1">組み込み</th>
-        <th class="border px-2 py-1"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @roles.each do |role| %>
-        <tr>
-          <td class="border px-2 py-1"><%= role.name %></td>
-          <td class="border px-2 py-1"><%= link_to role.label, edit_admin_role_management_path(role) %></td>
-          <td class="border px-2 py-1 text-center"><%= role.super_admin? ? "✓" : "" %></td>
-          <td class="border px-2 py-1 text-center"><%= role.system? ? "✓" : "" %></td>
-          <td class="border px-2 py-1 text-center">
-            <% unless role.system? %>
-              <%= button_to "削除", admin_role_management_path(role), method: :delete,
-                    form: { data: { turbo_confirm: "削除しますか？" } } %>
-            <% end %>
-          </td>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">ロール管理</h2>
+      <p class="text-sm text-slate-500">管理画面ユーザーに割り当てるロール（権限のまとまり）を管理します。</p>
+    </div>
+    <% if can_access_system_action?("admin/role_management", "new") %>
+      <%= link_to "新規ロール作成", new_admin_role_management_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">表示名</th>
+          <th class="px-4 py-3">内部名</th>
+          <th class="px-4 py-3">説明</th>
+          <th class="px-4 py-3">所属ユーザー</th>
+          <th class="px-4 py-3">権限数</th>
+          <th class="px-4 py-3">種別</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @roles.each do |role| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to role.label, admin_role_management_path(role), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-slate-500"><%= role.name %></td>
+            <td class="px-4 py-3 max-w-xs truncate text-slate-600"><%= role.description %></td>
+            <td class="px-4 py-3 text-slate-600"><%= role.users.size %> 人</td>
+            <td class="px-4 py-3 text-slate-600"><%= role.system_permissions.size %> 件</td>
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap gap-1">
+                <% if role.super_admin? %>
+                  <span class="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">super_admin</span>
+                <% end %>
+                <% if role.system? %>
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">組み込み</span>
+                <% end %>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_role_management_path(role), class: "text-indigo-600 hover:underline" %>
+              <% if can_access_system_action?("admin/role_management", "edit") %>
+                <%= link_to "編集", edit_admin_role_management_path(role), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if !role.system? && can_access_system_action?("admin/role_management", "destroy") %>
+                <%= button_to "削除", admin_role_management_path(role), method: :delete,
+                      form: { data: { turbo_confirm: "#{role.label} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>

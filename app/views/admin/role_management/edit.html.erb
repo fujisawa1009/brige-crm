@@ -1,4 +1,6 @@
+<% content_for :page_title, "ロール編集" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">ロール編集</h1>
+  <h2 class="text-xl font-bold text-slate-900">ロール編集</h2>
   <%= render "form", role: @role, url: admin_role_management_path(@role) %>
 </div>

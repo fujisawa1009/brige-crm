@@ -3,7 +3,8 @@ class Admin::RoleManagementController < Admin::BaseController
   before_action :set_role, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @roles = SystemRole.order(Arel.sql("COALESCE(position, 99999), system DESC, name ASC"))
+    @roles = SystemRole.includes(:users, :system_permissions)
+                        .order(Arel.sql("COALESCE(position, 99999), system DESC, name ASC"))
   end
 
   def new

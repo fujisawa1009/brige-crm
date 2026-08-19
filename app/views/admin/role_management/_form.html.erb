@@ -1,20 +1,32 @@
-<%= form_with model: role, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
-  <% if role.errors.any? %>
-    <div class="text-red-700"><%= role.errors.full_messages.to_sentence %></div>
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: role, url: url, class: "flex flex-col gap-4 max-w-md" do |f| %>
+    <% if role.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= role.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <% if role.system? %>
+      <div class="rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        組み込みロールのため内部名は変更できません。
+      </div>
+    <% end %>
+
+    <div>
+      <%= f.label :name, "内部名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :name, disabled: role.system?,
+            class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400" %>
+    </div>
+    <div>
+      <%= f.label :display_name, "表示名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :display_name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :description, "説明", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_area :description, rows: 3, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= link_to "キャンセル", admin_role_management_index_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+    </div>
   <% end %>
-
-  <div>
-    <%= f.label :name, "内部名" %>
-    <%= f.text_field :name, disabled: role.system?, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :display_name, "表示名" %>
-    <%= f.text_field :display_name, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :description, "説明" %>
-    <%= f.text_area :description, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-<% end %>
+</div>

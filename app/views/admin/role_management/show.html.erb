@@ -1,5 +1,84 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @role.label %></h1>
-  <p><%= @role.description %></p>
-  <%= link_to "編集", edit_admin_role_management_path(@role), class: "underline w-fit" %>
+<% content_for :page_title, "ロール詳細" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @role.label %></h2>
+      <p class="text-sm text-slate-500"><%= @role.name %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_role_management_index_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if can_access_system_action?("admin/role_management", "edit") %>
+        <%= link_to "編集", edit_admin_role_management_path(@role),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">表示名</dt>
+        <dd class="mt-1 font-medium text-slate-800"><%= @role.label %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">内部名</dt>
+        <dd class="mt-1 text-slate-800"><%= @role.name %></dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-slate-500">説明</dt>
+        <dd class="mt-1 text-slate-800"><%= @role.description.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">種別</dt>
+        <dd class="mt-1 flex gap-1">
+          <% if @role.super_admin? %>
+            <span class="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">super_admin</span>
+          <% end %>
+          <% if @role.system? %>
+            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">組み込み（削除不可）</span>
+          <% else %>
+            <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">カスタム</span>
+          <% end %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="mb-4 flex items-center justify-between">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">権限</h3>
+      <%= link_to "権限マトリクスで編集", admin_permission_management_path, class: "text-sm text-indigo-600 hover:underline" %>
+    </div>
+    <p class="text-sm text-slate-600"><%= @role.system_permissions.size %> 件の操作が許可されています。</p>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">所属ユーザー（<%= @role.users.size %>人）</h3>
+    <% if @role.users.any? %>
+      <ul class="divide-y divide-slate-100">
+        <% @role.users.each do |user| %>
+          <li class="flex items-center justify-between py-2 text-sm">
+            <div>
+              <%= link_to user.name, admin_user_path(user), class: "font-medium text-slate-800 hover:underline" %>
+              <span class="ml-2 text-slate-500"><%= user.email %></span>
+            </div>
+            <span class="text-xs <%= user.is_active? ? "text-green-600" : "text-slate-400" %>"><%= user.is_active? ? "有効" : "無効" %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-slate-500">このロールが割り当てられているユーザーはいません。</p>
+    <% end %>
+  </div>
+
+  <% if !@role.system? && can_access_system_action?("admin/role_management", "destroy") %>
+    <div>
+      <%= button_to "このロールを削除", admin_role_management_path(@role), method: :delete,
+            form: { data: { turbo_confirm: "#{@role.label} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>
