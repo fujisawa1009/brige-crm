@@ -1,4 +1,4 @@
-# 顧客ステータスマスタ管理（04 R2タスク4）。is_system=trueの行はcode変更・削除不可
+# 申込ステータス（旧称: 顧客ステータス）マスタ管理（04 R2タスク4）。is_system=trueの行はcode変更・削除不可
 # （SystemManagedStatus concern参照。フォーム上もcodeフィールドをreadonly表示する想定）。
 class Admin::CustomerStatusesController < Admin::BaseController
   before_action :set_customer_status, only: %i[show edit update destroy]
