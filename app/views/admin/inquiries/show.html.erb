@@ -1,33 +1,71 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @inquiry.inquiry_number %>（<%= @inquiry.category %>）</h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">案件</dt><dd><%= @inquiry.order.order_number %></dd>
-    <dt class="font-bold">状態</dt><dd><%= @inquiry.status %></dd>
-    <dt class="font-bold">代理店可視</dt><dd><%= @inquiry.is_visible_to_agent %></dd>
-  </dl>
+<% content_for :page_title, "問い合わせ詳細" %>
 
-  <h2 class="text-lg font-bold">メッセージ</h2>
-  <ul class="flex flex-col gap-3">
-    <% @inquiry_messages.each do |message| %>
-      <li class="border rounded p-2">
-        <p class="text-xs text-gray-500"><%= message.created_by&.name %> / <%= message.created_at %></p>
-        <p><%= message.body %></p>
-        <p class="text-xs text-gray-500">宛先: <%= message.inquiry_message_recipients.map { |r| "#{r.recipient_type}:#{r.recipient_id}" }.join(", ") %></p>
-      </li>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @inquiry.title %></h2>
+      <p class="text-sm text-slate-500 font-mono"><%= @inquiry.inquiry_number %></p>
+    </div>
+    <%= link_to "一覧に戻る", admin_inquiries_path,
+          class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">掲示板種別</dt>
+        <dd class="mt-1"><span class="rounded-full px-2 py-0.5 text-xs font-medium <%= inquiry_category_badge_class(@inquiry.category) %>"><%= @inquiry.category %></span></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">状態</dt>
+        <dd class="mt-1 text-slate-800"><%= inquiry_status_label(@inquiry.category, @inquiry.status) %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">案件</dt>
+        <dd class="mt-1"><%= link_to @inquiry.order.order_number, admin_order_path(@inquiry.order), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">代理店への公開</dt>
+        <dd class="mt-1 text-slate-800"><%= @inquiry.is_visible_to_agent? ? "公開" : "非公開（社内限定）" %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">メッセージ（<%= @inquiry_messages.size %>件）</h3>
+    <div class="flex flex-col gap-3">
+      <% @inquiry_messages.each do |message| %>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p class="text-xs text-slate-500">
+            <span class="font-medium text-slate-700"><%= message.created_by&.name || "システム" %></span>
+            ・<%= message.created_at.strftime("%Y-%m-%d %H:%M") %>
+          </p>
+          <p class="mt-1 whitespace-pre-wrap text-sm text-slate-800"><%= message.body %></p>
+          <% if message.inquiry_message_recipients.any? %>
+            <p class="mt-2 text-xs text-slate-500">
+              宛先: <%= message.inquiry_message_recipients.map { |r| r.recipient&.name || r.recipient_type }.join(", ") %>
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">返信</h3>
+    <%= form_with model: @inquiry_message, url: admin_inquiry_inquiry_messages_path(@inquiry), class: "flex flex-col gap-4 max-w-md" do |f| %>
+      <div>
+        <%= f.label :body, "返信本文", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.text_area :body, rows: 4, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= label_tag :status, "ステータス変更（任意）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= select_tag :status,
+              options_for_select(InquiryStatus.for_category(@inquiry.category).ordered.pluck(:label, :code), @inquiry.status),
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <%= f.submit "送信", class: "w-fit rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
     <% end %>
-  </ul>
-
-  <%= form_with model: @inquiry_message, url: admin_inquiry_inquiry_messages_path(@inquiry), class: "flex flex-col gap-3 max-w-md" do |f| %>
-    <div>
-      <%= f.label :body, "返信本文" %>
-      <%= f.text_area :body, rows: 4, class: "border rounded px-2 py-1 w-full" %>
-    </div>
-    <div>
-      <%= label_tag :status, "ステータス変更（任意）" %>
-      <%= select_tag :status, options_for_select(InquiryStatus.for_category(@inquiry.category).ordered.pluck(:label, :code), @inquiry.status), class: "border rounded px-2 py-1 w-full" %>
-    </div>
-    <%= f.submit "送信", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-  <% end %>
-
-  <%= link_to "一覧に戻る", admin_inquiries_path, class: "underline w-fit" %>
+  </div>
 </div>

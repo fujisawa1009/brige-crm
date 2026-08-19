@@ -1,17 +1,61 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">問い合わせ</h1>
-  <table class="border-collapse w-full text-sm">
-    <thead><tr><th class="border px-2 py-1 text-left">番号</th><th class="border px-2 py-1 text-left">種別</th><th class="border px-2 py-1 text-left">状態</th><th class="border px-2 py-1 text-left">案件</th></tr></thead>
-    <tbody>
-      <% @inquiries.each do |inquiry| %>
-        <tr>
-          <td class="border px-2 py-1"><%= link_to inquiry.inquiry_number, admin_inquiry_path(inquiry) %></td>
-          <td class="border px-2 py-1"><%= inquiry.category %></td>
-          <td class="border px-2 py-1"><%= inquiry.status %></td>
-          <td class="border px-2 py-1"><%= inquiry.order.order_number %></td>
+<% content_for :page_title, "問い合わせ" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">問い合わせ</h2>
+      <p class="text-sm text-slate-500">後確・制作対応・検収コール・アフター問合せの掲示板を管理します。</p>
+    </div>
+    <% if policy(Inquiry).create? %>
+      <%= link_to "新規作成", new_admin_inquiry_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <%= form_with url: admin_inquiries_path, method: :get, class: "flex flex-wrap items-end gap-3" do %>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">掲示板種別</label>
+        <%= select_tag :category, options_for_select(Inquiry::CATEGORIES, params[:category]),
+              include_blank: "すべて", class: "w-56 rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <span class="ml-auto text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
+      <%= link_to "クリア", admin_inquiries_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+      <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">問い合わせ番号</th>
+          <th class="px-4 py-3">タイトル</th>
+          <th class="px-4 py-3">種別</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3">案件</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @inquiries.empty? %>
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">該当する問い合わせが見つかりません</td>
+          </tr>
+        <% end %>
+        <% @inquiries.each do |inquiry| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono text-slate-600"><%= link_to inquiry.inquiry_number, admin_inquiry_path(inquiry), class: "hover:underline" %></td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= inquiry.title %></td>
+            <td class="px-4 py-3">
+              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= inquiry_category_badge_class(inquiry.category) %>"><%= inquiry.category %></span>
+            </td>
+            <td class="px-4 py-3 text-slate-600"><%= inquiry_status_label(inquiry.category, inquiry.status) %></td>
+            <td class="px-4 py-3 text-slate-600"><%= link_to inquiry.order.order_number, admin_order_path(inquiry.order), class: "hover:underline" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>

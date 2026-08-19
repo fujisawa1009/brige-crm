@@ -19,6 +19,7 @@ class Admin::InquiriesController < Admin::BaseController
   def new
     @inquiry = Inquiry.new(order_id: params[:order_id])
     authorize @inquiry
+    @orders = policy_scope(Order).order(:order_number)
   end
 
   def create
@@ -39,6 +40,7 @@ class Admin::InquiriesController < Admin::BaseController
 
     redirect_to admin_inquiry_path(@inquiry), notice: "問い合わせを作成しました。"
   rescue ActiveRecord::RecordInvalid
+    @orders = policy_scope(Order).order(:order_number)
     render :new, status: :unprocessable_entity
   end
 

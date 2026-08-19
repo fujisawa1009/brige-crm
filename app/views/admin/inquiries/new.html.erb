@@ -1,18 +1,36 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">問い合わせの新規作成</h1>
+<% content_for :page_title, "問い合わせ新規作成" %>
 
-  <%= form_with model: @inquiry, url: admin_inquiries_path, class: "flex flex-col gap-3 max-w-md" do |f| %>
-    <% if @inquiry.errors.any? %><div class="text-red-700"><%= @inquiry.errors.full_messages.to_sentence %></div><% end %>
-    <div><%= f.label :order_id, "案件ID" %><%= f.text_field :order_id, class: "border rounded px-2 py-1 w-full" %></div>
-    <div><%= f.label :title, "タイトル" %><%= f.text_field :title, class: "border rounded px-2 py-1 w-full" %></div>
-    <div>
-      <%= f.label :category, "掲示板種別" %>
-      <%= f.select :category, Inquiry::CATEGORIES, {}, class: "border rounded px-2 py-1 w-full" %>
-    </div>
-    <div>
-      <%= f.label :first_message_body, "本文" %>
-      <%= text_area_tag "inquiry[first_message_body]", nil, rows: 4, class: "border rounded px-2 py-1 w-full" %>
-    </div>
-    <%= f.submit "作成", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-  <% end %>
+<div class="flex flex-col gap-4">
+  <h2 class="text-xl font-bold text-slate-900">問い合わせ新規作成</h2>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <%= form_with model: @inquiry, url: admin_inquiries_path, class: "flex flex-col gap-4 max-w-md" do |f| %>
+      <% if @inquiry.errors.any? %>
+        <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= @inquiry.errors.full_messages.to_sentence %></div>
+      <% end %>
+
+      <div>
+        <%= f.label :order_id, "案件", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :order_id, @orders, :id, :order_number,
+              { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :title, "タイトル", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.text_field :title, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :category, "掲示板種別", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.select :category, Inquiry::CATEGORIES, {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :first_message_body, "本文", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= text_area_tag "inquiry[first_message_body]", nil, rows: 4, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <%= f.submit "作成", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+        <%= link_to "キャンセル", admin_inquiries_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+      </div>
+    <% end %>
+  </div>
 </div>
