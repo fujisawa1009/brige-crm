@@ -1,29 +1,65 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @customer.name %>の店舗</h1>
-  <% if policy(Store.new(customer: @customer)).create? %>
-    <%= link_to "新規作成", new_admin_customer_store_path(@customer), class: "underline w-fit" %>
-  <% end %>
+<% content_for :page_title, "店舗" %>
 
-  <table class="border-collapse w-full text-sm">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1 text-left">店舗CD</th>
-        <th class="border px-2 py-1 text-left">ご利用施設名称</th>
-        <th class="border px-2 py-1 text-left">有効</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @stores.each do |store| %>
-        <tr>
-          <td class="border px-2 py-1"><%= store.store_code %></td>
-          <td class="border px-2 py-1">
-            <%= link_to store.store_name, admin_customer_store_path(@customer, store) %>
-          </td>
-          <td class="border px-2 py-1"><%= store.is_active %></td>
-        </tr>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">店舗</h2>
+      <p class="text-sm text-slate-500">
+        <%= link_to @customer.name, admin_customer_path(@customer), class: "text-indigo-600 hover:underline" %> の店舗を管理します。
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "顧客に戻る", admin_customer_path(@customer),
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(Store.new(customer: @customer)).create? %>
+        <%= link_to "新規作成", new_admin_customer_store_path(@customer),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
       <% end %>
-    </tbody>
-  </table>
+    </div>
+  </div>
 
-  <%= link_to "顧客に戻る", admin_customer_path(@customer), class: "underline w-fit" %>
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">店舗CD</th>
+          <th class="px-4 py-3">ご利用施設名称</th>
+          <th class="px-4 py-3">住所</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @stores.empty? %>
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">店舗が登録されていません</td>
+          </tr>
+        <% end %>
+        <% @stores.each do |store| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono text-slate-600"><%= store.store_code.presence || "—" %></td>
+            <td class="px-4 py-3 font-medium text-slate-800">
+              <%= link_to store.store_name, admin_customer_store_path(@customer, store), class: "hover:underline" %>
+            </td>
+            <td class="px-4 py-3 text-slate-600">
+              <% address = [ store.prefecture, store.city, store.town, store.address_detail ].compact_blank.join(" ") %>
+              <%= address.presence || "—" %>
+            </td>
+            <td class="px-4 py-3"><%= active_badge(store.is_active?) %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_customer_store_path(@customer, store), class: "text-indigo-600 hover:underline" %>
+              <% if policy(store).update? %>
+                <%= link_to "編集", edit_admin_customer_store_path(@customer, store), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(store).destroy? %>
+                <%= button_to "削除", admin_customer_store_path(@customer, store), method: :delete,
+                      form: { data: { turbo_confirm: "#{store.store_name} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>

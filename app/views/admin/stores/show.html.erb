@@ -1,21 +1,79 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @store.store_name %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">店舗CD</dt><dd><%= @store.store_code %></dd>
-    <dt class="font-bold">住所</dt>
-    <dd><%= [@store.prefecture, @store.city, @store.town, @store.address_detail].join %></dd>
-    <dt class="font-bold">電話番号</dt><dd><%= @store.phone_number %></dd>
-    <dt class="font-bold">有効</dt><dd><%= @store.is_active %></dd>
-  </dl>
+<% content_for :page_title, "店舗詳細" %>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_customer_stores_path(@customer), class: "underline" %>
-    <% if policy(@store).update? %>
-      <%= link_to "編集", edit_admin_customer_store_path(@customer, @store), class: "underline" %>
-    <% end %>
-    <% if policy(@store).destroy? %>
-      <%= button_to "削除", admin_customer_store_path(@customer, @store), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
-    <% end %>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @store.store_name %></h2>
+      <p class="text-sm text-slate-500">
+        <%= link_to @customer.name, admin_customer_path(@customer), class: "text-indigo-600 hover:underline" %>
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_customer_stores_path(@customer),
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@store).update? %>
+        <%= link_to "編集", edit_admin_customer_store_path(@customer, @store),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
   </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">店舗CD</dt>
+        <dd class="mt-1 font-mono text-slate-800"><%= @store.store_code.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">状態</dt>
+        <dd class="mt-1"><%= active_badge(@store.is_active?) %></dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-slate-500">ご利用施設名称（カナ）</dt>
+        <dd class="mt-1 text-slate-800"><%= @store.store_name_kana.presence || "—" %></dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-slate-500">住所</dt>
+        <dd class="mt-1 text-slate-800">
+          <% address = [ @store.postal_code, @store.prefecture, @store.city, @store.town, @store.address_detail ].compact_blank.join(" ") %>
+          <%= address.presence || "—" %>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">電話番号</dt>
+        <dd class="mt-1 text-slate-800"><%= @store.phone_number.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">FAX番号</dt>
+        <dd class="mt-1 text-slate-800"><%= @store.fax_number.presence || "—" %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">営業情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">営業時間1</dt>
+        <dd class="mt-1 text-slate-800"><%= @store.business_hours_1.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">営業時間2</dt>
+        <dd class="mt-1 text-slate-800"><%= @store.business_hours_2.presence || "—" %></dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-slate-500">定休日</dt>
+        <dd class="mt-1 text-slate-800"><%= @store.regular_holiday.presence || "—" %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if policy(@store).destroy? %>
+    <div>
+      <%= button_to "この店舗を削除", admin_customer_store_path(@customer, @store), method: :delete,
+            form: { data: { turbo_confirm: "#{@store.store_name} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>
