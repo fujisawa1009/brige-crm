@@ -34,7 +34,7 @@
 #  consent_status                 :string(20)
 #  contract_sent_at               :date
 #  contract_start_date            :date
-#  contract_status                :string(10)
+#  contract_status                :string(50)
 #  domestic_citation_plan         :string(50)
 #  elderly_consent                :string(5)
 #  elderly_consent_collected_at   :date

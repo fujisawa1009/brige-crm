@@ -1,0 +1,6 @@
+<% content_for :page_title, "契約ステータス編集" %>
+
+<div class="flex flex-col gap-4">
+  <h2 class="text-xl font-bold text-slate-900">契約ステータス編集</h2>
+  <%= render "form", contract_status: @contract_status, url: admin_contract_status_path(@contract_status) %>
+</div>

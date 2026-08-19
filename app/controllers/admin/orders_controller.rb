@@ -93,7 +93,7 @@ class Admin::OrdersController < Admin::BaseController
     params.require(:order).permit(
       :customer_id, :store_id, :sales_representative_id, :agency_id, :contract_condition_id, :serial_id,
       :plan_id, :product_initial_fee_id, :payment_method, :plus_applied,
-      :status, :contract_status,
+      :status,
       :ordered_at, :contract_start_date, :contract_sent_at, :issued_at, :account_issued_at,
       :work_completed_at, :accounting_month, :bridge_accounting_month, :payment_collected_at,
       :payment_doc_confirmed_at, :cancelled_at, :terminated_at, :termination_reason,

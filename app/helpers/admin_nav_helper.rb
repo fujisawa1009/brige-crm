@@ -55,6 +55,8 @@ module AdminNavHelper
                           controller: "admin/customer_statuses", action: "index"),
         AdminNavItem.new(label: "案件ステータス", path: admin_order_statuses_path,
                           controller: "admin/order_statuses", action: "index"),
+        AdminNavItem.new(label: "契約ステータス", path: admin_contract_statuses_path,
+                          controller: "admin/contract_statuses", action: "index"),
         AdminNavItem.new(label: "問い合わせステータス", path: admin_inquiry_statuses_path,
                           controller: "admin/inquiry_statuses", action: "index"),
         AdminNavItem.new(label: "問い合わせ宛先ルート", path: admin_inquiry_recipient_routes_path,
@@ -72,6 +74,8 @@ module AdminNavHelper
       AdminNavSection.new(title: "その他", items: [
         AdminNavItem.new(label: "フォームテンプレート", path: admin_form_templates_path,
                           controller: "admin/form_templates", action: "index"),
+        AdminNavItem.new(label: "重説項目セット", path: admin_disclosure_item_sets_path,
+                          controller: "admin/disclosure_item_sets", action: "index"),
         AdminNavItem.new(label: "制作会社", path: admin_production_companies_path,
                           controller: "admin/production_companies", action: "index"),
         AdminNavItem.new(label: "営業資料", path: admin_sales_materials_path,

@@ -64,6 +64,31 @@ class StatusSeeder
     { code: "100:CLOSE",                                  label: "CLOSE" }
   ].freeze
 
+  # R5-1（basic-design.md §9〜§12「契約ワークフロー状態機械」）: 不備チェック/差戻し/確認コール/
+  # 契約確定に散在していたステータスを1本化。遷移表はOrder::CONTRACT_STATUS_TRANSITIONS参照。
+  # pending_check/contractedはOrder側のコードから直接参照されるためis_system=true。
+  CONTRACT_STATUSES = [
+    { code: ContractStatus::CODE_PENDING_CHECK,               label: "不備チェック待ち", is_system: true },
+    { code: ContractStatus::CODE_RETURNED,                    label: "差戻し" },
+    { code: ContractStatus::CODE_BEING_CORRECTED,              label: "差戻し中" },
+    { code: ContractStatus::CODE_REAPPLICATION_PENDING,        label: "再申請待ち" },
+    { code: ContractStatus::CODE_RECHECK_PENDING,              label: "再チェック待ち" },
+    { code: ContractStatus::CODE_CONFIRM_CALL_PENDING,         label: "確認コール待ち" },
+    { code: ContractStatus::CODE_CONFIRM_CALL_DONE,            label: "確認コール済" },
+    { code: ContractStatus::CODE_NEEDS_RECONFIRMATION,         label: "再確認要" },
+    { code: ContractStatus::CODE_CONTRACT_CONFIRMATION_PENDING, label: "契約確定待ち" },
+    { code: ContractStatus::CODE_CONTRACTED,                  label: "契約確定", is_system: true }
+  ].freeze
+
+  # R5-5b（master-data-design-policy.md §5-3）: payment_methodをOptionGroupから昇格した専用マスタ。
+  # D-P12①の3択（口振/クレカ/おまとめ）。旧OptionGroup(payment_method)の値（預金口座振替/クレジット）を
+  # そのまま踏襲し、D-P12で必要な「おまとめ」を新規追加する（旧マスタには無かった3択目）。
+  PAYMENT_METHODS = [
+    { code: PaymentMethod::CODE_BANK_TRANSFER, label: "預金口座振替", is_system: true },
+    { code: PaymentMethod::CODE_CREDIT,        label: "クレジット",   is_system: true },
+    { code: PaymentMethod::CODE_BUNDLED,       label: "おまとめ",     is_system: true }
+  ].freeze
+
   # 04 R4タスク2・決定D-11: 掲示板4種のステータス集合（board-implementation-options.md §1表）を
   # そのままinquiry_statusesへ落とし込む。各category先頭値はInquiry::DEFAULT_STATUS_CODESから
   # 参照されるためis_system=true（CustomerStatus/OrderStatusと同じ理由）。
@@ -77,6 +102,8 @@ class StatusSeeder
   def call
     seed(CustomerStatus, CUSTOMER_STATUSES)
     seed(OrderStatus, ORDER_STATUSES)
+    seed(ContractStatus, CONTRACT_STATUSES)
+    seed(PaymentMethod, PAYMENT_METHODS)
     seed_inquiry_statuses
   end
 

@@ -61,4 +61,40 @@ RSpec.describe StatusSeeder do
       expect(OrderStatus.count).to eq(31)
     end
   end
+
+  describe "ContractStatus" do
+    it "basic-design.md §9〜§12の9ステータス+起点(pending_check)を投入する" do
+      described_class.call
+
+      expect(ContractStatus.ordered.pluck(:code)).to eq(
+        %w[
+          pending_check returned being_corrected reapplication_pending recheck_pending
+          confirm_call_pending confirm_call_done needs_reconfirmation
+          contract_confirmation_pending contracted
+        ]
+      )
+    end
+
+    it "pending_check/contractedのみis_system=true（Order側のコードから直接参照される起点/終端）" do
+      described_class.call
+
+      system_codes = ContractStatus.where(is_system: true).pluck(:code)
+      expect(system_codes).to match_array(%w[pending_check contracted])
+    end
+  end
+
+  describe "PaymentMethod" do
+    it "口振/クレカ/おまとめの3値をis_system=trueで投入する" do
+      described_class.call
+
+      expect(PaymentMethod.ordered.pluck(:code, :label)).to eq(
+        [
+          [ PaymentMethod::CODE_BANK_TRANSFER, "預金口座振替" ],
+          [ PaymentMethod::CODE_CREDIT, "クレジット" ],
+          [ PaymentMethod::CODE_BUNDLED, "おまとめ" ]
+        ]
+      )
+      expect(PaymentMethod.pluck(:is_system).uniq).to eq([ true ])
+    end
+  end
 end

@@ -8,7 +8,7 @@ require "rails_helper"
 RSpec.describe BridgePlusFormTemplateSeeder do
   it "Product/FormTemplate/FormStep/FormField/OptionGroupを冪等に作成する" do
     expect { described_class.call }.to change(FormField, :count).by(69)
-      .and change(OptionGroup, :count).by(8)
+      .and change(OptionGroup, :count).by(7)
 
     product = Product.find_by!(code: "BRIDGE_PLUS")
     expect(product.form_template.form_steps.count).to eq(8)
@@ -48,6 +48,17 @@ RSpec.describe BridgePlusFormTemplateSeeder do
 
     yes_no_field = FormField.find_by!(field_key: "plus_applied")
     expect(yes_no_field.input_options["choices"]).to eq([ [ "はい", "はい" ], [ "いいえ", "いいえ" ] ])
+  end
+
+  it "R5-5b: payment_methodフィールドの選択肢はOptionGroupではなくPaymentMethodマスタから生成される" do
+    StatusSeeder.call
+    described_class.call
+
+    field = FormField.find_by!(field_key: "payment_method")
+    expect(field.input_options["choices"]).to eq(
+      [ %w[bank_transfer 預金口座振替], %w[credit クレジット], %w[bundled おまとめ] ]
+    )
+    expect(OptionGroup.exists?(key: "payment_method")).to be false
   end
 
   it "OptionGroup(prefecture)は47都道府県のOptionValueを持つ" do

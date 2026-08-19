@@ -29,7 +29,11 @@
       </div>
       <div>
         <dt class="text-xs text-slate-500">契約ステータス</dt>
-        <dd class="mt-1 text-slate-800"><%= @order.contract_status.presence || "—" %></dd>
+        <dd class="mt-1">
+          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= contract_status_badge_class(@order.contract_status) %>">
+            <%= contract_status_label(@order.contract_status) %>
+          </span>
+        </dd>
       </div>
       <div>
         <dt class="text-xs text-slate-500">契約顧客</dt>
@@ -53,10 +57,72 @@
       </div>
       <div>
         <dt class="text-xs text-slate-500">支払方法</dt>
-        <dd class="mt-1 text-slate-800"><%= @order.payment_method.presence || "—" %></dd>
+        <dd class="mt-1 text-slate-800"><%= PaymentMethod.find_by(code: @order.payment_method)&.label || @order.payment_method.presence || "—" %></dd>
       </div>
     </dl>
   </div>
+
+  <% if policy(@order).transition_contract? %>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">契約ワークフロー</h3>
+
+      <% available_events = contract_status_available_events(@order) %>
+      <% if available_events.any? %>
+        <%= form_with model: ContractReview.new, url: admin_order_contract_reviews_path(@order),
+              class: "flex flex-col gap-3 max-w-md" do |f| %>
+          <div>
+            <%= f.label :event, "遷移イベント", class: "mb-1 block text-sm font-medium text-slate-700" %>
+            <%= f.select :event, available_events,
+                  {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+          </div>
+          <div>
+            <%= f.label :reason, "理由（差戻し時など）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+            <%= f.text_area :reason, rows: 2, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+          </div>
+          <div>
+            <%= f.label :returned_to, "差戻し先", class: "mb-1 block text-sm font-medium text-slate-700" %>
+            <%= f.select :returned_to, [ %w[営業担当者 sales_representative], %w[顧客 customer] ],
+                  { include_blank: "（差戻し以外は空欄）" }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+          </div>
+          <div>
+            <%= f.label :comment, "コメント", class: "mb-1 block text-sm font-medium text-slate-700" %>
+            <%= f.text_area :comment, rows: 2, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+          </div>
+          <%= f.submit "イベントを投入", class: "self-start rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-slate-500">現在のステータス（<%= contract_status_label(@order.contract_status) %>）から遷移可能なイベントはありません。</p>
+      <% end %>
+
+      <% if @order.contract_reviews.any? %>
+        <h4 class="mt-6 mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">遷移履歴</h4>
+        <div class="overflow-x-auto rounded-md border border-slate-200">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th class="px-3 py-2">日時</th>
+                <th class="px-3 py-2">イベント</th>
+                <th class="px-3 py-2">遷移</th>
+                <th class="px-3 py-2">実施者</th>
+                <th class="px-3 py-2">理由・コメント</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @order.contract_reviews.order(performed_at: :desc).each do |review| %>
+                <tr>
+                  <td class="px-3 py-2 whitespace-nowrap text-slate-600"><%= review.performed_at.strftime("%Y-%m-%d %H:%M") %></td>
+                  <td class="px-3 py-2 font-mono text-slate-600"><%= review.event %></td>
+                  <td class="px-3 py-2 text-slate-800"><%= contract_status_label(review.from_status) %> → <%= contract_status_label(review.to_status) %></td>
+                  <td class="px-3 py-2 text-slate-600"><%= review.performed_by&.name || "—" %></td>
+                  <td class="px-3 py-2 text-slate-600"><%= [ review.reason, review.comment ].compact_blank.join(" / ").presence || "—" %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 
   <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">日程</h3>

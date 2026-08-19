@@ -10,6 +10,11 @@ class OrderPolicy < ApplicationPolicy
   def record_agency_id = record.agency_id
   def record_agency_group_id = record.agency&.agency_group_id
 
+  # 04 R5-1: 契約ワークフロー（不備チェック/確認コール/契約確定）は basic-design.md §9〜§12 で
+  # 一貫して「管理者が」行う社内工程として記述されているため、代理店側の自己申告編集は許可しない
+  # （AgencyGroup/ContractConditionと同じ理由でstaff_scope?のみ上書き）。
+  def transition_contract? = staff_scope?
+
   class Scope < ApplicationPolicy::Scope
     include AgencyScoped::ScopeMethods
 

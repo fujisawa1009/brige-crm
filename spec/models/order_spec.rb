@@ -36,7 +36,7 @@ require "rails_helper"
 #  consent_status                 :string(20)
 #  contract_sent_at               :date
 #  contract_start_date            :date
-#  contract_status                :string(10)
+#  contract_status                :string(50)
 #  domestic_citation_plan         :string(50)
 #  elderly_consent                :string(5)
 #  elderly_consent_collected_at   :date
@@ -129,6 +129,7 @@ RSpec.describe Order, type: :model, seed_status_catalog: true do
   self.use_transactional_tests = false
 
   after do
+    ContractReview.delete_all
     Order.delete_all
     Customer.delete_all
     ContractCondition.delete_all
@@ -186,6 +187,127 @@ RSpec.describe Order, type: :model, seed_status_catalog: true do
       order = Order.create!(agency: agency, customer: customer, contract_condition: contract_condition)
 
       expect(order.status).to eq(OrderStatus::CODE_ORDERED)
+    end
+  end
+
+  describe "payment_method（R5-5b: PaymentMethodマスタ参照）" do
+    it "PaymentMethodに存在するcodeなら有効" do
+      agency = create(:agency)
+      contract_condition = create(:contract_condition, agency: agency)
+      customer = Customer.create!(agency: agency, name: "顧客")
+      order = Order.new(agency: agency, customer: customer, contract_condition: contract_condition,
+                         payment_method: PaymentMethod::CODE_CREDIT)
+
+      expect(order).to be_valid
+    end
+
+    it "PaymentMethodに存在しないcodeなら無効" do
+      agency = create(:agency)
+      contract_condition = create(:contract_condition, agency: agency)
+      customer = Customer.create!(agency: agency, name: "顧客")
+      order = Order.new(agency: agency, customer: customer, contract_condition: contract_condition,
+                         payment_method: "存在しない支払方法")
+
+      expect(order).not_to be_valid
+      expect(order.errors[:payment_method]).to be_present
+    end
+
+    it "未指定（blank）は許容される" do
+      agency = create(:agency)
+      contract_condition = create(:contract_condition, agency: agency)
+      customer = Customer.create!(agency: agency, name: "顧客")
+      order = Order.new(agency: agency, customer: customer, contract_condition: contract_condition)
+
+      expect(order).to be_valid
+    end
+  end
+
+  # 04 R5-1: 契約ワークフロー状態機械。design docの要求どおり遷移表をspecで固定する
+  # （payment-integration.md §6「省略しない」の要求とcontract-confirmation-docs.mdの意図に倣う）。
+  describe "transition_contract_to!（契約ワークフロー状態機械）" do
+    let(:order) do
+      agency = create(:agency)
+      contract_condition = create(:contract_condition, agency: agency)
+      customer = Customer.create!(agency: agency, name: "顧客")
+      Order.create!(agency: agency, customer: customer, contract_condition: contract_condition)
+    end
+
+    it "未着手(contract_status=nil)からcheck_requestedでpending_checkへ遷移する" do
+      order.transition_contract_to!("check_requested")
+
+      expect(order.reload.contract_status).to eq(ContractStatus::CODE_PENDING_CHECK)
+    end
+
+    it "遷移するたびにcontract_reviewsへfrom/to/eventが記録される" do
+      order.transition_contract_to!("check_requested")
+
+      review = order.contract_reviews.sole
+      expect(review.event).to eq("check_requested")
+      expect(review.from_status).to be_nil
+      expect(review.to_status).to eq(ContractStatus::CODE_PENDING_CHECK)
+      expect(review.performed_at).to be_present
+    end
+
+    it "reason/comment/returned_to/performed_byを記録できる" do
+      staff = create(:user)
+      order.transition_contract_to!("check_requested")
+
+      order.transition_contract_to!(
+        "check_returned", reason: "住所不備", comment: "郵便番号が空欄",
+        returned_to: "sales_representative", performed_by: staff
+      )
+
+      review = order.contract_reviews.order(:performed_at).last
+      expect(review.reason).to eq("住所不備")
+      expect(review.comment).to eq("郵便番号が空欄")
+      expect(review.returned_to).to eq("sales_representative")
+      expect(review.performed_by).to eq(staff)
+    end
+
+    it "定義されていない遷移はInvalidContractTransitionを発生させ、contract_status/contract_reviewsは変化しない" do
+      expect { order.transition_contract_to!("contract_confirmed") }
+        .to raise_error(Order::InvalidContractTransition)
+
+      expect(order.reload.contract_status).to be_nil
+      expect(order.contract_reviews).to be_empty
+    end
+
+    it "不備チェック→差戻し→修正→再チェック→確認コール→契約確定まで一連の遷移を通せる" do
+      order.transition_contract_to!("check_requested")
+      order.transition_contract_to!("check_returned")
+      order.transition_contract_to!("start_correction")
+      order.transition_contract_to!("await_reapplication")
+      order.transition_contract_to!("resubmitted")
+      order.transition_contract_to!("check_passed")
+      order.transition_contract_to!("call_done")
+      order.transition_contract_to!("confirm")
+      order.transition_contract_to!("contract_confirmed")
+
+      expect(order.reload.contract_status).to eq(ContractStatus::CODE_CONTRACTED)
+      expect(order.contract_reviews.count).to eq(9)
+    end
+
+    it "確認コール待ちで結果が不十分なら再確認要を経て確認コール待ちに戻れる" do
+      order.transition_contract_to!("check_requested")
+      order.transition_contract_to!("check_passed")
+      order.transition_contract_to!("call_inconclusive")
+
+      expect(order.reload.contract_status).to eq(ContractStatus::CODE_NEEDS_RECONFIRMATION)
+
+      order.transition_contract_to!("call_pending_again")
+
+      expect(order.reload.contract_status).to eq(ContractStatus::CODE_CONFIRM_CALL_PENDING)
+    end
+
+    it "契約確定(contracted)は終端状態でどのeventも受け付けない" do
+      order.transition_contract_to!("check_requested")
+      order.transition_contract_to!("check_passed")
+      order.transition_contract_to!("call_done")
+      order.transition_contract_to!("confirm")
+      order.transition_contract_to!("contract_confirmed")
+
+      expect { order.transition_contract_to!("check_requested") }
+        .to raise_error(Order::InvalidContractTransition)
     end
   end
 

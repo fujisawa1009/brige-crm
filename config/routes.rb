@@ -72,7 +72,10 @@ Rails.application.routes.draw do
     end
     resources :orders do
       collection { post :export }
+      # R5-1: 契約ワークフロー状態機械のイベント投入（Order#transition_contract_to!）。
+      resources :contract_reviews, only: %i[create]
     end
+    resources :contract_statuses
     resources :csv_exports, only: %i[index show]
 
     resources :products
@@ -88,6 +91,9 @@ Rails.application.routes.draw do
 
     # 04 R3タスク6: フォームビルダー（FormTemplate 1─* FormStep 1─* FormField をネスト属性で一括編集）。
     resources :form_templates
+
+    # R5-13: 重説項目セットの版管理（DisclosureItemSet 1─* DisclosureItem をネスト属性で一括編集）。
+    resources :disclosure_item_sets
 
     # 04 R4タスク1・2: 問い合わせ（Inquiry）＋掲示板統合後のステータス/ルーティングマスタ。
     resources :inquiries, only: %i[index show new create] do

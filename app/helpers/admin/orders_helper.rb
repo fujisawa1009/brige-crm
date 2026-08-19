@@ -19,4 +19,30 @@ module Admin::OrdersHelper
     else "bg-slate-100 text-slate-600"
     end
   end
+
+  # R5-1: contract_statusも同じ理由（コードのみ保持）でラベル変換が必要。
+  def contract_status_label(code)
+    return "—" if code.blank?
+
+    @contract_status_labels ||= ContractStatus.pluck(:code, :label).to_h
+    @contract_status_labels.fetch(code, code)
+  end
+
+  def contract_status_badge_class(code)
+    case code
+    when ContractStatus::CODE_CONTRACTED then "bg-green-100 text-green-700"
+    when ContractStatus::CODE_RETURNED, ContractStatus::CODE_BEING_CORRECTED then "bg-red-100 text-red-700"
+    when ContractStatus::CODE_NEEDS_RECONFIRMATION then "bg-amber-100 text-amber-700"
+    when nil then "bg-slate-100 text-slate-500"
+    else "bg-blue-100 text-blue-700"
+    end
+  end
+
+  # R5-1: 現在のcontract_statusから遷移可能なevent一覧（Admin::ContractReviewsController#createの
+  # セレクトボックス用）。Order::CONTRACT_STATUS_TRANSITIONSのキーから該当するfromのものだけ抽出する。
+  def contract_status_available_events(order)
+    Order::CONTRACT_STATUS_TRANSITIONS.keys
+      .select { |from_status, _event| from_status == order.contract_status }
+      .map { |_from_status, event| event }
+  end
 end

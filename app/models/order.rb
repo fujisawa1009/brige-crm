@@ -46,7 +46,7 @@
 #  consent_status                 :string(20)
 #  contract_sent_at               :date
 #  contract_start_date            :date
-#  contract_status                :string(10)
+#  contract_status                :string(50)
 #  domestic_citation_plan         :string(50)
 #  elderly_consent                :string(5)
 #  elderly_consent_collected_at   :date
@@ -155,6 +155,8 @@ class Order < ApplicationRecord
   has_many :order_options, dependent: :destroy
   has_many :product_options, through: :order_options
   has_many :applications, dependent: :nullify
+  has_many :contract_reviews, dependent: :restrict_with_error
+  has_many :disclosure_checks, dependent: :restrict_with_error
 
   # 【2026-08-19 CEO決定（Q-45）: 暗号化を廃止し平文保存に変更】
   # 従来は encrypts :billing_password を適用していたが、「暗号化列を全部平文にする」というCEO決定に
@@ -170,9 +172,10 @@ class Order < ApplicationRecord
   validate :status_must_exist_in_order_statuses
 
   validates :serial_id, length: { maximum: 20 }
-  validates :payment_method, length: { maximum: 50 }
+  validate :payment_method_must_exist_in_payment_methods
   validates :plus_applied, length: { maximum: 5 }
-  validates :contract_status, length: { maximum: 10 }
+  validates :contract_status, length: { maximum: 50 }
+  validate :contract_status_must_exist_in_contract_statuses
   validates :accounting_month, :bridge_accounting_month, length: { maximum: 6 }
   validates :termination_reason, length: { maximum: 200 }
   validates :consent_rep_age, :consent_contact_age,
@@ -181,6 +184,69 @@ class Order < ApplicationRecord
             numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
 
   scope :for_year, ->(year) { where("EXTRACT(YEAR FROM created_at) = ?", year) }
+
+  # 契約ワークフロー状態機械（04 R5-1・basic-design.md §9〜§12）。
+  # キーは [遷移前のcontract_status（未着手はnil）, event]、値は遷移後のcontract_status。
+  # 遷移図の確定根拠は basic-design.md の記述（「問題がなければ次工程へ、問題があれば差戻し」
+  # 「差戻し後は代理店営業担当者または顧客が修正可能とし、修正後は再度チェック待ちに戻す」
+  # 「確認コール後、結果に応じて契約確定または再差戻しの判断を行う」）を1本の状態機械へ具体化した
+  # 初版であり、差戻し中/再申請待ちの区切り方など細部は業務レビュー未実施（要確認）。
+  # 変更する場合は必ずこの定数とspec/models/order_spec.rbの遷移表specを同時に更新すること。
+  CONTRACT_STATUS_TRANSITIONS = {
+    [ nil, "check_requested" ] => ContractStatus::CODE_PENDING_CHECK,
+
+    [ ContractStatus::CODE_PENDING_CHECK, "check_passed" ]   => ContractStatus::CODE_CONFIRM_CALL_PENDING,
+    [ ContractStatus::CODE_PENDING_CHECK, "check_returned" ] => ContractStatus::CODE_RETURNED,
+
+    [ ContractStatus::CODE_RETURNED, "start_correction" ] => ContractStatus::CODE_BEING_CORRECTED,
+
+    [ ContractStatus::CODE_BEING_CORRECTED, "await_reapplication" ] => ContractStatus::CODE_REAPPLICATION_PENDING,
+
+    [ ContractStatus::CODE_REAPPLICATION_PENDING, "resubmitted" ] => ContractStatus::CODE_RECHECK_PENDING,
+
+    [ ContractStatus::CODE_RECHECK_PENDING, "check_passed" ]   => ContractStatus::CODE_CONFIRM_CALL_PENDING,
+    [ ContractStatus::CODE_RECHECK_PENDING, "check_returned" ] => ContractStatus::CODE_RETURNED,
+
+    [ ContractStatus::CODE_CONFIRM_CALL_PENDING, "call_done" ]        => ContractStatus::CODE_CONFIRM_CALL_DONE,
+    [ ContractStatus::CODE_CONFIRM_CALL_PENDING, "call_inconclusive" ] => ContractStatus::CODE_NEEDS_RECONFIRMATION,
+    [ ContractStatus::CODE_CONFIRM_CALL_PENDING, "call_returned" ]    => ContractStatus::CODE_RETURNED,
+
+    [ ContractStatus::CODE_NEEDS_RECONFIRMATION, "call_pending_again" ] => ContractStatus::CODE_CONFIRM_CALL_PENDING,
+
+    [ ContractStatus::CODE_CONFIRM_CALL_DONE, "confirm" ]       => ContractStatus::CODE_CONTRACT_CONFIRMATION_PENDING,
+    [ ContractStatus::CODE_CONFIRM_CALL_DONE, "call_returned" ] => ContractStatus::CODE_RETURNED,
+
+    [ ContractStatus::CODE_CONTRACT_CONFIRMATION_PENDING, "contract_confirmed" ] => ContractStatus::CODE_CONTRACTED,
+    [ ContractStatus::CODE_CONTRACT_CONFIRMATION_PENDING, "call_returned" ]      => ContractStatus::CODE_RETURNED
+  }.freeze
+
+  InvalidContractTransition = Class.new(StandardError)
+
+  # 不正遷移は例外にする（payment-integration.md §4-4のPaymentTransaction状態機械と同じ方針）。
+  # with_lockで行ロックを取り、同一Orderへの同時遷移操作（管理者が2画面から同時操作等）を防ぐ。
+  def transition_contract_to!(event, reason: nil, target_fields: nil, comment: nil, returned_to: nil, performed_by: nil)
+    with_lock do
+      from_status = contract_status
+      to_status = self.class::CONTRACT_STATUS_TRANSITIONS[[ from_status, event ]]
+
+      if to_status.nil?
+        raise InvalidContractTransition, "#{from_status.inspect}からevent=#{event}への遷移は許可されていません"
+      end
+
+      update!(contract_status: to_status)
+      contract_reviews.create!(
+        event: event,
+        from_status: from_status,
+        to_status: to_status,
+        reason: reason,
+        target_fields: target_fields || {},
+        comment: comment,
+        returned_to: returned_to,
+        performed_by: performed_by,
+        performed_at: Time.current
+      )
+    end
+  end
 
   private
 
@@ -201,5 +267,19 @@ class Order < ApplicationRecord
     return if OrderStatus.exists?(code: status)
 
     errors.add(:status, "はorder_statusesに存在しないコードです（#{status}）")
+  end
+
+  def payment_method_must_exist_in_payment_methods
+    return if payment_method.blank?
+    return if PaymentMethod.exists?(code: payment_method)
+
+    errors.add(:payment_method, "はpayment_methodsに存在しないコードです（#{payment_method}）")
+  end
+
+  def contract_status_must_exist_in_contract_statuses
+    return if contract_status.blank?
+    return if ContractStatus.exists?(code: contract_status)
+
+    errors.add(:contract_status, "はcontract_statusesに存在しないコードです（#{contract_status}）")
   end
 end

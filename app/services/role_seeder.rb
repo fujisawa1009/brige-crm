@@ -100,10 +100,12 @@ class RoleSeeder
   # 04 R2: 商材・ステータス・営業資料マスタ。MasterDataPolicyの既定どおり、代理店/代理店グループは
   # 参照のみ（index/show）。作成・変更は実務運用者以上に限定する（商材構成・料金・ステータス体系の
   # 自己申告変更を許すと業務ルールが崩れるため。04 R2タスク8）。
+  # 04 R5-1: 契約ステータスもcustomer_statuses/order_statusesと同じ「代理店は参照のみ・変更は
+  # 実務運用者以上」の状態マスタ（ContractStatusPolicyもMasterDataPolicy）。
   R2_MASTER_CONTROLLERS = %w[
     admin/products admin/plans admin/product_initial_fees admin/product_options
     admin/option_groups admin/option_values admin/customer_statuses admin/order_statuses
-    admin/production_companies admin/sales_materials
+    admin/contract_statuses admin/production_companies admin/sales_materials
   ].freeze
 
   # CSVエクスポート成果物の一覧・ダウンロード。CsvExportPolicyがrequested_by本人のみに絞るため、
@@ -130,6 +132,12 @@ class RoleSeeder
     admin/recipient_groups admin/notification_templates admin/notifications
   ].freeze
 
+  # 04 R5-1/R5-13: 契約ワークフロー（不備チェック/確認コール/契約確定）イベント投入・重説項目セットの
+  # 版管理は、basic-design.mdが一貫して「管理者が」行う工程として記述する社内工程のため、
+  # R3_FORM_BUILDER_CONTROLLERSと同じく代理店/代理店グループロールへは参照権限すら渡さない
+  # （OrderPolicy#transition_contract?・DisclosureItemSetPolicyもstaff_scope?限定でPundit側も一致）。
+  R5_CONTRACT_WORKFLOW_CONTROLLERS = %w[admin/contract_reviews admin/disclosure_item_sets].freeze
+
   def assign_default_permissions(roles)
     admin_permissions = SystemPermission.enabled.admin
 
@@ -149,6 +157,8 @@ class RoleSeeder
     grant(roles["実務運用者"], admin_permissions.where(controller: R4_INQUIRY_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: R4_INQUIRY_MESSAGE_CONTROLLERS).pluck(:id))
     grant(roles["実務運用者"], admin_permissions.where(controller: R4_INTERNAL_CONTROLLERS).pluck(:id))
+    # 04 R5: 契約ワークフロー・重説項目セットは内部工程のため実務運用者専有。
+    grant(roles["実務運用者"], admin_permissions.where(controller: R5_CONTRACT_WORKFLOW_CONTROLLERS).pluck(:id))
 
     %w[代理店グループ用 代理店用].each do |name|
       grant(

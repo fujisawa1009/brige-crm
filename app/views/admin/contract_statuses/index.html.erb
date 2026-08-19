@@ -1,0 +1,58 @@
+<% content_for :page_title, "契約ステータス" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">契約ステータス</h2>
+      <p class="text-sm text-slate-500">契約ワークフロー状態機械のステータスマスタを管理します。</p>
+    </div>
+    <% if policy(ContractStatus).create? %>
+      <%= link_to "新規作成", new_admin_contract_status_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">コード</th>
+          <th class="px-4 py-3">表示名</th>
+          <th class="px-4 py-3">表示順</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @contract_statuses.each do |status| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono text-slate-600"><%= status.code %></td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to status.label, admin_contract_status_path(status), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= status.sort_order %></td>
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap gap-1">
+                <% if status.is_system? %>
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">組み込み</span>
+                <% end %>
+                <%= active_badge(status.is_active?) %>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_contract_status_path(status), class: "text-indigo-600 hover:underline" %>
+              <% if policy(status).update? %>
+                <%= link_to "編集", edit_admin_contract_status_path(status), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if !status.is_system? && policy(status).destroy? %>
+                <%= button_to "削除", admin_contract_status_path(status), method: :delete,
+                      form: { data: { turbo_confirm: "#{status.label} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

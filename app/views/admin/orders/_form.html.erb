@@ -48,16 +48,21 @@
         <%= f.collection_select :status, OrderStatus.ordered, :code, :label,
               {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
-      <% [
-           [:serial_id, "シリアルID"], [:payment_method, "支払方法"], [:plus_applied, "Plus申込有無"],
-           [:contract_status, "契約ステータス"]
-         ].each do |field, label| %>
+      <div>
+        <%= f.label :payment_method, "支払方法", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :payment_method, PaymentMethod.ordered.active, :code, :label,
+              { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <% [ [:serial_id, "シリアルID"], [:plus_applied, "Plus申込有無"] ].each do |field, label| %>
         <div>
           <%= f.label field, label, class: "mb-1 block text-sm font-medium text-slate-700" %>
           <%= f.text_field field, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
         </div>
       <% end %>
     </div>
+    <p class="mt-3 text-xs text-slate-500">
+      契約ステータスはこの編集画面では変更できません。案件詳細の「契約ワークフロー」から遷移イベントを投入してください。
+    </p>
   </div>
 
   <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

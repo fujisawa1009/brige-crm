@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_224400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -150,6 +150,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
     t.index ["effective_until"], name: "index_contract_conditions_on_effective_until"
   end
 
+  create_table "contract_reviews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "comment"
+    t.datetime "created_at", null: false
+    t.string "event", null: false
+    t.string "from_status"
+    t.uuid "order_id", null: false
+    t.datetime "performed_at", null: false
+    t.uuid "performed_by_id"
+    t.text "reason"
+    t.string "returned_to"
+    t.jsonb "target_fields", default: {}, null: false
+    t.string "to_status", null: false
+    t.index ["order_id", "performed_at"], name: "index_contract_reviews_on_order_id_and_performed_at"
+    t.index ["order_id"], name: "index_contract_reviews_on_order_id"
+  end
+
+  create_table "contract_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.boolean "is_system", default: false, null: false
+    t.string "label", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["code"], name: "index_contract_statuses_on_code", unique: true
+    t.index ["is_active", "sort_order"], name: "index_contract_statuses_on_is_active_and_sort_order"
+  end
+
   create_table "csv_exports", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "error_message"
@@ -250,6 +280,52 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
     t.index ["sales_representative_id"], name: "index_customers_on_sales_representative_id"
     t.index ["status"], name: "index_customers_on_status"
     t.index ["unlock_token"], name: "index_customers_on_unlock_token", unique: true
+  end
+
+  create_table "disclosure_check_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "checked", default: false, null: false
+    t.datetime "checked_at"
+    t.datetime "created_at", null: false
+    t.uuid "disclosure_check_id", null: false
+    t.uuid "disclosure_item_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["disclosure_check_id", "disclosure_item_id"], name: "index_disclosure_check_items_on_check_and_item", unique: true
+    t.index ["disclosure_check_id"], name: "index_disclosure_check_items_on_disclosure_check_id"
+  end
+
+  create_table "disclosure_checks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "disclosure_item_set_id", null: false
+    t.string "method", default: "web_check", null: false
+    t.uuid "order_id", null: false
+    t.datetime "performed_at", null: false
+    t.uuid "performed_by_id", null: false
+    t.string "performed_by_type", null: false
+    t.string "result", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_disclosure_checks_on_order_id"
+    t.index ["performed_by_type", "performed_by_id"], name: "idx_on_performed_by_type_performed_by_id_6fec7c8419"
+  end
+
+  create_table "disclosure_item_sets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.date "effective_from", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.integer "version", null: false
+    t.index ["version"], name: "index_disclosure_item_sets_on_version", unique: true
+  end
+
+  create_table "disclosure_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.uuid "disclosure_item_set_id", null: false
+    t.boolean "is_required", default: true, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["disclosure_item_set_id"], name: "index_disclosure_items_on_disclosure_item_set_id"
   end
 
   create_table "form_fields", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -592,7 +668,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
     t.uuid "contract_condition_id", null: false
     t.date "contract_sent_at"
     t.date "contract_start_date"
-    t.string "contract_status", limit: 10
+    t.string "contract_status", limit: 50
     t.datetime "created_at", null: false
     t.uuid "created_by_id"
     t.uuid "customer_id", null: false
@@ -663,6 +739,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
     t.index ["sales_representative_id"], name: "index_orders_on_sales_representative_id"
     t.index ["status"], name: "index_orders_on_status"
     t.index ["store_id"], name: "index_orders_on_store_id"
+  end
+
+  create_table "payment_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.boolean "is_active", default: true, null: false
+    t.boolean "is_system", default: false, null: false
+    t.string "label", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["code"], name: "index_payment_methods_on_code", unique: true
+    t.index ["is_active", "sort_order"], name: "index_payment_methods_on_is_active_and_sort_order"
   end
 
   create_table "plans", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -944,6 +1034,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
   add_foreign_key "contract_conditions", "agencies", on_delete: :cascade
   add_foreign_key "contract_conditions", "users", column: "created_by_id"
   add_foreign_key "contract_conditions", "users", column: "updated_by_id"
+  add_foreign_key "contract_reviews", "orders"
+  add_foreign_key "contract_reviews", "users", column: "performed_by_id"
+  add_foreign_key "contract_statuses", "users", column: "created_by_id"
+  add_foreign_key "contract_statuses", "users", column: "updated_by_id"
   add_foreign_key "csv_exports", "users", column: "requested_by_id"
   add_foreign_key "customer_statuses", "users", column: "created_by_id"
   add_foreign_key "customer_statuses", "users", column: "updated_by_id"
@@ -951,6 +1045,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
   add_foreign_key "customers", "sales_representatives", on_delete: :nullify
   add_foreign_key "customers", "users", column: "created_by_id"
   add_foreign_key "customers", "users", column: "updated_by_id"
+  add_foreign_key "disclosure_check_items", "disclosure_checks"
+  add_foreign_key "disclosure_check_items", "disclosure_items"
+  add_foreign_key "disclosure_checks", "disclosure_item_sets"
+  add_foreign_key "disclosure_checks", "orders"
+  add_foreign_key "disclosure_item_sets", "users", column: "created_by_id"
+  add_foreign_key "disclosure_item_sets", "users", column: "updated_by_id"
+  add_foreign_key "disclosure_items", "disclosure_item_sets"
   add_foreign_key "form_fields", "form_steps", on_delete: :cascade
   add_foreign_key "form_fields", "users", column: "created_by_id"
   add_foreign_key "form_fields", "users", column: "updated_by_id"
@@ -1002,6 +1103,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_150002) do
   add_foreign_key "orders", "stores", on_delete: :nullify
   add_foreign_key "orders", "users", column: "created_by_id"
   add_foreign_key "orders", "users", column: "updated_by_id"
+  add_foreign_key "payment_methods", "users", column: "created_by_id"
+  add_foreign_key "payment_methods", "users", column: "updated_by_id"
   add_foreign_key "plans", "products", on_delete: :restrict
   add_foreign_key "plans", "users", column: "created_by_id"
   add_foreign_key "plans", "users", column: "updated_by_id"

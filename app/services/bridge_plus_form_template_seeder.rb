@@ -29,12 +29,6 @@ class BridgePlusFormTemplateSeeder
       label: "都道府県",
       values: PREFECTURES.map { |name| [ name, name ] }
     },
-    "payment_method" => {
-      label: "お支払方法",
-      # Column.md §10 の表記（預金口座振替／クレジット）を採用。§3の「クレジットカード／口座振替」は同義の
-      # 案として残るが、DB設計側の表記に揃える。
-      values: [ [ "預金口座振替", "預金口座振替" ], [ "クレジット", "クレジット" ] ]
-    },
     "yes_no" => {
       label: "はい/いいえ（共通）",
       values: [ [ "はい", "はい" ], [ "いいえ", "いいえ" ] ]
@@ -263,6 +257,10 @@ class BridgePlusFormTemplateSeeder
 
   def choices_for(option_group_key)
     return {} if option_group_key.blank?
+
+    # R5-5b: payment_methodはOptionGroupから専用マスタ(PaymentMethod)へ昇格したため、
+    # このキーだけ選択肢の出所が異なる（master-data-design-policy.md §5-3）。
+    return { "choices" => PaymentMethod.ordered.active.pluck(:code, :label) } if option_group_key == "payment_method"
 
     { "choices" => OPTION_GROUPS.fetch(option_group_key).fetch(:values) }
   end
