@@ -239,7 +239,7 @@
 - **決済状態機械（PaymentTransaction）のrequest spec必須**（2026-08-15追記: payment-integration.md §6「省略しない。タイムアウト・二重送信・改ざんは手動再現不可」の要求が完了条件に反映されていなかったため）
 - **ネットムーブ会員ID（カード情報）の引き継ぎ対応**（2026-08-19追記。出典: `netmove-card-migration.md`）: CEO判断は「カード情報は会員IDで引き継がれる前提」。カラム自体はR2で`customers.netmove_member_id`/`netmove_registered_at`として実装済みだが、以下がR5本文から漏れていた。
   - 会員ID採番が新旧で連続すること（既存顧客の会員IDと衝突しない採番設計）→ `Payment::MemberIdAllocator`（既存優先/`SequenceCounter` 採番。形式「6＋7桁連番」仮説は回答待ちのため固定しない）
-  - カード変更導線（ネットムーブ `member-modify`）の実装 → section（mypage で顧客本人 / admin からメールリンク案内）未決。S-7 回答後に実装（R5 ではスコープ境界の明記のみ）
+  - カード変更導線（ネットムーブ `member-modify`）の実装 → section は **mypage（顧客本人が再 checkout）に決定（2026-08-19 CEO追加決定）**。`Mypage::CardsController` として実装。ただし実装自体はS-7（現行カード変更手順）の回答後（R5 ではスコープ境界の明記のみ）
   - 旧CRM顧客管理エクスポートの「ネットムーブ会員ID」列を取り込むETL枠（R7と連携。`lib/tasks/etl/netmove_member_ids.rake`）
   - 2026-08-19 v4追加: `customers.netmove_member_id` の部分ユニークインデックス、`Auditable TRACKED_FIELDS["Customer"]` へ `netmove_member_id`/`netmove_registered_at` 追加（現行は会員IDの変更履歴が監査ログに残らない）
 - **請求用受注データCSV出力の実装先を確定する**（2026-08-19追記。出典: `payment-integration.md` D-P8）: 「継続課金の売上処理はTBSSスコープ外。新システムは請求用受注データのCSV出力のみを担う」という決定がR5本文にもR6のCSV汎用化にも明記されていなかった。
@@ -251,7 +251,7 @@
 
 | 順 | タスク | 主な出典 | 優先度 |
 |---|---|---|---|
-| R5-0 | 着手前チェックリスト確定（下表）＋ ret_url の section 配置・カード変更導線の section を CTO 判断で確定 | payment §8/§4-10 | ブロッカー |
+| R5-0 | 着手前チェックリスト確定（下表）＋ ret_url の section 配置を CTO 判断で確定（カード変更導線の section は2026-08-19 CEO追加決定で mypage に確定済み） | payment §8/§4-10 | ブロッカー |
 | R5-1 | **契約ワークフロー状態機械（P3-4）の設計確定** — `orders.status`/`contract_status` の遷移表、決済未完了 Order の扱い、重説完了を遷移条件にするか（Q-4）、案件初期ステータス（`0:受注` の扱い。DM-6） | basic-design §9〜12、contract-confirmation §4 | 高（他タスクの前提） |
 | R5-2 | migration: `payment_transactions`/`payment_transaction_logs`（payment §5）、`netmove_member_id` 部分ユニークIDX、`Auditable TRACKED_FIELDS` 追加、Column.md §13→本文昇格 | payment §5、netmove §6 | 高 |
 | R5-3 | `PaymentTransaction` 状態機械（遷移表・mark/confirm・`with_lock`・`lock_version`）+ model spec | payment §4-4 | 高 |
@@ -268,7 +268,7 @@
 | R5-13 | **【v5決定でR5-1非依存に変更】重説チェック（P3-12）**: `Disclosure*` 4テーブル + R3/R5-6b（顧客ハイブリッド入力フロー）の送信バリデーションに組み込み + 管理画面版管理 + Policy。R5-1（状態機械）を待たずに着手可能。項目マスタは法務確認済み文面を先行投入 | contract-confirmation §3-1 | 高（R5-6bと同時・早期着手可） |
 | R5-14 | 入力チェック設定（`InputCheckRule`）・キーワード自動選定（`KeywordSuggestionService`）・契約書PDF・版数管理・契約確認メール（Cc要否=Q-8は2026-08-19決定。初期実装はCcなしだが**運用開始後に変更できる設定項目として実装**すること。ハードコード禁止）・手書き署名（R5-11 の器を共用） | basic-design §8/§11/§13/§14 | 中 |
 | R5-15 | 実結線確認（P3-2-i）: 商用カードでの1円与信＋与信取消で実施（Q-39作業前提確定）。ネットムーブの開通処理・HMACキー発行の依頼が前提。**契約巻き直し（Q-48・payment §R-13）が完了するまで開通処理自体に着手できない**ため、まずS-3改（前任実装からのHMACキー回収）を先行させる | payment §6/R-6/R-13 | — |
-| R5-16 | カード変更導線（member-modify）はスコープ境界の明記のみ（S-7 回答後に実装） | netmove §3/§6-4 | 低 |
+| R5-16 | カード変更導線（member-modify）: section=mypage（`Mypage::CardsController`。2026-08-19 CEO追加決定）でスコープ境界を明記。実装本体はS-7 回答後 | netmove §3/§6-4 | 低 |
 
 **R5着手前チェックリスト（2026-08-15追記 / 2026-08-19拡充 / 2026-08-19 v4 再拡充 / 2026-08-19 v5 CEO決定反映）**: `development-plan.md`§8で未確認のまま残っていたQ-25〜27・Q-35〜39・Q-D-3・G-1/G-9・DM-6・E3/E5/E6・R4追補・FAQテンプレ・顧客本人入力導線は **v5で全件決定・作業前提確定した**。CTO判断で着手可能な項目のみ引き続き未着手。**新たにQ-45〜48（2026-08-18浅賀MTG由来）が判明しており、これらはv5で扱っていないため引き続き未決**。
 
@@ -291,6 +291,8 @@
 | Q-35（重説チェック・確認書） | `contract-confirmation-docs.md` Q-1〜9 | **✅ 9/9決定**: 重説項目=法務確認済み文面を流用／実施方式=顧客がWeb上でチェック（案件単位・再実施任意）／**未実施時は契約ステータス遷移ではなくWeb申込フォーム送信自体をブロック**／確認書テンプレ=現行「申込書控えPDF」流用／確認書データ=申込時点スナップショット／送信基盤=専用Mailer（開発判断）／保存期間=監査ログと同じ5年／**Q-8（Cc要否）=2026-08-19決定。初期はCcなし・後から設定変更可能な形で実装** |
 | Q-36（決済紐づけ単位） | `payment-integration.md` §8 論点9 | **確定してよい**: `customer_id`（主）＋`order_id`（登録契機案件）の併記で確定 |
 | Q-37〜39（jutyu_cd桁数／決済結果確定手段／ステージング検証方式） | ネットムーブ導入ガイド再確認 | **作業前提を確定しR5実装を進める**: jutyu_cd=サイトコード4桁+ハイフン+数字7桁=12文字で実装／決済結果確定=「会員ID非空＋check_cd一致」判定＋取引履歴CSV突合フォールバック／ステージング検証=商用カードでの1円与信＋与信取消。**並行してネットムーブへの事務依頼（桁数の正式確定・開通処理・HMACキー発行）が必要**（外部連絡のため承認パイプライン経由で起票） |
+| **カード変更導線の section**（2026-08-19 CEO追加決定） | payment §4-10／netmove §3「共通」 | **mypage に決定**：`Mypage::CardsController` で顧客本人が member-modify 付き checkout へ再遷移する方式。管理画面からのメールリンク案内（候補B）は不採用。実装本体はS-7（現行カード変更手順）の回答後（R5ではスコープ境界の明記のみ） |
+| **与信取消・決済失敗時の操作の置き場所**（2026-08-19 CEO追加決定。Q-25の補足） | payment §4-10 | **新システムの管理画面には持たせない**。Q-25の決定（状態記録のみ・実際の返金/与信取消処理はシステム外・手作業/決済代行会社の管理画面で対応）と整合。`Admin::PaymentTransactionsController` は状態の閲覧・状態記録の手動更新（confirm系）に限定し、与信取消そのものの操作ボタンは実装しない |
 
 ### 未決（引き続き保留・次に確認が必要）
 
