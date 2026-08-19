@@ -32,7 +32,7 @@
       <div>
         <label class="mb-1 block text-xs font-medium text-slate-500">プラン表示区分</label>
         <%= select_tag :bridge_plan_display_type,
-              options_for_select([ "ハイブリッド", "プラン全表示" ], params[:bridge_plan_display_type]),
+              options_for_select(AgencyGroup::BRIDGE_PLAN_DISPLAY_TYPES, params[:bridge_plan_display_type]),
               include_blank: "すべて", class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
 

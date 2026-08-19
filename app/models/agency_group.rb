@@ -32,6 +32,10 @@ class AgencyGroup < ApplicationRecord
   include Auditable
 
   SERVICE_TYPES = %w[Bridge BridgePlus].freeze
+  # #Bridgeプラン表示区分。Column.md §1は「ハイブリッド/プラン全表示」の2値としていたが、
+  # 本番CSV由来の実データ（Laravel AgencyGroupSeeder移植: db/seeds/agency_groups.rb）に
+  # 「ストック」区分が存在するため許容する。
+  BRIDGE_PLAN_DISPLAY_TYPES = %w[ハイブリッド プラン全表示 ストック].freeze
 
   has_many :agencies, dependent: :restrict_with_error
   # グループ担当者アカウント（agency_group_id のみ設定されたUser。Column.md §1「グループアカウント」）。
@@ -48,5 +52,5 @@ class AgencyGroup < ApplicationRecord
   validates :service_type, presence: true, inclusion: { in: SERVICE_TYPES }
   validates :group_code, presence: true, uniqueness: true, length: { maximum: 255 }
   validates :contact_email, length: { maximum: 255 }
-  validates :bridge_plan_display_type, inclusion: { in: %w[ハイブリッド プラン全表示] }, allow_nil: true
+  validates :bridge_plan_display_type, inclusion: { in: BRIDGE_PLAN_DISPLAY_TYPES }, allow_nil: true
 end

@@ -8,6 +8,13 @@ StatusSeeder.call
 # development限定ブロックの外に置く。
 BridgePlusFormTemplateSeeder.call
 
+# Laravel版シーダー移植（ProductSeeder / AgencyGroupSeeder / AgencySeeder）: 本番CSV由来の
+# 商材・プラン・代理店グループ・代理店の実データマスタ。全環境で必要なため development 限定の外に置く。
+# 実行順序: 商材 → 代理店グループ → 代理店（代理店は group_code / BRIDGE_PLUS 商材へ依存）。
+load Rails.root.join("db/seeds/products.rb")
+load Rails.root.join("db/seeds/agency_groups.rb")
+load Rails.root.join("db/seeds/agencies.rb")
+
 if Rails.env.development?
   admin_email = "admin@example.com"
   unless User.exists?(email: admin_email)
@@ -21,7 +28,4 @@ if Rails.env.development?
     UserSystemRole.create!(user: admin, system_role: admin_role)
     puts "development seed: created #{admin_email} / Password1234 (admin role)"
   end
-
-  # 画面確認用サンプルデータ（顧客約100件など。db/seeds/sample_data.rb参照）。
-  load Rails.root.join("db/seeds/sample_data.rb")
 end

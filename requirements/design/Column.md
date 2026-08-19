@@ -88,7 +88,7 @@
 | `service_type` | string | NOT NULL | - | - | サービス種別：`Bridge` / `BridgePlus`（`AgencyGroup::SERVICE_TYPES` で inclusion 検証。旧設計の IDX は実装では未作成） |
 | `group_code` | string | NOT NULL | - | UQ | グループCD（例: 971201 / 52313510）。ログインIDと常に同値。固定・不変 |
 | `contact_email` | string | NULL | - | - | グループ連絡先メールアドレス（Bridge: グループアカウントメールアドレス / BridgePlus: 担当メールアドレス。同一概念） |
-| `bridge_plan_display_type` | string | NULL | - | - | #Bridgeプラン表示区分。値: `ハイブリッド` / `プラン全表示`（旧設計 ENUM → string ＋ inclusion 検証） |
+| `bridge_plan_display_type` | string | NULL | - | - | #Bridgeプラン表示区分。値: `ハイブリッド` / `プラン全表示` / `ストック`（旧設計 ENUM → string ＋ inclusion 検証。`ストック` は本番CSV由来の実データに存在するため追加） |
 | `csv_download_visible` | boolean | NULL | - | - | CSVダウンロードボタン表示フラグ（**Bridge側のみ**。BridgePlus側グループはNULL） |
 | `created_at` | datetime | NOT NULL | - | - | 作成日時（Rails `timestamps`） |
 | `updated_at` | datetime | NOT NULL | - | - | 更新日時（Rails `timestamps`） |
@@ -129,7 +129,7 @@
 ### 備考
 
 - `group_code` は業務上のグループCDであり、変更不可。UI上の「ログインID」表示項目として使用するが、実際の認証は users.email で行う
-- `bridge_plan_display_type` の確定値: `ハイブリッド` / `プラン全表示` の2種類（以後追加なし）
+- `bridge_plan_display_type` の確定値: `ハイブリッド` / `プラン全表示` / `ストック` の3種類（当初2種類としていたが、本番CSV由来の実データ移植（db/seeds/agency_groups.rb）で `ストック` 8件を確認したため追加）
 - `csv_download_visible` はBridge側のみ使用。BridgePlus側グループは常にNULL
 - `contact_email` はBridgePlus側では全件未設定（空）、Bridge側ではアカウントメールと同値
 

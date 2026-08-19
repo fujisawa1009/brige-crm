@@ -22,7 +22,7 @@
     </div>
     <div>
       <%= f.label :bridge_plan_display_type, "Bridgeプラン表示区分", class: "mb-1 block text-sm font-medium text-slate-700" %>
-      <%= f.select :bridge_plan_display_type, [ "ハイブリッド", "プラン全表示" ], { include_blank: true },
+      <%= f.select :bridge_plan_display_type, AgencyGroup::BRIDGE_PLAN_DISPLAY_TYPES, { include_blank: true },
             class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div class="flex items-center gap-2">
