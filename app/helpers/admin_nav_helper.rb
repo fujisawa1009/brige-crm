@@ -10,7 +10,9 @@ module AdminNavHelper
     [
       AdminNavSection.new(items: [
         AdminNavItem.new(label: "ダッシュボード", path: admin_dashboard_path,
-                          controller: "admin/dashboard", action: "index")
+                          controller: "admin/dashboard", action: "index"),
+        AdminNavItem.new(label: "通知設定", path: admin_notification_settings_path,
+                          controller: "admin/notification_settings", action: "show")
       ]),
       AdminNavSection.new(title: "ユーザー・権限", items: [
         AdminNavItem.new(label: "ユーザー", path: admin_users_path, controller: "admin/users", action: "index"),

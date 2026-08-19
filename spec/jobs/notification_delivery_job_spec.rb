@@ -35,6 +35,23 @@ RSpec.describe NotificationDeliveryJob, type: :job, seed_status_catalog: true do
     expect(ActionMailer::Base.deliveries.first.to).to include("c1@example.com")
   end
 
+  # R6-1: 個人ごとの通知設定（E13一斉通知）の反映（判定はNotificationSettingGateに集約）。
+  it "E13のメール通知をOFFにした顧客は宛先から除外され、NotificationRecipientも作られない" do
+    agency = create(:agency)
+    customer_on  = create(:customer, agency: agency, email: "on@example.com")
+    customer_off = create(:customer, agency: agency, email: "off@example.com")
+    create(:customer_notification_setting, customer: customer_off,
+           event_type: NotificationEventType::BROADCAST_NOTIFICATION, email_enabled: false)
+    notification = create(:notification, target_type: Notification::TARGET_CUSTOMER)
+
+    described_class.perform_now(notification.id)
+
+    notification.reload
+    expect(notification.total_count).to eq(1)
+    expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly("on@example.com")
+    expect(notification.notification_recipients.where(recipient: customer_off)).to be_empty
+  end
+
   it "送信失敗はNotificationRecipientにfailedとして記録され、全体は止まらない" do
     agency = create(:agency)
     create(:customer, agency: agency, email: "c1@example.com")

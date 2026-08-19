@@ -55,6 +55,8 @@ class User < ApplicationRecord
 
   has_many :user_system_roles, dependent: :destroy
   has_many :system_roles, through: :user_system_roles
+  # R6-1: 個人ごとの通知設定（マイページ相当画面から本人のみ編集）。
+  has_many :staff_notification_settings, dependent: :destroy
 
   belongs_to :agency_group, optional: true
   belongs_to :agency, optional: true

@@ -46,6 +46,27 @@ RSpec.describe InquiryMessageMailJob, type: :job, seed_status_catalog: true do
     expect(recipient.reload.resolved_email).to be_nil
   end
 
+  # R6-1: 個人ごとの通知設定（E4/E9/E10案件関連の通知）の反映（判定はNotificationSettingGateに集約）。
+  it "E4/E9/E10のメール通知をOFFにした顧客には送信されない" do
+    create(:customer_notification_setting, customer: customer,
+           event_type: NotificationEventType::INQUIRY_CASE_RELATED, email_enabled: false)
+    message.inquiry_message_recipients.create!(recipient_type: "Agency", recipient_id: agency.id)
+    message.inquiry_message_recipients.create!(recipient_type: "Customer", recipient_id: customer.id)
+
+    described_class.perform_now(message.id)
+
+    tos = ActionMailer::Base.deliveries.flat_map(&:to)
+    expect(tos).to contain_exactly("agency@example.com")
+  end
+
+  it "個人設定を持たないAgency宛は設定に関わらず送信される" do
+    message.inquiry_message_recipients.create!(recipient_type: "Agency", recipient_id: agency.id)
+
+    described_class.perform_now(message.id)
+
+    expect(ActionMailer::Base.deliveries.flat_map(&:to)).to contain_exactly("agency@example.com")
+  end
+
   it "1宛先の送信失敗が他宛先の送信を止めない（失敗はログに残して続行）" do
     message.inquiry_message_recipients.create!(recipient_type: "Agency", recipient_id: agency.id)
     message.inquiry_message_recipients.create!(recipient_type: "Customer", recipient_id: customer.id)

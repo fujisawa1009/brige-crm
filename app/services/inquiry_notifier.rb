@@ -25,6 +25,13 @@ class InquiryNotifier
     }
 
     each_notifiable_recipient do |recipient|
+      # R6-1: 個人ごとの通知設定（E4/E9/E10案件関連の通知）でアプリ内通知をOFFにしている場合は
+      # 作らない（判定はNotificationSettingGateに集約。メール側の同種判定はInquiryMessageMailJob）。
+      next unless NotificationSettingGate.app_enabled?(
+        recipient_type: recipient.class.name, recipient_id: recipient.id,
+        event_type: NotificationEventType::INQUIRY_CASE_RELATED
+      )
+
       SystemNotification.create!(recipient: recipient, notification_type: notification_type, data: payload)
     end
   end

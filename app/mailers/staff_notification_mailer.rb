@@ -5,6 +5,10 @@
 # 宛先は実務運用者ロール（SystemRole）に所属する全Userのメールアドレス（社内の日常業務担当者= 04
 # R2までの権限マトリクスで新規申込の一次対応を担う想定のロール）。該当ユーザーが0件の場合は
 # 送信をスキップする（宛先の無いメールをdeliver_laterしても失敗するだけのため）。
+#
+# R6-1: 個人ごとの通知設定（E1申込受付）で email_enabled=false にしているユーザーは宛先から除外する
+# （判定はNotificationSettingGateに集約。1通のメールに複数toを積む方式のため、ここで宛先を
+# 絞り込んだ後に1回だけmailを組み立てる）。
 class StaffNotificationMailer < ApplicationMailer
   def new_application(order)
     @order    = order
@@ -19,6 +23,14 @@ class StaffNotificationMailer < ApplicationMailer
 
   def staff_recipient_emails
     User.joins(:system_roles).where(system_roles: { name: "実務運用者" }).where(is_active: true)
-        .distinct.pluck(:email).reject(&:blank?)
+        .distinct
+        .reject { |user| user.email.blank? }
+        .select do |user|
+          NotificationSettingGate.email_enabled?(
+            recipient_type: "User", recipient_id: user.id,
+            event_type: NotificationEventType::APPLICATION_RECEIVED
+          )
+        end
+        .map(&:email)
   end
 end

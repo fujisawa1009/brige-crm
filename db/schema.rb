@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_224400) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_010100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -191,6 +191,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_224400) do
     t.datetime "updated_at", null: false
     t.index ["requested_by_id"], name: "index_csv_exports_on_requested_by_id"
     t.index ["status"], name: "index_csv_exports_on_status"
+  end
+
+  create_table "customer_notification_settings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "app_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.uuid "customer_id", null: false
+    t.boolean "email_enabled", default: true, null: false
+    t.string "event_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "event_type"], name: "index_customer_notification_settings_on_customer_and_event", unique: true
   end
 
   create_table "customer_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -901,6 +911,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_224400) do
     t.index ["key"], name: "index_sequence_counters_on_key", unique: true
   end
 
+  create_table "staff_notification_settings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "app_enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.boolean "email_enabled", default: true, null: false
+    t.string "event_type", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "user_id", null: false
+    t.index ["user_id", "event_type"], name: "index_staff_notification_settings_on_user_and_event", unique: true
+  end
+
   create_table "stores", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "address_detail", limit: 200
     t.string "business_hours_1", limit: 50
@@ -1039,6 +1059,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_224400) do
   add_foreign_key "contract_statuses", "users", column: "created_by_id"
   add_foreign_key "contract_statuses", "users", column: "updated_by_id"
   add_foreign_key "csv_exports", "users", column: "requested_by_id"
+  add_foreign_key "customer_notification_settings", "customers", on_delete: :cascade
   add_foreign_key "customer_statuses", "users", column: "created_by_id"
   add_foreign_key "customer_statuses", "users", column: "updated_by_id"
   add_foreign_key "customers", "agencies", on_delete: :restrict
@@ -1126,6 +1147,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_224400) do
   add_foreign_key "sales_representatives", "agencies", on_delete: :restrict
   add_foreign_key "sales_representatives", "users", column: "created_by_id"
   add_foreign_key "sales_representatives", "users", column: "updated_by_id"
+  add_foreign_key "staff_notification_settings", "users", on_delete: :cascade
   add_foreign_key "stores", "customers", on_delete: :cascade
   add_foreign_key "stores", "users", column: "created_by_id"
   add_foreign_key "stores", "users", column: "updated_by_id"

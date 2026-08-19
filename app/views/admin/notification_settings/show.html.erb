@@ -1,0 +1,49 @@
+<% content_for :page_title, "通知設定" %>
+
+<div class="flex flex-col gap-6">
+  <div>
+    <h2 class="text-xl font-bold text-slate-900">通知設定</h2>
+    <p class="text-sm text-slate-500">
+      イベントごとに、アプリ内通知・メール通知を個別にON/OFFできます。設定を保存していないイベントは
+      既定値（アプリ内通知・メール通知ともON）で通知されます。
+    </p>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <%= form_with url: admin_notification_settings_path, method: :patch, class: "contents" do |f| %>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th class="px-4 py-3">イベント</th>
+            <th class="px-4 py-3 text-center">アプリ内通知</th>
+            <th class="px-4 py-3 text-center">メール通知</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% NotificationEventType::ALL.each do |event_type| %>
+            <% setting = @settings_by_event_type[event_type] %>
+            <tr>
+              <td class="px-4 py-3 font-medium text-slate-800"><%= NotificationEventType.label_for(event_type) %></td>
+              <td class="px-4 py-3 text-center">
+                <%= hidden_field_tag "notification_settings[#{event_type}][app_enabled]", "0", id: nil %>
+                <%= check_box_tag "notification_settings[#{event_type}][app_enabled]", "1",
+                      setting ? setting.app_enabled? : StaffNotificationSetting::DEFAULT_APP_ENABLED,
+                      class: "h-4 w-4 rounded border-slate-300" %>
+              </td>
+              <td class="px-4 py-3 text-center">
+                <%= hidden_field_tag "notification_settings[#{event_type}][email_enabled]", "0", id: nil %>
+                <%= check_box_tag "notification_settings[#{event_type}][email_enabled]", "1",
+                      setting ? setting.email_enabled? : StaffNotificationSetting::DEFAULT_EMAIL_ENABLED,
+                      class: "h-4 w-4 rounded border-slate-300" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <div class="p-4">
+        <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      </div>
+    <% end %>
+  </div>
+</div>

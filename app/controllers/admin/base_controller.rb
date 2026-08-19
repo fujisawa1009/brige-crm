@@ -35,12 +35,16 @@ class Admin::BaseController < ApplicationController
   #   - login_histories: AuditLogの絞り込みビュー（専用テーブルではない。read-only）
   #   - ip_allowlist_entries: admin(super_admin)専有（RoleSeeder）。代理店スコープ対象外
   #   - permission_management / role_management: SystemPermission/SystemRoleの管理そのもの
+  #   - notification_settings（R6-1）: idパラメータを持たない単数resourceで、常にcurrent_user自身の
+  #     設定のみを読み書きする（他ユーザーのレコードへ到達する経路が構造的に存在しない）。
+  #     policy_scope対象の一覧も無いためdashboardと同じ理由で除外する。
   PUNDIT_VERIFICATION_EXEMPT_CONTROLLERS = %w[
     admin/dashboard
     admin/login_histories
     admin/ip_allowlist_entries
     admin/permission_management
     admin/role_management
+    admin/notification_settings
   ].freeze
 
   def pundit_verification_exempt?

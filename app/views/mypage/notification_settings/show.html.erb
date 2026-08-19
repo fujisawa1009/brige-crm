@@ -1,0 +1,41 @@
+<div class="flex flex-col gap-4">
+  <h1 class="text-2xl font-bold">通知設定</h1>
+  <p class="text-sm text-slate-600">
+    イベントごとに、アプリ内通知・メール通知を個別にON/OFFできます。設定していないイベントは
+    既定値（アプリ内通知・メール通知ともON）で通知されます。
+  </p>
+
+  <%= form_with url: mypage_notification_settings_path, method: :patch, class: "contents" do |f| %>
+    <table class="border-collapse w-full text-sm">
+      <thead>
+        <tr>
+          <th class="border px-2 py-1 text-left">イベント</th>
+          <th class="border px-2 py-1 text-center">アプリ内通知</th>
+          <th class="border px-2 py-1 text-center">メール通知</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% NotificationEventType::ALL.each do |event_type| %>
+          <% setting = @settings_by_event_type[event_type] %>
+          <tr>
+            <td class="border px-2 py-1"><%= NotificationEventType.label_for(event_type) %></td>
+            <td class="border px-2 py-1 text-center">
+              <%= hidden_field_tag "notification_settings[#{event_type}][app_enabled]", "0", id: nil %>
+              <%= check_box_tag "notification_settings[#{event_type}][app_enabled]", "1",
+                    setting ? setting.app_enabled? : CustomerNotificationSetting::DEFAULT_APP_ENABLED %>
+            </td>
+            <td class="border px-2 py-1 text-center">
+              <%= hidden_field_tag "notification_settings[#{event_type}][email_enabled]", "0", id: nil %>
+              <%= check_box_tag "notification_settings[#{event_type}][email_enabled]", "1",
+                    setting ? setting.email_enabled? : CustomerNotificationSetting::DEFAULT_EMAIL_ENABLED %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <%= f.submit "保存", class: "underline w-fit" %>
+  <% end %>
+
+  <%= link_to "マイページへ戻る", mypage_dashboard_path, class: "underline w-fit" %>
+</div>

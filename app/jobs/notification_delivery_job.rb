@@ -11,7 +11,16 @@ class NotificationDeliveryJob < ApplicationJob
     notification = Notification.find(notification_id)
     notification.update!(status: Notification::STATUS_SENDING)
 
-    recipients = notification.resolve_recipients
+    # R6-1: 個人ごとの通知設定（E13一斉通知）でメール通知をOFFにしている顧客は宛先から除外する
+    # （判定はNotificationSettingGateに集約。Agency宛は個人設定を持たないため常に残る。除外された
+    # 宛先はNotificationRecipientを作らない＝メールアドレス不備で除外する既存のresolve_recipients
+    # と同じ「送れたはずの宛先」だけを集計対象にする方針を踏襲する）。
+    recipients = notification.resolve_recipients.select do |entry|
+      NotificationSettingGate.email_enabled?(
+        recipient_type: entry.fetch(:recipient_type), recipient_id: entry.fetch(:recipient_id),
+        event_type: NotificationEventType::BROADCAST_NOTIFICATION
+      )
+    end
     success = 0
     failed  = 0
 

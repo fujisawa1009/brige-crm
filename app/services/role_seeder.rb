@@ -48,8 +48,12 @@ class RoleSeeder
   ].freeze
 
   # 全ロール共通の「自分の状態」系コントローラー（ftlog踏襲。ログイン後に必ず到達できる画面）。
+  # R6-1: admin/notification_settings（個人ごとの通知設定）も常にcurrent_user自身のみを対象とする
+  # 自己サービス画面のため、他の書き込み系コントローラーのようなロール別の絞り込みを行わず全ロールへ
+  # 一律付与する（admin/dashboardと同じ扱い）。
   SELF_SERVICE_CONTROLLERS = %w[
     admin/dashboard
+    admin/notification_settings
   ].freeze
 
   # 04 R1: 組織・アカウント5コントローラ。実務運用者（内部スタッフ）は全操作可。

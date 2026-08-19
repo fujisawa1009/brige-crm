@@ -119,6 +119,8 @@ class Customer < ApplicationRecord
   has_many :stores, dependent: :destroy
   has_many :orders, dependent: :restrict_with_error
   has_many :system_notifications, as: :recipient, dependent: :destroy
+  # R6-1: 個人ごとの通知設定（マイページから本人のみ編集）。
+  has_many :customer_notification_settings, dependent: :destroy
 
   # customer_numberはpresenceバリデーション対象のため、before_create（バリデーション後）ではなく
   # before_validationで採番する（before_createにすると常に「空のまま」バリデーションに失敗する）。

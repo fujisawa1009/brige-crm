@@ -17,6 +17,14 @@ class InquiryMessageMailJob < ApplicationJob
         emails = entry[:emails]
         next if emails.blank?
 
+        # R6-1: 個人ごとの通知設定（E4/E9/E10案件関連の通知）でメール通知をOFFにしている宛先
+        # （User/Customer）はスキップする（判定はNotificationSettingGateに集約。Agency/
+        # SalesRepresentative/ProductionCompanyは個人設定を持たないため常に許可される）。
+        next unless NotificationSettingGate.email_enabled?(
+          recipient_type: entry[:type], recipient_id: entry[:id],
+          event_type: NotificationEventType::INQUIRY_CASE_RELATED
+        )
+
         to_email  = emails.first
         cc_emails = emails[1..] || []
 

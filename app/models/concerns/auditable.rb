@@ -45,7 +45,10 @@ module Auditable
     "InquiryRecipientRoute"  => %w[category status_code recipient_group_id],
     "RecipientGroup"         => %w[name is_active],
     "NotificationTemplate"   => %w[name template_type subject],
-    "Notification"           => %w[title target_type status scheduled_at]
+    "Notification"           => %w[title target_type status scheduled_at],
+    # R6-1: 個人ごとの通知設定。PIIを含まないためON/OFF状態をそのまま追跡する。
+    "StaffNotificationSetting"    => %w[user_id event_type app_enabled email_enabled],
+    "CustomerNotificationSetting" => %w[customer_id event_type app_enabled email_enabled]
   }.freeze
 
   included do

@@ -8,6 +8,14 @@ class Form::ApplicationMailer < ApplicationMailer
     @customer    = application.customer
     @order       = application.order
 
-    mail(to: @customer.email, subject: "[brige-crm] お申込みを受け付けました") if @customer.email.present?
+    return if @customer.email.blank?
+    # R6-1: 個人ごとの通知設定（E2申込確認）で顧客本人がメール通知をOFFにしている場合は送らない
+    # （判定はNotificationSettingGateに集約）。
+    return unless NotificationSettingGate.email_enabled?(
+      recipient_type: "Customer", recipient_id: @customer.id,
+      event_type: NotificationEventType::APPLICATION_CONFIRMED
+    )
+
+    mail(to: @customer.email, subject: "[brige-crm] お申込みを受け付けました")
   end
 end

@@ -40,6 +40,11 @@ Rails.application.routes.draw do
   namespace :admin do
     get "dashboard", to: "dashboard#index", as: :dashboard
 
+    # R6-1: 個人ごとの通知設定（社内スタッフ用マイページ相当）。idパラメータを持たない単数resourceに
+    # し、常にcurrent_user自身の設定のみを対象にする（他ユーザーの代理編集は不要という要件を
+    # ルーティングの形自体で担保する）。
+    resource :notification_settings, only: [ :show, :update ], controller: "notification_settings"
+
     resource :permission_management, only: [ :show, :update ], controller: "permission_management" do
       post :sync, on: :collection
     end
@@ -134,6 +139,9 @@ Rails.application.routes.draw do
   # section: "mypage" を自動判定する（config/routes.rb冒頭のadmin/formと同じ仕組み）。
   namespace :mypage do
     get "dashboard", to: "dashboard#index", as: :dashboard
+
+    # R6-1: 個人ごとの通知設定（顧客本人ごと。マイページから自分の設定のみ編集）。
+    resource :notification_settings, only: [ :show, :update ], controller: "notification_settings"
   end
 
   # Defines the root path route ("/")
