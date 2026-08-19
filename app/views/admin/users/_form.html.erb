@@ -1,44 +1,49 @@
-<%= form_with model: user, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
-  <% if user.errors.any? %>
-    <div class="text-red-700"><%= user.errors.full_messages.to_sentence %></div>
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: user, url: url, class: "flex flex-col gap-4 max-w-md" do |f| %>
+    <% if user.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= user.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <div>
+      <%= f.label :name, "氏名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :email, "メール", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :email, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+
+    <% if user.new_record? %>
+      <div>
+        <%= f.label :password, "初期パスワード", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.password_field :password, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :password_confirmation, "初期パスワード（確認）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.password_field :password_confirmation, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+    <% end %>
+
+    <% if policy(user).staff_scope? %>
+      <div>
+        <%= f.label :agency_group_id, "所属グループ（内部/代理店グループ担当者のみ）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :agency_group_id, AgencyGroup.order(:name), :id, :name,
+              { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :agency_id, "所属代理店（代理店担当者のみ）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
+              { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+    <% end %>
+    <div class="flex items-center gap-2">
+      <%= f.check_box :is_active, class: "h-4 w-4 rounded border-slate-300" %>
+      <%= f.label :is_active, "有効", class: "text-sm font-medium text-slate-700" %>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= link_to "キャンセル", admin_users_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+    </div>
   <% end %>
-
-  <div>
-    <%= f.label :name, "氏名" %>
-    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :email, "メール" %>
-    <%= f.text_field :email, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-
-  <% if user.new_record? %>
-    <div>
-      <%= f.label :password, "初期パスワード" %>
-      <%= f.password_field :password, class: "border rounded px-2 py-1 w-full" %>
-    </div>
-    <div>
-      <%= f.label :password_confirmation, "初期パスワード（確認）" %>
-      <%= f.password_field :password_confirmation, class: "border rounded px-2 py-1 w-full" %>
-    </div>
-  <% end %>
-
-  <% if policy(user).staff_scope? %>
-    <div>
-      <%= f.label :agency_group_id, "所属グループ（内部/代理店グループ担当者のみ）" %>
-      <%= f.collection_select :agency_group_id, AgencyGroup.order(:name), :id, :name,
-            { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-    </div>
-    <div>
-      <%= f.label :agency_id, "所属代理店（代理店担当者のみ）" %>
-      <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
-            { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-    </div>
-  <% end %>
-  <div>
-    <%= f.label :is_active, "有効" %>
-    <%= f.check_box :is_active %>
-  </div>
-
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-<% end %>
+</div>

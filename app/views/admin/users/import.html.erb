@@ -1,15 +1,21 @@
+<% content_for :page_title, "ユーザーCSV一括アップロード" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">ユーザーCSV一括アップロード</h1>
-  <p class="text-sm text-gray-500">
-    ヘッダー行必須: name,email,password,agency_group_id,agency_id,is_active
-    （password省略時はランダムな一時パスワードを発行します）。非同期ジョブで処理します。
-  </p>
+  <h2 class="text-xl font-bold text-slate-900">ユーザーCSV一括アップロード</h2>
 
-  <%= form_with url: import_upload_admin_users_path, method: :post,
-        multipart: true, class: "flex flex-col gap-3 max-w-md" do |f| %>
-    <%= f.file_field :csv_file, accept: "text/csv" %>
-    <%= f.submit "アップロード", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-  <% end %>
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <p class="mb-4 text-sm text-slate-500">
+      ヘッダー行必須: <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">name,email,password,agency_group_id,agency_id,is_active</code><br>
+      （password省略時はランダムな一時パスワードを発行します）。非同期ジョブで処理します。
+    </p>
 
-  <%= link_to "一覧に戻る", admin_users_path, class: "underline w-fit" %>
+    <%= form_with url: import_upload_admin_users_path, method: :post,
+          multipart: true, class: "flex flex-col gap-4 max-w-md" do |f| %>
+      <%= f.file_field :csv_file, accept: "text/csv", class: "block w-full text-sm text-slate-600 file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200" %>
+      <div class="flex gap-2">
+        <%= f.submit "アップロード", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+        <%= link_to "一覧に戻る", admin_users_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+      </div>
+    <% end %>
+  </div>
 </div>

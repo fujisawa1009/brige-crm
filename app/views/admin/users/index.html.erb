@@ -1,32 +1,130 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">ユーザー</h1>
-  <div class="flex gap-3">
+<% content_for :page_title, "ユーザー" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">ユーザー</h2>
+      <p class="text-sm text-slate-500">管理画面にログインできるアカウント（社内・代理店グループ・代理店）を管理します。</p>
+    </div>
     <% if policy(User).create? %>
-      <%= link_to "新規作成", new_admin_user_path, class: "underline w-fit" %>
-      <%= link_to "CSV一括アップロード", import_admin_users_path, class: "underline w-fit" %>
+      <div class="flex gap-2">
+        <%= link_to "CSV一括アップロード", import_admin_users_path,
+              class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+        <%= link_to "新規作成", new_admin_user_path,
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      </div>
     <% end %>
   </div>
 
-  <table class="border-collapse w-full text-sm">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1 text-left">メール</th>
-        <th class="border px-2 py-1 text-left">氏名</th>
-        <th class="border px-2 py-1 text-left">所属</th>
-        <th class="border px-2 py-1">有効</th>
-        <th class="border px-2 py-1"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @users.each do |user| %>
-        <tr>
-          <td class="border px-2 py-1"><%= link_to user.email, admin_user_path(user) %></td>
-          <td class="border px-2 py-1"><%= user.name %></td>
-          <td class="border px-2 py-1"><%= user.agency&.name || user.agency_group&.name || "社内" %></td>
-          <td class="border px-2 py-1 text-center"><%= user.is_active? ? "✓" : "" %></td>
-          <td class="border px-2 py-1"></td>
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <%= form_with url: admin_users_path, method: :get, class: "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" do %>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">氏名・メール</label>
+        <%= text_field_tag :q, params[:q], placeholder: "氏名・メールで検索",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">アカウント種別</label>
+        <%= select_tag :account_type,
+              options_for_select([ [ "すべて", "" ], [ "社内", "staff" ], [ "代理店グループ", "agency_group" ], [ "代理店", "agency" ] ], params[:account_type]),
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">代理店グループ</label>
+        <%= select_tag :agency_group_id,
+              options_from_collection_for_select(@agency_groups, :id, :name, params[:agency_group_id]),
+              include_blank: "すべて", class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">代理店</label>
+        <%= select_tag :agency_id,
+              options_from_collection_for_select(@agencies, :id, :name, params[:agency_id]),
+              include_blank: "すべて", class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">ロール</label>
+        <%= select_tag :role_id,
+              options_from_collection_for_select(@roles, :id, ->(role) { role.display_name.presence || role.name }, params[:role_id]),
+              include_blank: "すべて", class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">状態</label>
+        <%= select_tag :is_active,
+              options_for_select([ [ "すべて", "" ], [ "有効", "true" ], [ "無効", "false" ] ], params[:is_active]),
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <div class="col-span-full flex items-center justify-between pt-1">
+        <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
+        <div class="flex gap-2">
+          <%= link_to "クリア", admin_users_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">氏名</th>
+          <th class="px-4 py-3">メール</th>
+          <th class="px-4 py-3">アカウント種別</th>
+          <th class="px-4 py-3">所属</th>
+          <th class="px-4 py-3">ロール</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @users.empty? %>
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-slate-500">該当するユーザーが見つかりません</td>
+          </tr>
+        <% end %>
+        <% @users.each do |user| %>
+          <tr class="hover:bg-slate-50 <%= 'opacity-50' unless user.is_active? %>">
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to user.name, admin_user_path(user), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= user.email %></td>
+            <td class="px-4 py-3">
+              <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= user_account_type_badge_class(user) %>">
+                <%= user_account_type_label(user) %>
+              </span>
+            </td>
+            <td class="px-4 py-3 text-slate-600"><%= user.agency&.name || user.agency_group&.name || "—" %></td>
+            <td class="px-4 py-3 text-slate-600">
+              <% if user.system_roles.any? %>
+                <div class="flex flex-wrap gap-1">
+                  <% user.system_roles.each do |role| %>
+                    <span class="rounded border border-slate-200 px-1.5 py-0.5 text-xs text-slate-600"><%= role.display_name.presence || role.name %></span>
+                  <% end %>
+                </div>
+              <% else %>
+                <span class="text-slate-400">—</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium <%= user.is_active? ? "border-green-500 text-green-600" : "border-slate-300 text-slate-400" %>">
+                <%= user.is_active? ? "有効" : "無効" %>
+              </span>
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_user_path(user), class: "text-indigo-600 hover:underline" if policy(user).show? %>
+              <% if policy(user).update? %>
+                <%= link_to "編集", edit_admin_user_path(user), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(user).destroy? %>
+                <%= button_to "削除", admin_user_path(user), method: :delete,
+                      form: { data: { turbo_confirm: "#{user.name} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>
