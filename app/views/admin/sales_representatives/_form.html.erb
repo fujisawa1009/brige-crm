@@ -1,31 +1,36 @@
-<%= form_with model: sales_representative, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
-  <% if sales_representative.errors.any? %>
-    <div class="text-red-700"><%= sales_representative.errors.full_messages.to_sentence %></div>
-  <% end %>
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: sales_representative, url: url, class: "flex flex-col gap-4 max-w-md" do |f| %>
+    <% if sales_representative.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= sales_representative.errors.full_messages.to_sentence %></div>
+    <% end %>
 
-  <% if policy(sales_representative).staff_scope? %>
+    <% if policy(sales_representative).staff_scope? %>
+      <div>
+        <%= f.label :agency_id, "所属代理店", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
+              { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+    <% end %>
     <div>
-      <%= f.label :agency_id, "所属代理店" %>
-      <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
-            { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :sales_rep_code, "営業CD", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :sales_rep_code, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono" %>
+    </div>
+    <div>
+      <%= f.label :name, "氏名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :email, "メール", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :email, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= f.check_box :is_active, class: "h-4 w-4 rounded border-slate-300" %>
+      <%= f.label :is_active, "有効", class: "text-sm font-medium text-slate-700" %>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= link_to "キャンセル", admin_sales_representatives_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
     </div>
   <% end %>
-  <div>
-    <%= f.label :sales_rep_code, "営業CD" %>
-    <%= f.text_field :sales_rep_code, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :name, "氏名" %>
-    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :email, "メール" %>
-    <%= f.text_field :email, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :is_active, "有効" %>
-    <%= f.check_box :is_active %>
-  </div>
-
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-<% end %>
+</div>

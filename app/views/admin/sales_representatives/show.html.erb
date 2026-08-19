@@ -1,20 +1,80 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @sales_representative.name %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">営業CD</dt><dd><%= @sales_representative.sales_rep_code %></dd>
-    <dt class="font-bold">所属代理店</dt><dd><%= @sales_representative.agency.name %></dd>
-    <dt class="font-bold">メール</dt><dd><%= @sales_representative.email %></dd>
-    <dt class="font-bold">有効</dt><dd><%= @sales_representative.is_active? ? "有効" : "無効" %></dd>
-  </dl>
+<% content_for :page_title, "営業担当者詳細" %>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_sales_representatives_path, class: "underline" %>
-    <% if policy(@sales_representative).update? %>
-      <%= link_to "編集", edit_admin_sales_representative_path(@sales_representative), class: "underline" %>
-    <% end %>
-    <% if policy(@sales_representative).destroy? %>
-      <%= button_to "削除", admin_sales_representative_path(@sales_representative), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
-    <% end %>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @sales_representative.name %></h2>
+      <p class="text-sm text-slate-500 font-mono"><%= @sales_representative.sales_rep_code %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_sales_representatives_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@sales_representative).update? %>
+        <%= link_to "編集", edit_admin_sales_representative_path(@sales_representative),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
   </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-xs text-slate-500">状態</p>
+      <p class="mt-1 text-lg font-bold <%= @sales_representative.is_active? ? "text-green-600" : "text-slate-400" %>">
+        <%= @sales_representative.is_active? ? "有効" : "無効" %>
+      </p>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-xs text-slate-500">担当顧客数</p>
+      <p class="mt-1 text-lg font-bold text-slate-800"><%= @sales_representative.customers.size %> 件</p>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p class="text-xs text-slate-500">担当案件数</p>
+      <p class="mt-1 text-lg font-bold text-slate-800"><%= @sales_representative.orders.size %> 件</p>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">所属代理店</dt>
+        <dd class="mt-1"><%= link_to @sales_representative.agency.name, admin_agency_path(@sales_representative.agency), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">メールアドレス</dt>
+        <dd class="mt-1 text-slate-800"><%= @sales_representative.email.presence || "—" %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if @sales_representative.pdf_store_name.present? || @sales_representative.pdf_postal_code.present? %>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">PDF出力用情報</h3>
+      <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <dt class="text-xs text-slate-500">店舗名</dt>
+          <dd class="mt-1 text-slate-800"><%= @sales_representative.pdf_store_name.presence || "—" %></dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-500">電話番号</dt>
+          <dd class="mt-1 text-slate-800"><%= @sales_representative.pdf_phone_number.presence || "—" %></dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-xs text-slate-500">住所</dt>
+          <dd class="mt-1 text-slate-800">
+            <% address = [ @sales_representative.pdf_postal_code, @sales_representative.pdf_prefecture, @sales_representative.pdf_city, @sales_representative.pdf_town, @sales_representative.pdf_address_detail ].compact_blank.join(" ") %>
+            <%= address.presence || "—" %>
+          </dd>
+        </div>
+      </dl>
+    </div>
+  <% end %>
+
+  <% if policy(@sales_representative).destroy? %>
+    <div>
+      <%= button_to "この営業担当者を削除", admin_sales_representative_path(@sales_representative), method: :delete,
+            form: { data: { turbo_confirm: "#{@sales_representative.name}（#{@sales_representative.sales_rep_code}） を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>

@@ -5,7 +5,19 @@ class Admin::SalesRepresentativesController < Admin::BaseController
   before_action :set_sales_representative, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @sales_representatives = policy_scope(SalesRepresentative).order(:sales_rep_code)
+    scope = policy_scope(SalesRepresentative).includes(agency: :agency_group).order(:sales_rep_code)
+    scope = scope.where("sales_representatives.name ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
+    scope = scope.where("sales_representatives.sales_rep_code ILIKE :q", q: "%#{params[:sales_rep_code]}%") if params[:sales_rep_code].present?
+    if params[:agency_q].present?
+      scope = scope.joins(:agency).where("agencies.name ILIKE :q OR agencies.agency_code ILIKE :q", q: "%#{params[:agency_q]}%")
+    end
+    if params[:group_q].present?
+      scope = scope.joins(agency: :agency_group)
+                   .where("agency_groups.name ILIKE :q OR agency_groups.group_code ILIKE :q", q: "%#{params[:group_q]}%")
+    end
+    scope = scope.where(is_active: params[:is_active]) if params[:is_active].present?
+
+    @pagy, @sales_representatives = pagy(scope)
   end
 
   def show

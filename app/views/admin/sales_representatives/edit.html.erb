@@ -1,4 +1,6 @@
+<% content_for :page_title, "営業担当者編集" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">営業担当者編集</h1>
+  <h2 class="text-xl font-bold text-slate-900">営業担当者編集</h2>
   <%= render "form", sales_representative: @sales_representative, url: admin_sales_representative_path(@sales_representative) %>
 </div>

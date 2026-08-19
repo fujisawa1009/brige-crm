@@ -1,31 +1,101 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">営業担当者</h1>
-  <% if policy(SalesRepresentative).create? %>
-    <%= link_to "新規作成", new_admin_sales_representative_path, class: "underline w-fit" %>
-  <% end %>
+<% content_for :page_title, "営業担当者" %>
 
-  <table class="border-collapse w-full text-sm">
-    <thead>
-      <tr>
-        <th class="border px-2 py-1 text-left">営業CD</th>
-        <th class="border px-2 py-1 text-left">氏名</th>
-        <th class="border px-2 py-1 text-left">所属代理店</th>
-        <th class="border px-2 py-1">有効</th>
-        <th class="border px-2 py-1"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @sales_representatives.each do |sales_representative| %>
-        <tr>
-          <td class="border px-2 py-1"><%= sales_representative.sales_rep_code %></td>
-          <td class="border px-2 py-1">
-            <%= link_to sales_representative.name, admin_sales_representative_path(sales_representative) %>
-          </td>
-          <td class="border px-2 py-1"><%= sales_representative.agency.name %></td>
-          <td class="border px-2 py-1 text-center"><%= sales_representative.is_active? ? "✓" : "" %></td>
-          <td class="border px-2 py-1"></td>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">営業担当者</h2>
+      <p class="text-sm text-slate-500">代理店に属する営業担当者を管理します。</p>
+    </div>
+    <% if policy(SalesRepresentative).create? %>
+      <%= link_to "新規作成", new_admin_sales_representative_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <%= form_with url: admin_sales_representatives_path, method: :get, class: "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" do %>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">氏名</label>
+        <%= text_field_tag :q, params[:q], placeholder: "氏名で検索",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">担当者コード</label>
+        <%= text_field_tag :sales_rep_code, params[:sales_rep_code], placeholder: "担当者コードで検索",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">所属代理店</label>
+        <%= text_field_tag :agency_q, params[:agency_q], placeholder: "代理店名・CDで検索",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">所属グループ</label>
+        <%= text_field_tag :group_q, params[:group_q], placeholder: "グループ名・CDで検索",
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">状態</label>
+        <%= select_tag :is_active,
+              options_for_select([ [ "すべて", "" ], [ "有効", "true" ], [ "無効", "false" ] ], params[:is_active]),
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <div class="col-span-full flex items-center justify-between pt-1">
+        <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
+        <div class="flex gap-2">
+          <%= link_to "クリア", admin_sales_representatives_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+          <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">担当者コード</th>
+          <th class="px-4 py-3">氏名</th>
+          <th class="px-4 py-3">グループCD</th>
+          <th class="px-4 py-3">代理店CD</th>
+          <th class="px-4 py-3">所属代理店</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @sales_representatives.empty? %>
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-slate-500">該当する営業担当者が見つかりません</td>
+          </tr>
+        <% end %>
+        <% @sales_representatives.each do |rep| %>
+          <tr class="hover:bg-slate-50 <%= 'opacity-50' unless rep.is_active? %>">
+            <td class="px-4 py-3 font-mono text-slate-600"><%= rep.sales_rep_code %></td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to rep.name, admin_sales_representative_path(rep), class: "hover:underline" %></td>
+            <td class="px-4 py-3 font-mono text-slate-500"><%= rep.agency.agency_group.group_code %></td>
+            <td class="px-4 py-3 font-mono text-slate-500"><%= rep.agency.agency_code %></td>
+            <td class="px-4 py-3 text-slate-600"><%= link_to rep.agency.name, admin_agency_path(rep.agency), class: "hover:underline" %></td>
+            <td class="px-4 py-3">
+              <span class="text-xs font-medium <%= rep.is_active? ? "text-green-600" : "text-slate-400" %>"><%= rep.is_active? ? "有効" : "無効" %></span>
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_sales_representative_path(rep), class: "text-indigo-600 hover:underline" %>
+              <% if policy(rep).update? %>
+                <%= link_to "編集", edit_admin_sales_representative_path(rep), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(rep).destroy? %>
+                <%= button_to "削除", admin_sales_representative_path(rep), method: :delete,
+                      form: { data: { turbo_confirm: "#{rep.name}（#{rep.sales_rep_code}） を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>
