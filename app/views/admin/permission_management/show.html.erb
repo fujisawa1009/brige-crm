@@ -1,39 +1,61 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">権限マトリクス（admin section）</h1>
+<% content_for :page_title, "権限マトリクス" %>
 
-  <%= button_to "ルート定義からカタログを同期", sync_admin_permission_management_path, method: :post, class: "underline w-fit" %>
+<div class="flex flex-col gap-6" data-controller="permission-matrix">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">権限マトリクス（admin section）</h2>
+      <p class="text-sm text-slate-500">ロールごとに許可する操作を設定します。admin（super_admin）は常に全許可です。</p>
+    </div>
+    <%= button_to "ルート定義からカタログを同期", sync_admin_permission_management_path, method: :post,
+          class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+  </div>
 
-  <% editable_roles = @roles.reject(&:admin?) %>
+  <div class="flex items-center justify-between">
+    <input type="text" placeholder="コントローラ・操作名で絞り込み" data-permission-matrix-target="input" data-action="input->permission-matrix#filter"
+           class="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm">
+    <span class="text-sm text-slate-500"><%= @permissions.size %> 件の権限 / <%= @permissions_by_controller.size %> コントローラ</span>
+  </div>
 
   <%= form_with url: admin_permission_management_path, method: :patch do %>
-    <table class="border-collapse w-full text-sm">
-      <thead>
-        <tr>
-          <th class="border px-2 py-1 text-left">権限</th>
-          <% @roles.each do |role| %>
-            <th class="border px-2 py-1"><%= role.label %><% if role.admin? %>（全許可）<% end %></th>
-          <% end %>
-        </tr>
-      </thead>
-      <tbody>
-        <% @permissions.each do |permission| %>
-          <tr>
-            <td class="border px-2 py-1"><%= permission.display_name %> <span class="text-gray-400">[<%= permission.http_method %>]</span></td>
+    <div class="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="sticky top-0 z-10 bg-slate-50">
+          <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th class="sticky left-0 z-20 bg-slate-50 px-4 py-3">権限</th>
             <% @roles.each do |role| %>
-              <td class="border px-2 py-1 text-center">
-                <% if role.admin? %>
-                  ✓
-                <% else %>
-                  <%= check_box_tag "permissions[#{permission.id}][]", role.id,
-                        permission.system_roles.include?(role), id: nil %>
-                <% end %>
-              </td>
+              <th class="px-4 py-3 text-center"><%= role.label %><% if role.admin? %><br><span class="font-normal normal-case text-slate-400">（全許可）</span><% end %></th>
             <% end %>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @permissions_by_controller.each do |controller_name, permissions| %>
+            <tr data-permission-matrix-target="header" data-controller-name="<%= controller_name %>" class="bg-slate-100">
+              <td colspan="<%= @roles.size + 1 %>" class="sticky left-0 px-4 py-1.5 font-mono text-xs font-semibold text-slate-600"><%= controller_name %></td>
+            </tr>
+            <% permissions.each do |permission| %>
+              <tr data-permission-matrix-target="row" data-controller-name="<%= controller_name %>"
+                  data-search="<%= [ permission.controller, permission.action, permission.http_method, permission.display_name ].join(" ").downcase %>"
+                  class="hover:bg-slate-50">
+                <td class="sticky left-0 z-[1] bg-white px-4 py-2 hover:bg-slate-50">
+                  <%= permission.display_name %> <span class="text-xs text-slate-400">[<%= permission.http_method %>]</span>
+                </td>
+                <% @roles.each do |role| %>
+                  <td class="px-4 py-2 text-center">
+                    <% if role.admin? %>
+                      <span class="text-green-600">✓</span>
+                    <% else %>
+                      <%= check_box_tag "permissions[#{permission.id}][]", role.id,
+                            permission.system_roles.include?(role), id: nil, class: "h-4 w-4 rounded border-slate-300" %>
+                    <% end %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
 
-    <%= submit_tag "保存", class: "bg-blue-600 text-white rounded px-4 py-2 mt-4" %>
+    <%= submit_tag "保存", class: "mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
   <% end %>
 </div>

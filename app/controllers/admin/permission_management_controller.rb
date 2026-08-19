@@ -23,6 +23,10 @@ class Admin::PermissionManagementController < Admin::BaseController
     @roles = SystemRole.order(Arel.sql("COALESCE(position, 99999), system DESC, name ASC"))
     @permissions = SystemPermission.includes(:system_roles).admin
                      .order(:controller, :action, :http_method, :path)
+    # 表示グルーピング用。@permissionsは既にcontroller順に並んでいるため、group_byの挿入順が
+    # そのままグループの表示順になる（フォーム送信のパラメータ構造はpermissions[id][]のままなので
+    # ここでの分割は表示にのみ影響する）。
+    @permissions_by_controller = @permissions.group_by(&:controller)
   end
 
   def update_role_permissions!
