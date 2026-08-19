@@ -257,6 +257,7 @@
 | R5-3 | `PaymentTransaction` 状態機械（遷移表・mark/confirm・`with_lock`・`lock_version`）+ model spec | payment §4-4 | 高 |
 | R5-4 | `app/services/payment/`: Config / CheckCode / JutyuCodeGenerator / MemberIdAllocator / CardholderInfoBuilder / ParamMasker + unit spec | payment §4-9/§4-10 | 高 |
 | R5-5 | Solid Queue 決済専用キュー（`queue.yml`・`retry_on` 禁止・`limits_concurrency`）+ job spec | payment §4-2 | 高 |
+| R5-5b | **`payment_method` を選択肢マスタ（OptionGroup）から専用テーブルへ昇格**（`master-data-design-policy.md` §5-3）: R5-6 の D-P12① 3択分岐が値を見て処理を変えるため、現行の `OptionGroup(key: "payment_method")` では `is_system` 保護もコード定数も無く、管理画面での表記変更で決済分岐が壊れる。`payment_methods` テーブル新設（`SystemManagedStatus` include）＋`CODE_BANK_TRANSFER`/`CODE_CREDIT`/`CODE_BUNDLED` 定数＋`orders.payment_method` の存在検証＋seeder の切り替え | master-data-design-policy §5-3、payment D-P12 | **高（R5-6 の前提）** |
 | R5-6 | 決済開始 `Form::PaymentsController` + `Payment::CheckoutSession` + D-P12① 3択分岐 + 3DS 項目送信 | payment §4-10/§4-7 | 高 |
 | R5-6b | **【v5 CEO決定】顧客本人入力導線（ハイブリッド方式）**: 営業担当者が仮申込を作成→顧客へメール送信→`Application#token` 付きURLで顧客が別セッションから申込を再開・決済まで完了。トークン有効期限・再送・なりすまし対策のrequest spec必須。**採用理由（2026-08-18浅賀MTGで再確認）**: 同意メールと電子サインを1通に統合する代替案を検討したが不可と判断——クレカ情報は顧客本人が入力するため画面が営業担当者から顧客へ移るフェーズが必ず発生し、メールリンクを挟む必要がある | basic-design §6、04次のアクション6、`contract-confirmation-docs.md` §1-3 | 高 |
 | R5-7 | ret_url/cancel_url 受け口 `Form::PaymentReturnsController` + `Payment::ReturnHandler` + rack-attack + **request spec（Cookie無し/改ざん/二重POST）** | payment §4-9/§4-10、R-12 | 高 |
@@ -376,6 +377,7 @@
 
 - 2026-08-19 v4: `release-readiness.md` を Rails 版（PostgreSQL 16 / Solid Queue・Cache・Cable / Puma+Thruster / Kamal or 未定）へ全面改訂し、A〜J 全項目に状態ラベル（✅実装済み／🔶部分実装／⬜未着手／❓要決定+Q番号）を付与。マイルストーン: M1（R0〜R4 達成）／M2（R5）／M3（R8+R7）
 - **本番前必須（v4で格上げ）**:
+  - **開発用ダミーの選択肢グループ（`OptionGroup` の `group_key_1` / `group_key_2`。各3値）を削除するか実データへ置換する**（`master-data-design-policy.md` §5-2）。管理画面の選択肢一覧に開発用の値が残ったまま運用開始しないこと
   - セッション/Cookie ハードニング一式: `force_ssl`・`assume_ssl`・`config.hosts`・`expire_after`・form ログイン時 `reset_session`（C-13。R3見送り事項）
   - Ruby バージョン整合（`.ruby-version` 3.3.4 vs 03§2「3.4」。上げるか 03 を訂正。A-14）
   - 本番構成方式（Q-40）・デプロイ方式（Kamal 採否。`config/deploy.yml` の宛先/registry は仮値）・SMTP/`default_url_options`（現状 example.com）・Active Storage 保存先（S3 等）と添付上限（現行 50MB/ファイル・合計制限なし）（A-3/A-8/A-12/A-13）
