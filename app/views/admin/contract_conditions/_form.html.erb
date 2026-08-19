@@ -1,25 +1,30 @@
-<%= form_with model: contract_condition, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
-  <% if contract_condition.errors.any? %>
-    <div class="text-red-700"><%= contract_condition.errors.full_messages.to_sentence %></div>
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: contract_condition, url: url, class: "flex flex-col gap-4 max-w-md" do |f| %>
+    <% if contract_condition.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= contract_condition.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <div>
+      <%= f.label :agency_id, "代理店", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
+            { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :name, "契約条件名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :effective_from, "適用開始日", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.date_field :effective_from, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :effective_until, "適用終了日（現行はNULL）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.date_field :effective_until, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= link_to "キャンセル", admin_contract_conditions_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+    </div>
   <% end %>
-
-  <div>
-    <%= f.label :agency_id, "代理店" %>
-    <%= f.collection_select :agency_id, Agency.order(:name), :id, :name,
-          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :name, "契約条件名" %>
-    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :effective_from, "適用開始日" %>
-    <%= f.date_field :effective_from, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :effective_until, "適用終了日（現行はNULL）" %>
-    <%= f.date_field :effective_until, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-<% end %>
+</div>

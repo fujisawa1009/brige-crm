@@ -8,7 +8,17 @@ class Admin::ContractConditionsController < Admin::BaseController
   before_action :set_contract_condition, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @contract_conditions = policy_scope(ContractCondition).order(effective_from: :desc)
+    scope = policy_scope(ContractCondition).includes(:agency).order(effective_from: :desc)
+    scope = scope.where("contract_conditions.name ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
+    if params[:agency_q].present?
+      scope = scope.joins(:agency).where("agencies.name ILIKE :q OR agencies.agency_code ILIKE :q", q: "%#{params[:agency_q]}%")
+    end
+    case params[:status]
+    when "current" then scope = scope.where(effective_until: nil)
+    when "past"    then scope = scope.where.not(effective_until: nil)
+    end
+
+    @pagy, @contract_conditions = pagy(scope)
   end
 
   def show

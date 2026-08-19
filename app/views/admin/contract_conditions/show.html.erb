@@ -1,19 +1,59 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @contract_condition.name %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">代理店</dt><dd><%= @contract_condition.agency.name %></dd>
-    <dt class="font-bold">適用開始日</dt><dd><%= @contract_condition.effective_from %></dd>
-    <dt class="font-bold">適用終了日</dt><dd><%= @contract_condition.effective_until || "現行" %></dd>
-  </dl>
+<% content_for :page_title, "契約条件詳細" %>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_contract_conditions_path, class: "underline" %>
-    <% if policy(@contract_condition).update? %>
-      <%= link_to "編集", edit_admin_contract_condition_path(@contract_condition), class: "underline" %>
-    <% end %>
-    <% if policy(@contract_condition).destroy? %>
-      <%= button_to "削除", admin_contract_condition_path(@contract_condition), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
-    <% end %>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @contract_condition.name %></h2>
+      <p class="text-sm text-slate-500"><%= @contract_condition.agency.name %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_contract_conditions_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@contract_condition).update? %>
+        <%= link_to "編集", edit_admin_contract_condition_path(@contract_condition),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
   </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">代理店</dt>
+        <dd class="mt-1"><%= link_to @contract_condition.agency.name, admin_agency_path(@contract_condition.agency), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">状態</dt>
+        <dd class="mt-1">
+          <% if @contract_condition.current? %>
+            <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">現行</span>
+          <% else %>
+            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">過去分</span>
+          <% end %>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">適用開始日</dt>
+        <dd class="mt-1 text-slate-800"><%= @contract_condition.effective_from %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">適用終了日</dt>
+        <dd class="mt-1 text-slate-800"><%= @contract_condition.effective_until || "—（現行）" %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">紐づく案件</h3>
+    <p class="text-sm text-slate-600">この契約条件を参照している案件は <%= @contract_condition.orders.size %> 件です。</p>
+  </div>
+
+  <% if policy(@contract_condition).destroy? %>
+    <div>
+      <%= button_to "この契約条件を削除", admin_contract_condition_path(@contract_condition), method: :delete,
+            form: { data: { turbo_confirm: "#{@contract_condition.name} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>
