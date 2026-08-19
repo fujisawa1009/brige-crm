@@ -1,4 +1,6 @@
+<% content_for :page_title, "代理店グループ編集" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">代理店グループ編集</h1>
+  <h2 class="text-xl font-bold text-slate-900">代理店グループ編集</h2>
   <%= render "form", agency_group: @agency_group, url: admin_agency_group_path(@agency_group) %>
 </div>

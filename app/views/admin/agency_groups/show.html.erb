@@ -1,21 +1,82 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @agency_group.name %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">グループCD</dt><dd><%= @agency_group.group_code %></dd>
-    <dt class="font-bold">サービス種別</dt><dd><%= @agency_group.service_type %></dd>
-    <dt class="font-bold">連絡先メール</dt><dd><%= @agency_group.contact_email %></dd>
-    <dt class="font-bold">Bridgeプラン表示区分</dt><dd><%= @agency_group.bridge_plan_display_type %></dd>
-    <dt class="font-bold">CSVダウンロード表示</dt><dd><%= @agency_group.csv_download_visible %></dd>
-  </dl>
+<% content_for :page_title, "代理店グループ詳細" %>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_agency_groups_path, class: "underline" %>
-    <% if policy(@agency_group).update? %>
-      <%= link_to "編集", edit_admin_agency_group_path(@agency_group), class: "underline" %>
-    <% end %>
-    <% if policy(@agency_group).destroy? %>
-      <%= button_to "削除", admin_agency_group_path(@agency_group), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @agency_group.name %></h2>
+      <p class="text-sm text-slate-500 font-mono"><%= @agency_group.group_code %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_agency_groups_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@agency_group).update? %>
+        <%= link_to "編集", edit_admin_agency_group_path(@agency_group),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">サービス種別</dt>
+        <dd class="mt-1">
+          <span class="rounded-full px-2 py-0.5 text-xs font-medium <%= @agency_group.service_type == "BridgePlus" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700" %>">
+            <%= @agency_group.service_type %>
+          </span>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">連絡先メール</dt>
+        <dd class="mt-1 text-slate-800"><%= @agency_group.contact_email.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">Bridgeプラン表示区分</dt>
+        <dd class="mt-1 text-slate-800"><%= @agency_group.bridge_plan_display_type.presence || "—" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">CSVダウンロード表示</dt>
+        <dd class="mt-1 text-slate-800"><%= @agency_group.csv_download_visible? ? "表示" : "非表示" %></dd>
+      </div>
+      <div class="sm:col-span-2">
+        <dt class="text-xs text-slate-500">許可商材</dt>
+        <dd class="mt-1">
+          <% if @agency_group.products.any? %>
+            <div class="flex flex-wrap gap-1">
+              <% @agency_group.products.each do |product| %>
+                <span class="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600"><%= product.name %></span>
+              <% end %>
+            </div>
+          <% else %>
+            <span class="text-slate-400">—</span>
+          <% end %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">配下代理店（<%= @agency_group.agencies.size %>件）</h3>
+    <% if @agency_group.agencies.any? %>
+      <ul class="divide-y divide-slate-100">
+        <% @agency_group.agencies.order(:name).each do |agency| %>
+          <li class="flex items-center justify-between py-2 text-sm">
+            <%= link_to agency.name, admin_agency_path(agency), class: "font-medium text-slate-800 hover:underline" %>
+            <span class="font-mono text-xs text-slate-500"><%= agency.agency_code %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-slate-500">配下の代理店はまだ登録されていません。</p>
     <% end %>
   </div>
+
+  <% if policy(@agency_group).destroy? %>
+    <div>
+      <%= button_to "この代理店グループを削除", admin_agency_group_path(@agency_group), method: :delete,
+            form: { data: { turbo_confirm: "#{@agency_group.name} を削除しますか？（配下に代理店が存在する場合は削除できません）" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>

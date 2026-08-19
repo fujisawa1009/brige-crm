@@ -4,7 +4,16 @@ class Admin::AgencyGroupsController < Admin::BaseController
   before_action :set_agency_group, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @agency_groups = policy_scope(AgencyGroup).order(:name)
+    scope = policy_scope(AgencyGroup).includes(:agencies, :products).order(:name)
+    scope = scope.where("name ILIKE :q OR group_code ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
+    scope = scope.where("contact_email ILIKE :q", q: "%#{params[:contact_email]}%") if params[:contact_email].present?
+    scope = scope.where(bridge_plan_display_type: params[:bridge_plan_display_type]) if params[:bridge_plan_display_type].present?
+    if params[:product_id].present?
+      scope = scope.joins(:agency_group_products).where(agency_group_products: { product_id: params[:product_id] }).distinct
+    end
+
+    @pagy, @agency_groups = pagy(scope)
+    @products = Product.order(:name)
   end
 
   def show
