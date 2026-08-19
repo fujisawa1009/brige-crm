@@ -102,7 +102,7 @@
 |---|---|---|
 | `payment-integration.md` / P3-2 | クレカNG顧客の自動追跡・通知（現行はExcel手動集計） | R5 |
 | `business-flow-analysis.md` §2 | 外部ツールに TimeRex を追加 | — |
-| `development-plan.md` P4-19 | 解約抑止（引き止め）は自動キャンセルと別業務。TimeRex継続の可能性 | R6（`04-implementation-plan.md` R6 の遅延案件検知・自動キャンセルと切り分け） |
+| `development-plan.md` P4-19 | 解約抑止（引き止め）は自動キャンセルと別業務。TimeRex継続の可能性 | R6（`04-rails-implementation-plan.md` R6 の遅延案件検知・自動キャンセルと切り分け） |
 | `04-requirements-inventory.md` | 連携エラー抽出（PAD）＝P4-21 の裏付け | R6 |
 
 ---
@@ -115,7 +115,7 @@
 - 画像/FileMaker/決済ガイド後半：フロー把握済み、詳細は実装時に原本参照
 - 検証：数値・固有名詞・破損・ギャップを複数パスで確認（誤り検出・修正済み）
 
-→ **調査は完了**。以降は設計を実装単位に落とす／実装フェーズへ移行する段階（Rails版: R0〜R4 実装済み・R5 以降は `04-implementation-plan.md`）。
+→ **調査は完了**。以降は設計を実装単位に落とす／実装フェーズへ移行する段階（Rails版: R0〜R4 実装済み・R5 以降は `04-rails-implementation-plan.md`）。
 
 ---
 

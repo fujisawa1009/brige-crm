@@ -1,10 +1,10 @@
 # 基本設計書
 
-> Rails版改訂: 2026-08-19。旧Laravelプロジェクト（boilerplate-vue-env/laravel/requirements/design/basic-design.md）を brige-crm（Rails 8.1）の現行実装（`db/schema.rb` / `app/models` / `app/controllers` / `app/policies` / `config/routes.rb`）・03-rails-architecture-proposal.md（決定A〜F・§8-2）・04-implementation-plan.md（R0〜R8）に合わせて全面見直し。フェーズ対応: §1〜5・§15〜18 = R0〜R4（実装済み範囲。章ごとに「実装済み（Rx）」「実装が異なる（差分）」を注記）、§6〜14 = R5（契約フロー・決済。未実装。Rails版での実装方針を追記）。
+> Rails版改訂: 2026-08-19。旧Laravelプロジェクト（boilerplate-vue-env/laravel/requirements/design/basic-design.md）を brige-crm（Rails 8.1）の現行実装（`db/schema.rb` / `app/models` / `app/controllers` / `app/policies` / `config/routes.rb`）・03-rails-architecture-proposal.md（決定A〜F・§8-2）・04-rails-implementation-plan.md（R0〜R8）に合わせて全面見直し。フェーズ対応: §1〜5・§15〜18 = R0〜R4（実装済み範囲。章ごとに「実装済み（Rx）」「実装が異なる（差分）」を注記）、§6〜14 = R5（契約フロー・決済。未実装。Rails版での実装方針を追記）。
 > 最終更新: 2026-08-19（Rails版改訂）／旧Laravel版最終更新: 2026-05-15
 > ステータス: 機能仕様の正（brige-crm `requirements/` が正。旧Laravel側は凍結参照元）。要件追加により随時更新
 >
-> **本書の位置づけ（Rails版）**: 業務要件・項番・未決論点は旧Laravel版から引き継ぎ、実装記述のみ Rails 版（Hotwire+ERB / PostgreSQL+UUID / Devise+メールOTP / ftlog式エンドポイントRBAC+Pundit / Solid Queue・Cache・Cable / ActionMailer）へ読み替えた。実装と設計が異なる箇所は原則「実装を正として設計を追従」させ、業務要件上の懸念があるものは「要確認」として残している。テーブル・カラムの詳細は `Column.md`、フェーズ計画は `04-implementation-plan.md` を参照。
+> **本書の位置づけ（Rails版）**: 業務要件・項番・未決論点は旧Laravel版から引き継ぎ、実装記述のみ Rails 版（Hotwire+ERB / PostgreSQL+UUID / Devise+メールOTP / ftlog式エンドポイントRBAC+Pundit / Solid Queue・Cache・Cable / ActionMailer）へ読み替えた。実装と設計が異なる箇所は原則「実装を正として設計を追従」させ、業務要件上の懸念があるものは「要確認」として残している。テーブル・カラムの詳細は `Column.md`、フェーズ計画は `04-rails-implementation-plan.md` を参照。
 
 ---
 
@@ -737,7 +737,7 @@ customers            ← 本システムの顧客（Devise Customer スコープ
 > - 初期ステータス: `Customer.status = applied`（`CustomerStatus::CODE_APPLIED`）、`Order.status = 0:受注`（`OrderStatus::CODE_ORDERED`）。旧記述の「初期ステータス案：申込受付」に相当
 >
 > ⏳ **未実装（R5）**: クレカ登録（§7）／申込確認メールへの確認書PDF添付／重要事項説明チェック（P3-12/13）／手書き署名の取得・保存（Active Storage に画像として `Order` または契約書レコードへ添付。取得手段は未確定⑤）／契約確認メール（§13）。
-> ⚠️ **差分**: 「顧客側が顧客情報を入力」は現状**営業担当者のセッション内**で進行する（顧客スマホへ URL 送付する経路は無い。未確定①）。`Application#token` を URL に持つ設計なので、顧客端末への引き継ぎは R5 で `token` 付き URL の別セッション許可（＋有効期限）として拡張可能。
+> ✅ **決定済み（2026-08-19・v5。旧①）**: 営業担当者が入力して仮申込を作成→顧客にメールでリンク送付→顧客がそのリンクから申込を再開する**ハイブリッド方式**を採用。R3現状（営業担当者のセッション内で完結・顧客スマホへのURL送付経路なし）から、R5で `Application#token` を使った別セッション許可（＋有効期限管理）を追加実装する。
 > ⚠️ **要確認（R3 精査）**: `form-template-mapping.md` §2 の BRIDGE_PLUS 向け個別フィールド155項目と、実装済み FormField 定義（seed）との突合は未実施（04 R3 要確認）。
 
 **疑問・未定義事項**
@@ -751,13 +751,13 @@ customers            ← 本システムの顧客（Devise Customer スコープ
 
 | # | 確認事項 | 現状 |
 |---|---|---|
-| ① | 顧客の情報入力端末・環境（営業担当者端末を渡す / 顧客スマホにURL送付 / 両対応） | 未確定 |
-| ② | 支払方法の種類（クレカのみ / 口座振替等も対応） | 未確定 |
+| ① | 顧客の情報入力端末・環境（営業担当者端末を渡す / 顧客スマホにURL送付 / 両対応） | ✅ 決定済み（2026-08-19・v5）: 営業担当者入力→仮申込→顧客へメールでリンク送付→顧客が続きを入力するハイブリッド方式 |
+| ② | 支払方法の種類（クレカのみ / 口座振替等も対応） | 未確定（Q-26は「信販は対象外」と決定済み。クレカ以外の既存選択肢の扱いは引き続き未確定） |
 | ③ | 顧客重複時の対応方針（エラー停止 / 警告して続行 / 既存顧客に自動紐づけ） | 未確定 |
-| ④ | 重要事項説明チェックの実施者・タイミング（顧客がWeb上でチェック / 営業担当者が口頭説明後に記録） | 未確定 |
-| ⑤ | 手書き署名の取得手段（タブレット上で描画 / 紙をカメラ撮影してアップロード） | 未確定 |
+| ④ | 重要事項説明チェックの実施者・タイミング（顧客がWeb上でチェック / 営業担当者が口頭説明後に記録） | 未確定（04 Q-35・`contract-confirmation-docs.md` Q-1〜9） |
+| ⑤ | 手書き署名の取得手段（タブレット上で描画 / 紙をカメラ撮影してアップロード） | 未確定（04 Q-35） |
 
-> ③ 顧客重複問題は R6 の名寄せ（`customer-merge-design.md`）と関連。R3 実装は「常に新規 Customer を作成」（重複検知なし）。R5 着手前に方針①〜⑤を確定すること（04 R5着手前チェックリストと併読）。
+> ③ 顧客重複問題は R6 の名寄せ（`customer-merge-design.md`）と関連。R3 実装は「常に新規 Customer を作成」（重複検知なし）。①は2026-08-19に決定済み。②〜⑤はR5着手前に確定すること（04 R5着手前チェックリストと併読）。
 
 ---
 
@@ -798,7 +798,7 @@ customers            ← 本システムの顧客（Devise Customer スコープ
 **確認中・未確定事項**
 
 > **⚠️ 本章の決済詳細は古い（2026-07-27）**
-> APIドキュメントは受領済みで、最新の正は `payment-integration.md`、`legacy-research/02-payment-netmove.md`、`netmove-card-migration.md` とする（旧参照の `impl-plans/P3-2-payment.md` は削除済み・旧Laravel側に残存。Rails版の実装計画は `04-implementation-plan.md` R5 が代替）。本章は基本要件の出典として残し、実装判断は上記文書と `development-plan.md` P3-2（= R5）を参照する。
+> APIドキュメントは受領済みで、最新の正は `payment-integration.md`、`legacy-research/02-payment-netmove.md`、`netmove-card-migration.md` とする（旧参照の `impl-plans/P3-2-payment.md` は削除済み・旧Laravel側に残存。Rails版の実装計画は `04-rails-implementation-plan.md` R5 が代替）。本章は基本要件の出典として残し、実装判断は上記文書と `development-plan.md` P3-2（= R5）を参照する。
 > R5 着手前ブロッカー: Q-25（返金・キャンセル）/ Q-26（信販）/ Q-27（決済障害時縮退運用）/ Q-36（決済トランザクション紐づけ単位）/ Q-37（jutyu_cd 桁数）/ Q-38（決済結果確定手段）/ Q-39（ステージング検証方式）、通知マトリクス E6（決済失敗の通知先）。
 
 | # | 確認事項 | 現状 |
@@ -1422,7 +1422,7 @@ customers            ← 本システムの顧客（Devise Customer スコープ
 | 17 | 問い合わせ管理 | ✅/⚠️ | R4 | 顧客側フォーム・メールリンク返信は未実装（R6）。返信テンプレ（FAQ）は要否・フェーズ要確認 |
 | 18 | 選択肢マスタ | ✅ | R2 | parent_id 方式。`*_id + *_label` スナップショット構造は未採用（文字列保持） |
 
-**関連ドキュメント（Rails版）**: `03-rails-architecture-proposal.md`（技術決定）/ `04-implementation-plan.md`（R0〜R8）/ `review/review-05-legacy-design-docs-sweep.md`（棚卸し）/ `Column.md`（テーブル定義）/ `payment-integration.md`（決済）/ `status-naming-analysis.md`（Q-B）/ `form-template-mapping.md`（R3）/ `board-implementation-options.md`（R4 Inquiry 統合）/ `customer-merge-design.md`（R6）/ `contract-confirmation-docs.md`（重説）/ `notification-matrix.md`（通知）。削除済み（旧Laravel側に残存）: `Inquiry-email.md` / `ftlog-port.md` / `basic-cost.md` / `branch-merge-policy.md` / `test-code-plan.md` / `test-file-review.md` / `remaining-tasks.md` / `impl-plans/`。
+**関連ドキュメント（Rails版）**: `03-rails-architecture-proposal.md`（技術決定）/ `04-rails-implementation-plan.md`（R0〜R8）/ `review/review-05-legacy-design-docs-sweep.md`（棚卸し）/ `Column.md`（テーブル定義）/ `payment-integration.md`（決済）/ `status-naming-analysis.md`（Q-B）/ `form-template-mapping.md`（R3）/ `board-implementation-options.md`（R4 Inquiry 統合）/ `customer-merge-design.md`（R6）/ `contract-confirmation-docs.md`（重説）/ `notification-matrix.md`（通知）。削除済み（旧Laravel側に残存）: `Inquiry-email.md` / `ftlog-port.md` / `basic-cost.md` / `branch-merge-policy.md` / `test-code-plan.md` / `test-file-review.md` / `remaining-tasks.md` / `impl-plans/`。
 
 ---
 

@@ -1,19 +1,73 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">ダッシュボード</h1>
-  <p><%= current_user.name %> さん、ようこそ。</p>
+<% content_for :page_title, "ダッシュボード" %>
 
-  <nav class="flex flex-col gap-2">
-    <% if can_access_system_action?("admin/role_management", "index") %>
-      <%= link_to "ロール管理", admin_role_management_index_path, class: "underline" %>
-    <% end %>
-    <% if can_access_system_action?("admin/permission_management", "show") %>
-      <%= link_to "権限マトリクス", admin_permission_management_path, class: "underline" %>
-    <% end %>
-    <% if can_access_system_action?("admin/login_histories", "index") %>
-      <%= link_to "ログイン履歴", admin_login_histories_path, class: "underline" %>
-    <% end %>
-    <% if can_access_system_action?("admin/ip_allowlist_entries", "index") %>
-      <%= link_to "IP許可リスト", admin_ip_allowlist_entries_path, class: "underline" %>
-    <% end %>
-  </nav>
+<div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-1">
+    <h2 class="text-xl font-bold text-slate-900">おかえりなさい、<%= current_user.name %> さん</h2>
+    <p class="text-sm text-slate-500">
+      <%= Time.zone.today.strftime("%Y年%m月%d日") %> の管理画面です。
+    </p>
+  </div>
+
+  <% if @stat_cards.present? %>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <% @stat_cards.each do |card| %>
+        <%= link_to card[:path], class: "group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow-md" do %>
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm font-medium text-slate-500"><%= card[:label] %></p>
+              <p class="mt-2 text-3xl font-bold text-slate-900"><%= number_with_delimiter(card[:count]) %></p>
+            </div>
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
+              <% case card[:icon] %>
+              <% when :customers %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                </svg>
+              <% when :orders %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              <% when :inquiries %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              <% when :agencies %>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                </svg>
+              <% end %>
+            </span>
+          </div>
+          <p class="mt-4 text-xs font-medium text-indigo-600 opacity-0 transition group-hover:opacity-100">一覧を見る →</p>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% quick_links = [
+       { label: "ロール管理", desc: "ロールごとの操作権限を設定します", path: admin_role_management_index_path, controller: "admin/role_management", action: "index" },
+       { label: "権限マトリクス", desc: "ロール×操作の権限一覧を確認します", path: admin_permission_management_path, controller: "admin/permission_management", action: "show" },
+       { label: "ログイン履歴", desc: "ログイン試行・失敗の履歴を確認します", path: admin_login_histories_path, controller: "admin/login_histories", action: "index" },
+       { label: "IP許可リスト", desc: "管理画面へアクセス可能なIPを管理します", path: admin_ip_allowlist_entries_path, controller: "admin/ip_allowlist_entries", action: "index" }
+     ].select { |l| can_access_system_action?(l[:controller], l[:action]) } %>
+
+  <% if quick_links.present? %>
+    <div class="flex flex-col gap-3">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">クイックアクセス</h3>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <% quick_links.each do |link| %>
+          <%= link_to link[:path], class: "rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-indigo-300 hover:shadow-md" do %>
+            <p class="font-semibold text-slate-800"><%= link[:label] %></p>
+            <p class="mt-1 text-xs text-slate-500"><%= link[:desc] %></p>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @stat_cards.blank? && quick_links.blank? %>
+    <div class="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+      現在のロールで利用できる管理機能はありません。必要な権限については管理者へお問い合わせください。
+    </div>
+  <% end %>
 </div>

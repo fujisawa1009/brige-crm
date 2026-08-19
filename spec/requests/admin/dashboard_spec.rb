@@ -1,6 +1,6 @@
 require "rails_helper"
 
-# R0完了条件（04-implementation-plan.md）:
+# R0完了条件（04-rails-implementation-plan.md）:
 # 「ダッシュボード1画面が『ログイン→OTP→権限チェック→表示』を通過し、権限を剥奪すると403相当になる
 #  request specがグリーン。加えて、このログイン・権限チェックイベントが監査ログに記録されていることを
 #  specで確認」

@@ -7,7 +7,7 @@
 
 > **ステータス: 設計案 → Q-14 は本書の推奨どおり仕様決定済み（D-13・2026-07-26。`development-plan.md` §8: config管理 v1・将来ハイブリッド移行可の構造）。実装は R6（未着手）。**
 > 作成日: 2026-07-26 ／ 参照: `development-plan.md` §3 P4-12、`design/business-flow-analysis.md` §6-2、
-> `design/legacy-research/04-requirements-inventory.md`、`design/payment-integration.md` §4-8（D-P8）、`04-implementation-plan.md` R5/R6
+> `design/legacy-research/04-requirements-inventory.md`、`design/payment-integration.md` §4-8（D-P8）、`04-rails-implementation-plan.md` R5/R6
 
 ---
 

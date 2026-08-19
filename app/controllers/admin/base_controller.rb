@@ -1,5 +1,7 @@
 # admin section配下コントローラの共通親。ApplicationControllerの認証・認可ゲートをそのまま継承する。
 class Admin::BaseController < ApplicationController
+  layout "admin"
+
   private
 
   # 04 R1: 代理店/代理店グループ所属を書き換えるパラメータ（agency_id・agency_group_id等）は、

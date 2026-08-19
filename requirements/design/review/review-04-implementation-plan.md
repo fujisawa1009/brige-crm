@@ -1,6 +1,6 @@
-# レビュー: 04-implementation-plan.md（R0〜R7）精査
+# レビュー: 04-rails-implementation-plan.md（R0〜R7）精査
 
-- レビュー対象: `projects/brige-crm/requirements/design/04-implementation-plan.md`（v2）
+- レビュー対象: `projects/brige-crm/requirements/design/04-rails-implementation-plan.md`（v2）
 - 参照: `01-laravel-current-analysis.md`（§5未実装一覧・§8決定ポイント）/ `03-rails-architecture-proposal.md`（§8決定録）/
   Laravel側 `projects/boilerplate-vue-env/laravel/requirements/development-plan.md`・`design/release-readiness.md`・
   `design/payment-integration.md`・`design/customer-merge-design.md`・`design/board-implementation-options.md`・
@@ -14,7 +14,7 @@
 
 1. **P3新規実装項目の主要部分はR5に集約されている。** クレカ決済連携本体（P3-1/2）・手書き署名（P3-3）・
    契約書PDF生成/版数管理/メール送付（P3-8/9）・契約ワークフロー状態機械（P3-4〜7）・入力チェック設定（P3-10）・
-   重説チェック・申込確認メール（P3-12/13）は04 R5本文（`04-implementation-plan.md:78-84`）に明示されている。
+   重説チェック・申込確認メール（P3-12/13）は04 R5本文（`04-rails-implementation-plan.md:78-84`）に明示されている。
 2. **P4-1（レコードレベル参照制御）の前倒しは意図通り機能している。** 03決定録・01§8-5の「後付けは手戻り大」という
    指摘を受け、R1で `Pundit policy_scope` を導入し「以降の全エンティティで必須」と明記（`04:48`）。Laravel側の
    最大の負債の一つを最初期フェーズで解消する設計になっている。
@@ -39,7 +39,7 @@
 
 | # | 項目（01§5の表現） | 該当箇所探索結果 |
 |---|---|---|
-| A | **キーワード自動選定（P3-11）** | `04-implementation-plan.md` 全文に「キーワード」の語が一切登場しない。R5は「入力チェック設定（3段階必須）・重説チェック・申込確認メール」（`04:84`）のみを列挙し、P3-11だけが脱落している。Laravel側 `basic-design.md` §11（`766-785行`）に独立した章として存在する機能であり、他機能への吸収記述もない。**単純な列挙漏れの可能性が高い。** |
+| A | **キーワード自動選定（P3-11）** | `04-rails-implementation-plan.md` 全文に「キーワード」の語が一切登場しない。R5は「入力チェック設定（3段階必須）・重説チェック・申込確認メール」（`04:84`）のみを列挙し、P3-11だけが脱落している。Laravel側 `basic-design.md` §11（`766-785行`）に独立した章として存在する機能であり、他機能への吸収記述もない。**単純な列挙漏れの可能性が高い。** |
 | B | **掲示板4種→問い合わせ統合（Inquiry拡張）** | R7に「掲示板42万件は参照アーカイブ（Q-C決定済み）」（`04:95`）はあるが、これは**過去データの移行（アーカイブ投入）部分のみ**を指す。CEO決定D-11（`board-implementation-options.md` 推奨案①、`development-plan.md:345`）の本体である「Inquiryモデルを掲示板4種対応に拡張する」機能実装（種別別ステータスマスタ化・enum撤廃・種別×ステータス→宛先ルーティング・アフター固有列追加。`board-implementation-options.md` §2-2/§5）は、R4「問い合わせ・通知」（`04:71-76`）のどの箇条にも現れない。R4の内容は「Inquiry / InquiryMessage / 添付 / 宛先解決（RecipientResolver移植）」のみで、掲示板対応拡張への言及がない。**R7のアーカイブ投入とR4のInquiry拡張は別工程であり、両方が計画に載って初めて01§5の該当項目が完了する。現状はR4側が欠落している。** |
 
 > 上記2件は「01の未実装一覧の文言と04本文を1対1で突合」した結果の脱落であり、他の全項目
@@ -107,7 +107,7 @@ spec化を求める記述が一切ない**。特に：
 Laravel側 `release-readiness.md` はA〜Jの10領域（インフラ・データ移行・セキュリティ・決済契約非機能・
 監視ログバックアップ・テストQA・法務・運用サポート・リリースプロセス・性能可用性）を「機能実装（P0〜P4）とは
 別軸で、本番リリースに必要な作業」として管理し、`development-plan.md` はP5として明示的にフェーズ化している
-（`development-plan.md:223-247`）。これに対し **04-implementation-plan.md にはP5相当のフェーズが存在しない**。
+（`development-plan.md:223-247`）。これに対し **04-rails-implementation-plan.md にはP5相当のフェーズが存在しない**。
 R7は「データ移行」のみを指し、release-readinessのB領域の一部（本投入部分）にしか対応しない。
 
 具体的に04計画から欠落している工程（Laravel側document参照）:

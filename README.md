@@ -1,7 +1,7 @@
 # brige-crm
 
 ジャスミンCRM（Laravel）のRails再構築。設計・要件は `requirements/design/` を正とする
-（特に `04-implementation-plan.md` がフェーズ計画、`03-rails-architecture-proposal.md` が技術構成・決定録）。
+（特に `04-rails-implementation-plan.md` がフェーズ計画、`03-rails-architecture-proposal.md` が技術構成・決定録）。
 
 ## セットアップ（Docker）
 

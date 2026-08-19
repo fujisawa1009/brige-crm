@@ -203,7 +203,7 @@
 | `release-readiness.md` B-3a | CSV破損の是正（営業担当ヘッダ・店舗Plus 47列行） |
 | `release-readiness.md` B-4 | 移行スクリプト＝rake ETL（6-2 Rails版。旧 Artisan） |
 | `release-readiness.md` B-7 | リハーサル＝ドライラン＋冪等再実行 |
-| `development-plan.md` P5-5 | 整形（ETL）を P5-5 の中核として明記。**Q-C 確定が律速** → Rails版は `04-implementation-plan.md` R7（Q-C は決着済み。残る律速は名寄せ＝`../name-matching-process.md`） |
+| `development-plan.md` P5-5 | 整形（ETL）を P5-5 の中核として明記。**Q-C 確定が律速** → Rails版は `04-rails-implementation-plan.md` R7（Q-C は決着済み。残る律速は名寄せ＝`../name-matching-process.md`） |
 
 ---
 

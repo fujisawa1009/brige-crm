@@ -1,7 +1,7 @@
 # brige-crm アーキテクチャ構成検討（v2・論点確定済み）
 
 - 目的: Laravel実装（01参照）を Rails で再構築するにあたっての技術構成・設計方針の検討
-- 参考: ftlog のアーキテクチャ（02参照）、`jasmin_laravel/requirements/`（機能仕様の正）
+- 参考: ftlog のアーキテクチャ（02参照）、`requirements/design/`（機能仕様の正。2026-08-19 に旧 `jasmin_laravel/requirements/` から集約・Rails版改訂済み）
 - 状態: **v2 = 論点A〜F CEO決定反映（2026-08-14）。決定録は §8**
 - 補足: 新規サービス名称（プロダクト名）は未定。リポジトリ名 brige-crm を仮称として使う
 
@@ -9,7 +9,7 @@
 
 ## 1. 基本方針
 
-1. **機能仕様の正は Laravel リポジトリの `requirements/`**（basic-design.md / Column.md / legacy-research/）。実装コードは参考であり、負債（T-1〜T-5）は移植せず是正して作る
+1. ~~**機能仕様の正は Laravel リポジトリの `requirements/`**~~ → **2026-08-19 更新: 機能仕様の正は brige-crm `requirements/`**（basic-design.md / Column.md / legacy-research/ を本リポジトリへ集約し Rails 版へ改訂済み。旧Laravel側は凍結参照元）。実装コードは参考であり、負債（T-1〜T-5）は移植せず是正して作る
 2. **認可・認証・監査・テストハーネスは ftlog の実装をベースに移植**（実績があり、Laravel側の同思想実装より成熟している）
 3. **未実装機能（契約フロー・決済連携・参照制御）は「後付け」ではなく最初からスキーマ・設計に織り込む**（Laravel側で手戻りが懸念されていた箇所）
 4. 単一テナント前提（ftlogのマルチテナント機構 acts_as_tenant は**移植しない**）
@@ -147,5 +147,5 @@
 
 - 01-laravel-current-analysis.md（現行Laravel分析）
 - 02-ftlog-architecture-analysis.md（ftlog解剖・RBAC詳細）
-- 04-implementation-plan.md（実装計画）
-- Laravel側要件: `projects/boilerplate-vue-env/laravel/requirements/`（basic-design.md ほか）
+- 04-rails-implementation-plan.md（実装計画）
+- ~~Laravel側要件: `projects/boilerplate-vue-env/laravel/requirements/`（basic-design.md ほか）~~ → 2026-08-19 以後は本リポジトリ `requirements/design/`（basic-design.md / Column.md ほか。Rails版改訂済み。集約経緯は `review/review-05`・`review-06`）

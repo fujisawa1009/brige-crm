@@ -2,14 +2,14 @@
 
 - 対象: `/home/fujisawa/project/ai-auto-company/projects/boilerplate-vue-env/laravel/requirements/design/` 配下30ファイル + `requirements/development-plan.md`（計31ファイル）を `brige-crm/requirements/` 配下へ2026-08-19にそのままコピー
 - 方法: 9グループに分けて並列エージェントで精読。各ファイルについて (1)概要 (2)Laravel固有実装詳細の有無 (3)関連フェーズ (4)03/04との矛盾・重複 (5)推奨アクション を確認
-- 本ファイルは調査結果の集約。**04-implementation-plan.mdへの反映はこの後の別コミットで実施**（本レビュー自体はコピーしたファイルの棚卸しのみ）
+- 本ファイルは調査結果の集約。**04-rails-implementation-plan.mdへの反映はこの後の別コミットで実施**（本レビュー自体はコピーしたファイルの棚卸しのみ）
 
 ---
 
 ## 1. 重要度高（要対応・要確認）
 
 ### 1-1. R5着手前チェックリストの未解決論点（裏付け確認）
-`04-implementation-plan.md`のR5着手前チェックリストが挙げるQ-25(返金・キャンセル)/Q-26(信販)/Q-27(決済障害時縮退運用)は、一次ソースである `development-plan.md`§8 で依然「未確認」のままと確認できた。加えて `development-plan.md`§8には04未記載の関連未決論点が多数残存:
+`04-rails-implementation-plan.md`のR5着手前チェックリストが挙げるQ-25(返金・キャンセル)/Q-26(信販)/Q-27(決済障害時縮退運用)は、一次ソースである `development-plan.md`§8 で依然「未確認」のままと確認できた。加えて `development-plan.md`§8には04未記載の関連未決論点が多数残存:
 - Q-35: 重説チェック・確認書の未決事項（項目/実施者/タイミング/宛先/版管理） — `contract-confirmation-docs.md`のQ-1〜9と重複
 - Q-36〜39: 決済トランザクション紐づけ単位・jutyu_cd桁数・決済結果確定手段・ステージング検証方式
 - `payment-integration.md` D-P8「継続課金の売上処理はTBSSスコープ外、新システムは請求用受注データCSV出力のみ」の04本文への反映漏れ（R5本文にもR6のCSV汎用化(export-profile-design.md)にも明記なし）
@@ -82,6 +82,15 @@
 ## 次のアクション
 
 1. 1-1/1-2（重要度高）をCEO/業務側に確認し、R5着手前チェックリストへ反映
-2. 2章の新規タスク候補を04-implementation-plan.mdの該当フェーズへ追記
+2. 2章の新規タスク候補を04-rails-implementation-plan.mdの該当フェーズへ追記
 3. 3章のform-template-mapping.md突合を実施
 4. 5章の「実質不要」ファイル群は`requirements/design/`に残置したままでよい（削除は不要。参照時に本レビューで判断済みである旨がわかればよい）
+
+---
+
+## 追記（2026-08-19・同日後続作業）
+
+- 上記「次のアクション」1〜3 は同日中に完了。全設計ドキュメントを Rails 版へ全面改訂し（`review/review-06-rails-revision-sweep.md`）、突合結果を `04-rails-implementation-plan.md` v4 へ反映した。
+- 3章の `form-template-mapping.md` 突合は実施済み: 「155項目」は概数で field_key 実数は 67 件、**全件未投入**（保存先カラムは全て実在。同書 §9）。
+- 1-2 の Q-B は `development-plan.md` §8 の D-8（2026-07-26）で**決定済み**と判明（未決ではなく適用漏れ）。04 v4 に決定として記録済み。
+- リネーム: `p3-12-13-confirmation-docs.md` → `contract-confirmation-docs.md`、`notification-matrix-draft.md` → `notification-matrix.md`（本文中の参照は置換済み）。

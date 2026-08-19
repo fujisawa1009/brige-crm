@@ -107,7 +107,7 @@
 
 | 反映先 | 内容 | Rails版（2026-08-19） |
 |---|---|---|
-| `development-plan.md` P4-14 | 問い合わせテンプレートの初期データ＝FAQ318件（12カテゴリ）を投入 | → `04-implementation-plan.md` R4「未実装ギャップ」に反映済み（実装要否・フェーズは CEO確認事項） |
+| `development-plan.md` P4-14 | 問い合わせテンプレートの初期データ＝FAQ318件（12カテゴリ）を投入 | → `04-rails-implementation-plan.md` R4「未実装ギャップ」に反映済み（実装要否・フェーズは CEO確認事項） |
 | `basic-design.md` §17-4 | テンプレート管理の初期データ源として本FAQを明記 | 継続（basic-design.md は別エージェント改訂） |
 | `Inquiry-email.md` | 問い合わせカテゴリ（12分類）とテンプレート差し込み変数の設計 | **削除済み（旧Laravel側に残存）**。代替: 本書 §2〜§3 ＋ 04 R4。設計が必要になった時点で `NotificationTemplate` 拡張案（category 列・差し込み変数・返信画面選択 UI）を新規に起こす |
 

@@ -11,7 +11,7 @@
 
 > 作成日: 2026-07-24 ／ **改訂: 2026-07-27（導入ガイド全文読了・現行キャプチャ精査を反映）** ／ Rails版改訂: 2026-08-19
 > ステータス: **API仕様読了済み（ネットムーブ）** → `legacy-research/02-payment-netmove.md`
-> 対象フェーズ: `../development-plan.md` P3-1 / P3-2（クリティカルパス）＝ **`04-implementation-plan.md` R5**
+> 対象フェーズ: `../development-plan.md` P3-1 / P3-2（クリティカルパス）＝ **`04-rails-implementation-plan.md` R5**
 > 関連: `basic-design.md` §7（決済連携）・§6（申込登録） / `remaining-tasks.md` 1-3（削除済み・旧Laravel側に残存。代替＝04 R5節） /
 > `03-rails-architecture-proposal.md` §2「状態機械」「キュー」「監査ログ」・§5「決済（PaymentTransaction）は状態機械・ログテーブル含め忠実移植」
 
@@ -233,7 +233,7 @@ pending / authorized / captured / failed / unknown / canceled / refunded
 ### 4-5. 全通信を監査ログに残す
 
 日時・申込ID・冪等キー・エンドポイント・HTTPステータス・所要時間・結果コード。
-**カード番号・CVVはマスクして除外**（ライブラリ層で）。`ftlog-port.md` §4 の監査基盤に載せる
+**カード番号・CVVはマスクして除外**（ライブラリ層で）。`Auditable`/`AuditLog`（旧 `ftlog-port.md` §4。同ファイルは削除済み）の監査基盤に載せる
 （※`ftlog-port.md` は削除済み・旧Laravel側に残存。Rails版の監査基盤＝**R0 実装済みの `Auditable` concern / `AuditLog`**）。
 
 > **Rails版の二層構成（2026-08-19）**:
@@ -458,7 +458,7 @@ pending / authorized / captured / failed / unknown / canceled / refunded
 
 ## 8. 未決定事項（`../development-plan.md` §8 ＝ 04「R5着手前チェックリスト」）
 
-> 2026-08-19: 04-implementation-plan.md の R5着手前チェックリスト（Q-25〜27・Q-35〜39）との対応を付記。**いずれも未解決のまま**（消していない）。
+> 2026-08-19: 04-rails-implementation-plan.md の R5着手前チェックリスト（Q-25〜27・Q-35〜39）との対応を付記。**いずれも未解決のまま**（消していない）。
 
 | # | 論点 | 04 対応 |
 |---|---|---|

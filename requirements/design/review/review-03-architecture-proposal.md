@@ -5,7 +5,7 @@
 - 参照した一次資料:
   - `projects/brige-crm/requirements/design/01-laravel-current-analysis.md`
   - `projects/brige-crm/requirements/design/02-ftlog-architecture-analysis.md`
-  - `projects/brige-crm/requirements/design/04-implementation-plan.md`
+  - `projects/brige-crm/requirements/design/04-rails-implementation-plan.md`
   - `projects/boilerplate-vue-env/laravel/requirements/development-plan.md`
   - `projects/boilerplate-vue-env/laravel/requirements/design/payment-integration.md`
   - `projects/boilerplate-vue-env/laravel/requirements/design/pii-handling-rules.md`

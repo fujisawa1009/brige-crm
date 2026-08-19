@@ -244,7 +244,7 @@ R4（決定D-11）で `InquiryStatus`（`inquiry_statuses`: category 単位で c
 | `requirements/design/Column.md`（460行目） | `customers.status` の説明「ワークフローステータス」→「申込ステータス」 | 未反映（同上） |
 | `requirements/design/business-flow-analysis.md` §3-2・§11 | Q-B 解消の旨と本書への参照を追記 | 要確認 |
 | `requirements/development-plan.md` §8 Q-B | ✅ D-8 決定済み（2026-07-26） | 反映済み |
-| `requirements/design/04-implementation-plan.md` | R2 追加タスク「Q-B の実装が中途半端」・リスク6・次のアクション5 に記載あり。**案Aを正式決定として本文に記録**し、本書 §4-1/4-1b を修正ファイル一覧として参照する | 一部反映（決定記録の明記は未） |
+| `requirements/design/04-rails-implementation-plan.md` | R2 追加タスク「Q-B の実装が中途半端」・リスク6・次のアクション5 に記載あり。**案Aを正式決定として本文に記録**し、本書 §4-1/4-1b を修正ファイル一覧として参照する | 一部反映（決定記録の明記は未） |
 | `requirements/design/legacy-research/10・11` ほか移行系 | 「59 顧客ステータス → 案件ステータス（`orders.status`）」の対訳を明記 | 未反映（R7 着手時） |
 | 用語集（新設推奨） | 「案件ステータス／申込ステータス／契約ステータス／問い合わせステータス（R4 追加）」の4語定義。`requirements/design/` 配下 or basic-design.md 冒頭 | 未作成 |
 

@@ -7,7 +7,7 @@
 > `app/services/recipient_resolver.rb`・`db/schema.rb`・`spec/`）。突合結果は §0 に集約し、各章にも「実装済み／差分／未実装」を注記した。
 >
 > **ステータス: 決定済み（D-11・2026-07-26。CEO仕様意思決定）＋ R4 実装突合済み（2026-08-19）**
-> 位置づけ: `business-flow-analysis.md` §11 Q-C／`development-plan.md` §8 Q-C（✅ D-11）／`04-implementation-plan.md` R4「掲示板4種→問い合わせ統合（決定D-11）」・R7「掲示板42万件は参照アーカイブ」。
+> 位置づけ: `business-flow-analysis.md` §11 Q-C／`development-plan.md` §8 Q-C（✅ D-11）／`04-rails-implementation-plan.md` R4「掲示板4種→問い合わせ統合（決定D-11）」・R7「掲示板42万件は参照アーカイブ」。
 > 掲示板42万件（Bridge 77,981 + BridgePlus 342,594）の移行スコープは **Q-C と一体で決まる**
 > （`legacy-research/09` Q-移1）。本書は3案の比較と推奨案（＝採用案①）を示し、§0 で R4 実装との突合結果を記録する。
 >
@@ -29,7 +29,7 @@
 | 種別（掲示板4種） | カテゴリ4値 | `Inquiry::CATEGORIES` = `後確` / `制作対応` / `検収コール` / `アフター問合せ`（日本語文字列をそのまま code として保持。R7 マッピングを素直にするため） | 実装済み |
 | 種別別ステータスマスタ（enum撤廃） | 掲示板種別×ステータスのマスタ | `InquiryStatus`（`inquiry_statuses`: `category`+`code` UNIQUE・`label`・`sort_order`・`is_active`・`is_system`）。`Inquiry#status` は文字列で、`InquiryStatus.exists?(category:, code:)` をモデルバリデーションで担保（DB enum/CHECK 制約なし＝ `CustomerStatus`/`OrderStatus` と同じ方式）。`StatusSeeder::INQUIRY_STATUSES` が §1 表の 8/7/6/4 値を投入（各先頭値が既定値・`is_system=true`）。管理画面 `/admin/inquiry_statuses`（CRUD） | 実装済み |
 | ステータス駆動ルーティング | 「種別×ステータス→recipient_group」マスタ | `InquiryRecipientRoute`（`inquiry_recipient_routes`: `category`・`status_code`・`recipient_group_id`、3列 UNIQUE）。`RecipientResolver.route_for(category:, status_code:)` が引く。返信時に `params[:status]` があれば `Inquiry#status` を更新してから宛先解決（`Admin::InquiryMessagesController#create`）＝「ステータス選択＝宛先自動決定」。管理画面 `/admin/inquiry_recipient_routes`（CRUD） | 実装済み（**ただしルート行の初期投入なし**: `05` §5-1 のマトリクスに相当する `RecipientGroup`／`InquiryRecipientRoute` はシード未定義。運用開始前に管理画面から登録が必要 → 04 R4/R8 タスク） |
-| 案件経由の宛先自動解決 | 代理店・営業・顧客をサジェスト | `RecipientResolver#resolve_from_order` → `recipients_for_inquiry` が **代理店（email_1〜5）・営業担当者・顧客のうちメールを持つ者を毎回自動的に宛先へ含め**、ルーティング結果（recipient_group）とマージ。投稿者による宛先の手動選択 UI は無い（Laravel版にあった手動選択＋サジェストは自動固定へ簡素化） | **差分（要確認）**: `05` §5-1 では「特定ステータスのみ販売店へメール」だが、実装は**全投稿で代理店・営業担当者・顧客へメール／アプリ内通知**を送る。特に後確/制作/検収の社内連絡が顧客本人へも届く挙動が業務上妥当か要確認（`notification-matrix.md` E4/E9/E10 の「顧客 ×」と不一致）。また `is_visible_to_agent=false` でも代理店へのメール宛先は除外されない |
+| 案件経由の宛先自動解決 | 代理店・営業・顧客をサジェスト | `RecipientResolver#resolve_from_order` → `recipients_for_inquiry` が **代理店（email_1〜5）・営業担当者・顧客のうちメールを持つ者を毎回自動的に宛先へ含め**、ルーティング結果（recipient_group）とマージ。投稿者による宛先の手動選択 UI は無い（Laravel版にあった手動選択＋サジェストは自動固定へ簡素化） | **✅ 2026-08-19 v5 CEO決定＝修正する**: `05` §5-1 では「特定ステータスのみ販売店へメール」だが、実装は**全投稿で代理店・営業担当者・顧客へメール／アプリ内通知**を送っており、`is_visible_to_agent=false` でも代理店へのメール宛先が除外されない。CEO決定により、見える範囲・ステータスに応じて宛先を絞る修正をR4追補タスクとして実施する（`notification-matrix.md` E4/E9/E10 と整合させる） |
 | アフター固有フィールド | カテゴリ1-3・受電窓口・初回/次回対応者 | `inquiries.after_urgency` / `after_type` / `after_area` / `reception_channel` / `first_responder_name` / `next_responder_name`（いずれも string・任意。他種別での使用を DB では禁止しない）。`Admin::InquiriesController#inquiry_params` で受け付けるが、**新規作成フォーム（`app/views/admin/inquiries/new.html.erb`）には入力欄が未配置** | 実装済み（列）／UI 未配置。選択肢マスタ化（至急/本日中… 等の固定値）は未実装。**次回対応者によるルーティング（`05` §5-2）は未実装**（`next_responder_name` は自由文字列で、宛先解決に使われない） |
 | 通知（メール） | `SendInquiryMessageJob` | `InquiryMessageMailJob`（Solid Queue `default` キュー）→ `RecipientResolver.expand_for_send` で宛先展開 → `InquiryMailer#message_notification`（件名 `【問い合わせ】タイトル（INQ-xxxxxx）`、代表 to＋残り cc、添付同報、宛先単位 rescue）。成功宛先を `inquiry_message_recipients.resolved_email` に記録 | 実装済み（Laravel の heavy-processing キュー分離は無し） |
 | 通知（アプリ内・既読） | SystemNotification（read_at） | `InquiryNotifier` → `SystemNotification`（`inquiry_created` / `inquiry_replied`。受信者は User／Customer。RecipientGroup は User メンバーへ展開）＋ Solid Cable（`SystemNotificationsChannel`）でリアルタイム配信、30日 prune（`config/recurring.yml`）。`mark_as_read!` あり | モデル・チャネル実装済み。**通知一覧・既読操作の画面（admin/mypage）は未実装**（R6「通知一覧強化」）。メッセージ単位既読は未実装（業務確認待ちのまま） |
@@ -185,8 +185,8 @@ P5-5（→R7）の律速3点「**Q-C（掲示板限定）＋現行DB再エクス
 - [ ] 過去42万件は参照専用アーカイブでよいか（§6。検索要件・保持期間）
       — `development-plan.md` §8 Q-44 として別建て。R7 着手前に確定
 - [ ] `bbs_status` の後確/制作の内部区別（`10` §8-2 の残課題）の実データ確認 — R7（再エクスポート後）
-- [ ] （2026-08-19 追加）**全投稿を代理店・営業担当者・顧客へ自動送信する現行実装でよいか**（§0「差分」）。
-      `05` §5-1 では販売店宛はステータス限定・顧客宛なし。顧客本人へ社内連絡が届くリスクの業務判断が必要
+- [x] （2026-08-19 追加）全投稿を代理店・営業担当者・顧客へ自動送信する現行実装でよいか（§0「差分」）
+      → **✅ 2026-08-19 v5 CEO決定＝修正する**。見える範囲・ステータスに応じて宛先を絞る（R4追補タスク）
 - [ ] （2026-08-19 追加）**外部委託先アドレス**（`ecotech-order@if-n.co.jp` 等）の宛先化方法。
       `RecipientGroupMember` は User／ProductionCompany のみ（管理画面 UI は User のみ）のため、委託先用の User または ProductionCompany レコードを作る運用でよいか（G-7 委託先連携）
 
@@ -214,8 +214,8 @@ P5-5（→R7）の律速3点「**Q-C（掲示板限定）＋現行DB再エクス
 |---|---|---|
 | `legacy-research/10` §6 | 新テーブル定義（拡張 inquiries or legacy_bbs_archives）を確定させマッピングを完成 | 拡張 inquiries は R4 で確定（`db/schema.rb`）。`legacy_bbs_archives` は R7 で定義 |
 | `legacy-research/09` C-3・Q-移1 | 移行範囲の確定（本書 §6 の段階案採否） | 段階案採用（D-11）。運用要件は Q-44 |
-| `04-implementation-plan.md` R4（旧 `development-plan.md` P4-14） | 種別×ステータス→宛先ルーティングマスタの実装に本書 §2-2 を入力 | 反映済み・実装済み（`InquiryRecipientRoute`） |
-| `04-implementation-plan.md` R7（旧 `development-plan.md` P5-5） | 律速解除（掲示板系テーブル定義の着手） | R7 未着手 |
+| `04-rails-implementation-plan.md` R4（旧 `development-plan.md` P4-14） | 種別×ステータス→宛先ルーティングマスタの実装に本書 §2-2 を入力 | 反映済み・実装済み（`InquiryRecipientRoute`） |
+| `04-rails-implementation-plan.md` R7（旧 `development-plan.md` P5-5） | 律速解除（掲示板系テーブル定義の着手） | R7 未着手 |
 | `notification-matrix.md` E9/E10 | Q-C 確定後の再検証（同書の注記11） | 2026-08-19 に実装突合済み版で再検証（同書 §1・§3-11） |
 
 ---

@@ -13,7 +13,7 @@
 > - `requirements/design/pii-handling-rules.md`（PII 取扱・Q-12 の判断材料）
 > - ~~`requirements/design/ftlog-port.md` §2（メールOTPの有効期限・試行制御の先例）~~ → Rails版では `app/models/concerns/otp_authenticatable.rb`（`OTP_VALID_FOR = 10.minutes` / `OTP_MAX_ATTEMPTS = 5`）が一次情報
 > - `requirements/design/legacy-research/09-data-cleansing.md`（移行時名寄せ C-3/C-5 との関係。R7）
-> - `requirements/design/03-rails-architecture-proposal.md` §3（Pundit 参照制御）/ §4（認証系統）、`04-implementation-plan.md` R6
+> - `requirements/design/03-rails-architecture-proposal.md` §3（Pundit 参照制御）/ §4（認証系統）、`04-rails-implementation-plan.md` R6
 
 ---
 

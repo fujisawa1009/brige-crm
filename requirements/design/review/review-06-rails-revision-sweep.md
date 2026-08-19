@@ -4,7 +4,7 @@
 - 目的: review-05 で棚卸しした旧Laravel設計ドキュメント（`requirements/design/` 配下 + `development-plan.md`）を、brige-crm（Rails 8.1）の**現行実装（db/schema.rb・app/）と 03/04 の決定**に合わせて全面改訂した際の、各担当エージェントのサマリを集約したもの
 - 方法: 9グループ（A〜I）に分け並列エージェントで改訂。各ドキュメントに「Rails版改訂ヘッダ」「実装済み／差分／未実装（Rx）」注記を付与し、必要に応じて「実装突合表」を追加。**業務要件・決定事項・未決論点・履歴は保持**し、Laravel固有記述のみ Rails 等価物へ置換
 - リネーム: `contract-confirmation-docs.md` → `contract-confirmation-docs.md`、`notification-matrix.md` → `notification-matrix.md`（相互参照は一括置換済み）
-- **04-implementation-plan.md への反映は本サマリを一次情報として実施済み（04 v4）**。本ファイルは判断根拠の保存が目的（詳細は各設計書の突合表を参照）
+- **04-rails-implementation-plan.md への反映は本サマリを一次情報として実施済み（04 v4）**。本ファイルは判断根拠の保存が目的（詳細は各設計書の突合表を参照）
 
 | グループ | 対象ファイル | フェーズ |
 |---|---|---|
@@ -79,7 +79,7 @@
 | §18-1 | フォーム側で `OptionGroup.is_active` を参照しているか要点検 | R5 |
 | §18-3 | `*_id + *_label` スナップショット構造は未採用（文字列保持） | R5 / R7 判断 |
 
-## 04-implementation-plan.md へ反映すべき新規タスク／変更
+## 04-rails-implementation-plan.md へ反映すべき新規タスク／変更
 
 | フェーズ | 優先度 | 内容 | 出典 |
 |---|---|---|---|
@@ -142,7 +142,7 @@
 - 未実装（R6）: customer_merges / customer_merge_keys、集計・遅延検知・自動キャンセル、CSV エクスポートプロファイル、ステータス遷移バリデーション、Store の一覧検索・CSV エクスポート。
 - 未実装（要否未定）: `plans.contract_unit` / `initial_construction`、未収情報フィールド、商材別納品日（G-1）、agency_products / agency_group_products の管理UI、sales_materials の実ファイルアップロード（Active Storage 化）、inquiry_message_production_companies。
 
-## 04-implementation-plan.md へ反映すべき新規タスク／変更
+## 04-rails-implementation-plan.md へ反映すべき新規タスク／変更
 | フェーズ | 優先度 | 内容 | 出典 |
 |---|---|---|---|
 | R2 追加 | 中 | `plans.contract_unit` / `initial_construction` の要否確定（未実装のまま R5 契約フローへ持ち越すか、R2 で列追加するか） | Column.md §4, §14-1 |
@@ -240,7 +240,7 @@
 
 ---
 
-## 4. 04-implementation-plan.md へ反映すべき事項
+## 4. 04-rails-implementation-plan.md へ反映すべき事項
 
 ### 4-1. R5 の実装タスク分解案（順序付き・04 R5節へ）
 
@@ -684,7 +684,7 @@
 
 ---
 
-## 3. 04-implementation-plan.md へ反映すべき事項（フェーズ・優先度・出典）
+## 3. 04-rails-implementation-plan.md へ反映すべき事項（フェーズ・優先度・出典）
 
 ### 3-1. Laravel P 番号のうち 04 に未反映のタスク一覧（推奨 R フェーズ付き）
 | P | 内容 | 推奨 R | 優先度 | 出典 |
@@ -803,7 +803,7 @@
 | 初期データ | `OptionGroup` 選択肢（属性1〜11 等）、掲示板転送先13件→`RecipientGroup`/`InquiryRecipientRoute`、旧プラン40種超（`is_active: false`）、旧ステータス（`order_statuses` 追加分）の投入 | 05 §4・§5 / 07 §1 / 03 §3 |
 | 会員ID | 旧CRMエクスポート「ネットムーブ会員ID」列 → `customers.netmove_member_id` の取り込み ETL（R5 の採番連続性と連携） | 02 §4-7・§7-b |
 
-## 04-implementation-plan.md へ反映すべき新規タスク／変更
+## 04-rails-implementation-plan.md へ反映すべき新規タスク／変更
 
 | フェーズ | 優先度 | 内容 | 出典 |
 |---|---|---|---|
@@ -896,7 +896,7 @@
 | `payment_transactions`（14 のクレカNG自動追跡の前提） | 未実装 | R5 |
 | pg_bigm/pg_trgm の `enable_extension` | 未実行 | R7（名寄せ用途なら一時DBで完結も可）／R8 全文検索 |
 
-## 3. 04-implementation-plan.md へ反映すべき事項
+## 3. 04-rails-implementation-plan.md へ反映すべき事項
 
 ### 3-1. R7 節に追記（優先度: 高）
 - **案件238フィールドの突合結果**（出典: `legacy-research/11` §0・付録A）: 実装済み 219 ＋ FK 9／未実装 2（`plans.contract_unit`/`initial_construction`＝Q-移18）／対応先なし 8（アポインター2人目 13/14・店舗メール 79・担当者生年月日 120・用途不明 132-134/233）。**移行先未実装は計10件、いずれも新規機能（R5/R6）依存なし。R7 着手前に要否判断**。

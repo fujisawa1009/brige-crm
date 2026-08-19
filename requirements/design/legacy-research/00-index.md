@@ -7,7 +7,7 @@
 > 目的: 内製化・現行（旧）ジャスミンの資料を調査し、現状整理に使う。
 > **注意**：資料には**情報が古いもの・現行システムの悪い点の仕様**が含まれる。
 > 「そのまま作る」ためではなく「現状把握と改善判断」に使う。
-> **新システム = brige-crm**（Rails 8.1 / PostgreSQL / Hotwire。`../03-rails-architecture-proposal.md` / `../04-implementation-plan.md`）。
+> **新システム = brige-crm**（Rails 8.1 / PostgreSQL / Hotwire。`../03-rails-architecture-proposal.md` / `../04-rails-implementation-plan.md`）。
 > 2026-08-19 時点で R0〜R4 実装済み、R5（契約・決済）以降は未実装。本ディレクトリは **requirements/ の正が brige-crm 側へ移った後の版**（旧 Laravel 側は凍結参照元）。
 
 ---
@@ -135,10 +135,10 @@
 
 | 領域 | 本ディレクトリの役割 | brige-crm 側の正 | 状態 |
 |---|---|---|---|
-| データ移行（決定F・別フェーズ） | **R7 の一次資料**（08〜11 = 移行元構造・ETL・マッピング、`../name-matching-process.md` = 名寄せ） | `../04-implementation-plan.md` R7、`db/schema.rb`（R2 実装済みスキーマ） | R7 未着手。移行ツールは rake タスク／`rails runner`（Artisan の読み替え） |
+| データ移行（決定F・別フェーズ） | **R7 の一次資料**（08〜11 = 移行元構造・ETL・マッピング、`../name-matching-process.md` = 名寄せ） | `../04-rails-implementation-plan.md` R7、`db/schema.rb`（R2 実装済みスキーマ） | R7 未着手。移行ツールは rake タスク／`rails runner`（Artisan の読み替え） |
 | 決済（ネットムーブ） | 02・15 = API 仕様と実機テスト記録 | `../payment-integration.md`（Rails 版へ並行改訂中）、`../netmove-card-migration.md` | R5 未実装。Q-37/Q-38 等は 04 R5 着手前チェックリスト |
 | ステータス・掲示板 | 03・05 = 現行の統廃合指針・4掲示板・転送先 | R4 `Inquiry`/`InquiryStatus`/`InquiryRecipientRoute`（`../board-implementation-options.md` 決定 D-11）、`StatusSeeder` | R4 実装済み。案件状態機械は R5、遷移バリデーションは R6 |
-| 要件・要望 | 01・04・06 = 機能64件・現場要望・BW手作業 | `../04-implementation-plan.md` R6（運用強化）、`../basic-design.md` | R6 未実装（P4-18〜25 相当） |
+| 要件・要望 | 01・04・06 = 機能64件・現場要望・BW手作業 | `../04-rails-implementation-plan.md` R6（運用強化）、`../basic-design.md` | R6 未実装（P4-18〜25 相当） |
 | プラン・請求 | 07 | R2 `Plan`/`ProductInitialFee`/`ContractCondition`、R5 決済・請求 | R2 済み／R5 未実装 |
 | FAQ テンプレート | 13 | R4 `NotificationTemplate`（`template_type: inquiry` のみ） | 未実装ギャップ（要否・フェーズ CEO 確認待ち） |
 | スキーマギャップ | 12 | R2 で解消済み | 歴史的記録として読む |

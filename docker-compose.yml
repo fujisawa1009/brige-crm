@@ -1,4 +1,4 @@
-# R0 Docker構成（04-implementation-plan.md R0-2 / 03-rails-architecture-proposal.md 技術スタック表）。
+# R0 Docker構成（04-rails-implementation-plan.md R0-2 / 03-rails-architecture-proposal.md 技術スタック表）。
 # ftlogのdocker-compose.yml（db/web/tailwind/worker）を土台に、mailpit（LaravelのDockerサービス）を追加した5サービス構成。
 name: brige_crm
 

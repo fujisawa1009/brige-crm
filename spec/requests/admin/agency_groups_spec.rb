@@ -1,6 +1,6 @@
 require "rails_helper"
 
-# R1完了条件（04-implementation-plan.md）: 参照制御込みでCRUD一式。
+# R1完了条件（04-rails-implementation-plan.md）: 参照制御込みでCRUD一式。
 # AgencyGroupPolicy（app/policies/agency_group_policy.rb）は代理店担当者を常にaccessible?=falseとし、
 # update?/destroy?は代理店グループ担当者にも許可しない（staff_scope?のみ）。
 RSpec.describe "Admin::AgencyGroups", type: :request, seed_permission_catalog: true, system_authorization: true do

@@ -13,7 +13,7 @@
 > **Rails版改訂: 2026-08-19。** 旧Laravelプロジェクト（`boilerplate-vue-env/laravel/requirements/design/legacy-research/15-test-purchase-20260728.md`）を
 > brige-crm（Rails 8.1）へ集約。**フェーズ対応: R5（契約フロー・決済。ネットムーブ連携）**。本記録は現行（旧ベンダー）システムでのテスト購入ログであり内容は不変。
 > - 状態: タイムライン・送信パラメータ・戻り記録は **未記入のまま**（2026-08-19 時点でも Step 1 の実施結果は本ファイルに追記されていない）。R5 着手前チェックリスト Q-37（jutyu_cd 桁数）・Q-38（決済結果の確定手段）の一次確認手段として、実施済みなら結果を本ファイルへ追記すること。
-> - 削除済み参照の差し替え: `../../impl-plans/P3-2-payment.md`（削除済み・旧Laravel側に残存）→ `../04-implementation-plan.md` R5（決済状態機械・request spec 必須）。`_NEXT.md`（旧Laravel側の作業メモ）→ `04-implementation-plan.md`「次のアクション」。
+> - 削除済み参照の差し替え: `../../impl-plans/P3-2-payment.md`（削除済み・旧Laravel側に残存）→ `../04-rails-implementation-plan.md` R5（決済状態機械・request spec 必須）。`_NEXT.md`（旧Laravel側の作業メモ）→ `04-rails-implementation-plan.md`「次のアクション」。
 
 ---
 
@@ -70,7 +70,7 @@
 | A | 新旧API判定 | （未確定） | `02-payment-netmove.md` |
 | B | 1桁問題（jutyu_cd ⇄ member_id） | （未確定） | `../netmove-card-migration.md` §2-4 |
 | C | 戻りパラメータの実物 | （未確定） | `02-payment-netmove.md` §5-b・`../payment-integration.md` §4-9 |
-| D | 3Dセキュアの実挙動 | （未確定） | `../04-implementation-plan.md` R5（旧 `impl-plans/P3-2-payment.md` は削除済み） |
+| D | 3Dセキュアの実挙動 | （未確定） | `../04-rails-implementation-plan.md` R5（旧 `impl-plans/P3-2-payment.md` は削除済み） |
 | E | check_cd の形式 | （未確定） | `02-payment-netmove.md` |
 
 ---
@@ -86,5 +86,5 @@
 ## 6. 反映タスク（テスト終了後）
 
 1. 本ファイル §4 の確定内容を `02-payment-netmove.md` / `netmove-card-migration.md` へ反映
-2. 必要なら `payment-integration.md`（戻り受け口設計）・`04-implementation-plan.md` R5（テスト観点。旧 `P3-2-payment.md` は削除済み）を更新
-3. ~~`_NEXT.md` の Step 1 を完了に更新~~ → `04-implementation-plan.md` R5着手前チェックリスト（Q-37/Q-38）に結果を反映
+2. 必要なら `payment-integration.md`（戻り受け口設計）・`04-rails-implementation-plan.md` R5（テスト観点。旧 `P3-2-payment.md` は削除済み）を更新
+3. ~~`_NEXT.md` の Step 1 を完了に更新~~ → `04-rails-implementation-plan.md` R5着手前チェックリスト（Q-37/Q-38）に結果を反映

@@ -1,7 +1,7 @@
 require "rails_helper"
 
 # 04 R3タスク4・5: 動的マルチステップ申込と申込完了トランザクション。
-# R3完了条件（04-implementation-plan.md）: 「営業担当者ログイン（代理店CD+営業CD+OTP）→
+# R3完了条件（04-rails-implementation-plan.md）: 「営業担当者ログイン（代理店CD+営業CD+OTP）→
 # 動的マルチステップ→完了、のrequest spec」「申込トランザクションのrequest spec必須。正常系・異常系
 # （バリデーション失敗時にトランザクション全体がロールバックされ、Customer/Store/Orderが中途半端に
 # 作られないこと）の両方をテストすること」（Laravel側の未カバー教訓=01§7 T-1を踏まえた要求）。
