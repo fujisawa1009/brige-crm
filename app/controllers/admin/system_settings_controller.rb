@@ -24,6 +24,10 @@ class Admin::SystemSettingsController < Admin::BaseController
   private
 
   def system_setting_params
-    params.require(:system_setting).permit(:inquiry_attachment_max_count, :inquiry_attachment_max_size_mb)
+    params.require(:system_setting).permit(
+      :inquiry_attachment_max_count, :inquiry_attachment_max_size_mb,
+      # R6-8: ファイル管理基盤（OrderAttachment）の上限もここに集約する。
+      :order_attachment_max_count, :order_attachment_max_size_mb
+    )
   end
 end

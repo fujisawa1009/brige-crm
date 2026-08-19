@@ -87,6 +87,10 @@ Rails.application.routes.draw do
       end
       # R5-1: 契約ワークフロー状態機械のイベント投入（Order#transition_contract_to!）。
       resources :contract_reviews, only: %i[create]
+      # R6-8: ファイル管理基盤（汎用添付。indexは持たずAdmin::OrdersController#showへ埋め込む）。
+      resources :order_attachments, only: %i[create destroy] do
+        member { get :download }
+      end
     end
     resources :contract_statuses
     resources :csv_exports, only: %i[index show]
@@ -152,6 +156,12 @@ Rails.application.routes.draw do
 
     # R6-1: 個人ごとの通知設定（顧客本人ごと。マイページから自分の設定のみ編集）。
     resource :notification_settings, only: [ :show, :update ], controller: "notification_settings"
+
+    # R6-8: ファイル管理基盤のダウンロード経路のみ（マイページにOrder詳細画面が無いためindex等は
+    # 追加しない。Mypage::OrderAttachmentsControllerのコメント参照）。
+    resources :order_attachments, only: [] do
+      member { get :download }
+    end
   end
 
   # Defines the root path route ("/")

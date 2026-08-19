@@ -33,6 +33,22 @@
               class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
 
+      <h3 class="mt-2 mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">案件の添付ファイル（R6-8）</h3>
+
+      <div>
+        <%= f.label :order_attachment_max_count, "添付件数の上限（1案件あたり）",
+              class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.number_field :order_attachment_max_count, min: 1, max: 100,
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
+      <div>
+        <%= f.label :order_attachment_max_size_mb, "1ファイルあたりの上限（MB）",
+              class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.number_field :order_attachment_max_size_mb, min: 1, max: 500,
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+
       <%= f.submit "保存", class: "w-fit btn-primary" %>
     <% end %>
   </div>

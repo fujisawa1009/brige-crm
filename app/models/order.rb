@@ -157,6 +157,9 @@ class Order < ApplicationRecord
   has_many :applications, dependent: :nullify
   has_many :contract_reviews, dependent: :restrict_with_error
   has_many :disclosure_checks, dependent: :restrict_with_error
+  # R6-8: ファイル管理基盤（汎用添付。中身が契約書かどうかは問わない）。Orderが削除されれば
+  # 添付も一緒に削除する（destroy時にActive Storageのblob purgeも連鎖する既定挙動に乗る）。
+  has_many :order_attachments, dependent: :destroy, inverse_of: :order
 
   # 【2026-08-19 CEO決定（Q-45）: 暗号化を廃止し平文保存に変更】
   # 従来は encrypts :billing_password を適用していたが、「暗号化列を全部平文にする」というCEO決定に

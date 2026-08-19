@@ -155,6 +155,12 @@ class RoleSeeder
   # （OrderPolicy#transition_contract?・DisclosureItemSetPolicyもstaff_scope?限定でPundit側も一致）。
   R5_CONTRACT_WORKFLOW_CONTROLLERS = %w[admin/contract_reviews admin/disclosure_item_sets].freeze
 
+  # R6-8: ファイル管理基盤（汎用添付）。OrderAttachmentPolicyの既定どおりcreate?はstaff_scope?限定
+  # （R2_CRM_CONTROLLERSと同じ「新規作成は内部運用限定」方針）、destroy?もAgencyScoped既定を上書きして
+  # staff_scope?限定にしている（契約書PDF等を代理店側の自己判断で失わせない。ポリシーのコメント参照）。
+  # 代理店/代理店グループへはdownload（閲覧・ダウンロード）のみ渡す。
+  R6_8_ORDER_ATTACHMENT_CONTROLLERS = %w[admin/order_attachments].freeze
+
   def assign_default_permissions(roles)
     admin_permissions = SystemPermission.enabled.admin
 
@@ -178,6 +184,9 @@ class RoleSeeder
     grant(roles["実務運用者"], admin_permissions.where(controller: R6_INQUIRY_TEMPLATE_CONTROLLERS).pluck(:id))
     # 04 R5: 契約ワークフロー・重説項目セットは内部工程のため実務運用者専有。
     grant(roles["実務運用者"], admin_permissions.where(controller: R5_CONTRACT_WORKFLOW_CONTROLLERS).pluck(:id))
+    # R6-8: ファイル管理基盤。実務運用者はアップロード・削除・ダウンロードすべて可（Pundit側の
+    # OrderAttachmentPolicyでも代理店スコープの範囲チェックが別途かかる）。
+    grant(roles["実務運用者"], admin_permissions.where(controller: R6_8_ORDER_ATTACHMENT_CONTROLLERS).pluck(:id))
 
     %w[代理店グループ用 代理店用].each do |name|
       grant(
@@ -218,6 +227,12 @@ class RoleSeeder
       grant(
         roles[name],
         admin_permissions.where(controller: R4_INQUIRY_MESSAGE_CONTROLLERS, action: %w[create]).pluck(:id)
+      )
+      # R6-8: 自スコープOrderの添付ファイルはダウンロードのみ（アップロード・削除は実務運用者専有。
+      # OrderAttachmentPolicy#create?/#destroy?のstaff_scope?限定とRBACレイヤーを揃える）。
+      grant(
+        roles[name],
+        admin_permissions.where(controller: R6_8_ORDER_ATTACHMENT_CONTROLLERS, action: %w[download]).pluck(:id)
       )
     end
   end

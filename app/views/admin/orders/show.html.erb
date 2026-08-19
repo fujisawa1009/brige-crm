@@ -167,6 +167,73 @@
     <% end %>
   </div>
 
+  <%
+    # R6-8: ファイル管理基盤（汎用添付。決済・契約状態機械そのものには触れない）。一覧の到達制御は
+    # このページ自体のauthorize @order（OrderPolicy#show?）に乗る。個々のアップロード/削除ボタンは
+    # OrderAttachmentPolicy（AgencyScoped）で都度gateし、ダウンロードは直接rails_blob_pathを
+    # 埋め込まずAdmin::OrderAttachmentsController#downloadを必ず経由させる（都度authorize）。
+    new_order_attachment = OrderAttachment.new(order: @order)
+  %>
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">添付ファイル</h3>
+
+    <% if @order.order_attachments.any? %>
+      <div class="overflow-x-auto rounded-md border border-slate-200">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <th class="px-3 py-2">ファイル名</th>
+              <th class="px-3 py-2">種別</th>
+              <th class="px-3 py-2">顧客への公開</th>
+              <th class="px-3 py-2">アップロード日時</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% @order.order_attachments.order(created_at: :desc).each do |attachment| %>
+              <tr>
+                <td class="px-3 py-2 text-slate-800"><%= attachment.file.filename %></td>
+                <td class="px-3 py-2 text-slate-600"><%= attachment.file_type.presence || "—" %></td>
+                <td class="px-3 py-2 text-slate-600"><%= attachment.is_visible_to_customer? ? "公開" : "社内限定" %></td>
+                <td class="px-3 py-2 whitespace-nowrap text-slate-600"><%= attachment.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+                <td class="px-3 py-2 text-right whitespace-nowrap">
+                  <%= link_to "ダウンロード", download_admin_order_order_attachment_path(@order, attachment),
+                        class: "text-indigo-600 hover:underline" %>
+                  <% if policy(attachment).destroy? %>
+                    <%= button_to "削除", admin_order_order_attachment_path(@order, attachment), method: :delete,
+                          form: { data: { turbo_confirm: "#{attachment.file.filename} を削除しますか？" }, class: "inline" },
+                          class: "ml-2 text-red-600 hover:underline" %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="text-sm text-slate-500">添付ファイルはまだありません。</p>
+    <% end %>
+
+    <% if policy(new_order_attachment).create? %>
+      <%= form_with model: new_order_attachment, url: admin_order_order_attachments_path(@order),
+            method: :post, multipart: true, class: "mt-4 flex flex-col gap-3 max-w-md" do |f| %>
+        <div>
+          <%= f.label :file, "ファイル", class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.file_field :file, class: "w-full text-sm" %>
+        </div>
+        <div>
+          <%= f.label :file_type, "種別（任意。例: 契約書/重説/その他）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+          <%= f.text_field :file_type, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+        </div>
+        <div class="flex items-center gap-2">
+          <%= f.check_box :is_visible_to_customer, class: "rounded border-slate-300" %>
+          <%= f.label :is_visible_to_customer, "顧客（マイページ）へ公開する", class: "text-sm text-slate-700" %>
+        </div>
+        <%= f.submit "アップロード", class: "w-fit btn-primary" %>
+      <% end %>
+    <% end %>
+  </div>
+
   <% if policy(@order).destroy? %>
     <div>
       <%= button_to "この案件を削除", admin_order_path(@order), method: :delete,

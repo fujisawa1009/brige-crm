@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_050000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_060100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -557,6 +557,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_050000) do
     t.index ["parent_id"], name: "index_option_values_on_parent_id"
   end
 
+  create_table "order_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "created_by_id"
+    t.string "file_type", limit: 50
+    t.boolean "is_visible_to_customer", default: false, null: false
+    t.uuid "order_id", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "updated_by_id"
+    t.index ["order_id"], name: "index_order_attachments_on_order_id"
+  end
+
   create_table "order_options", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.uuid "order_id", null: false
@@ -1020,6 +1031,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_050000) do
     t.uuid "created_by_id"
     t.integer "inquiry_attachment_max_count", default: 5, null: false
     t.integer "inquiry_attachment_max_size_mb", default: 50, null: false
+    t.integer "order_attachment_max_count", default: 20, null: false
+    t.integer "order_attachment_max_size_mb", default: 50, null: false
     t.datetime "updated_at", null: false
     t.uuid "updated_by_id"
   end
@@ -1136,6 +1149,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_050000) do
   add_foreign_key "option_values", "option_values", column: "parent_id", on_delete: :cascade
   add_foreign_key "option_values", "users", column: "created_by_id"
   add_foreign_key "option_values", "users", column: "updated_by_id"
+  add_foreign_key "order_attachments", "orders", on_delete: :cascade
+  add_foreign_key "order_attachments", "users", column: "created_by_id"
+  add_foreign_key "order_attachments", "users", column: "updated_by_id"
   add_foreign_key "order_options", "orders", on_delete: :cascade
   add_foreign_key "order_options", "product_options", on_delete: :restrict
   add_foreign_key "order_statuses", "users", column: "created_by_id"

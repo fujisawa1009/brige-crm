@@ -17,6 +17,8 @@
 #  id                             :uuid             not null, primary key
 #  inquiry_attachment_max_count   :integer          default(5), not null
 #  inquiry_attachment_max_size_mb :integer          default(50), not null
+#  order_attachment_max_count     :integer          default(20), not null
+#  order_attachment_max_size_mb   :integer          default(50), not null
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  created_by_id                  :uuid
@@ -35,6 +37,12 @@ class SystemSetting < ApplicationRecord
             numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 100 }
   validates :inquiry_attachment_max_size_mb, presence: true,
             numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 500 }
+  # R6-8: OrderAttachment（ファイル管理基盤）の上限もここに集約する（inquiry_attachment_*と同じ
+  # 「DB管理・admin専有で変更可能」方針）。
+  validates :order_attachment_max_count, presence: true,
+            numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 100 }
+  validates :order_attachment_max_size_mb, presence: true,
+            numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 500 }
   validate :only_one_record_may_exist, on: :create
 
   # シングルトン取得。存在しなければカラムのDB既定値で1行作る（find_or_create的な設計。
@@ -46,6 +54,10 @@ class SystemSetting < ApplicationRecord
 
   def inquiry_attachment_max_size_bytes
     inquiry_attachment_max_size_mb.megabytes
+  end
+
+  def order_attachment_max_size_bytes
+    order_attachment_max_size_mb.megabytes
   end
 
   # Auditable#audit_record の resource_label フォールバック用（name/display_name/cidrを
