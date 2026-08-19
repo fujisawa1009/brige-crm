@@ -1,4 +1,6 @@
+<% content_for :page_title, "商材オプション編集" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">商材オプションの編集</h1>
+  <h2 class="text-xl font-bold text-slate-900">商材オプション編集</h2>
   <%= render "form", product_option: @product_option, url: admin_product_option_path(@product_option) %>
 </div>

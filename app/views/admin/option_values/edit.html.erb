@@ -1,4 +1,6 @@
+<% content_for :page_title, "選択肢編集" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">選択肢の編集</h1>
+  <h2 class="text-xl font-bold text-slate-900">選択肢編集</h2>
   <%= render "form", option_value: @option_value, url: admin_option_value_path(@option_value) %>
 </div>

@@ -1,17 +1,56 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">プラン</h1>
-  <% if policy(Plan).create? %><%= link_to "新規作成", new_admin_plan_path, class: "underline w-fit" %><% end %>
-  <table class="border-collapse w-full text-sm">
-    <thead><tr><th class="border px-2 py-1 text-left">商材</th><th class="border px-2 py-1 text-left">名称</th><th class="border px-2 py-1 text-left">月額料金</th></tr></thead>
-    <tbody>
-      <% @plans.each do |plan| %>
-        <tr>
-          <td class="border px-2 py-1"><%= plan.product.name %></td>
-          <td class="border px-2 py-1"><%= link_to plan.name, admin_plan_path(plan) %></td>
-          <td class="border px-2 py-1"><%= plan.monthly_fee %></td>
+<% content_for :page_title, "プラン" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">プラン</h2>
+      <p class="text-sm text-slate-500">商材ごとの月額プランを管理します。</p>
+    </div>
+    <% if policy(Plan).create? %>
+      <%= link_to "新規作成", new_admin_plan_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">商材</th>
+          <th class="px-4 py-3">プラン名</th>
+          <th class="px-4 py-3">月額料金</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @plans.empty? %>
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">プランが登録されていません</td>
+          </tr>
+        <% end %>
+        <% @plans.each do |plan| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 text-slate-600"><%= link_to plan.product.name, admin_product_path(plan.product), class: "hover:underline" %></td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to plan.name, admin_plan_path(plan), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= number_to_currency(plan.monthly_fee, unit: "¥", precision: 0) if plan.monthly_fee %></td>
+            <td class="px-4 py-3"><%= active_badge(plan.is_active?) %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_plan_path(plan), class: "text-indigo-600 hover:underline" %>
+              <% if policy(plan).update? %>
+                <%= link_to "編集", edit_admin_plan_path(plan), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(plan).destroy? %>
+                <%= button_to "削除", admin_plan_path(plan), method: :delete,
+                      form: { data: { turbo_confirm: "#{plan.name} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>

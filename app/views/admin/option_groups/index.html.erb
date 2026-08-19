@@ -1,16 +1,54 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">選択肢グループ</h1>
-  <% if policy(OptionGroup).create? %><%= link_to "新規作成", new_admin_option_group_path, class: "underline w-fit" %><% end %>
-  <table class="border-collapse w-full text-sm">
-    <thead><tr><th class="border px-2 py-1 text-left">キー</th><th class="border px-2 py-1 text-left">表示名</th></tr></thead>
-    <tbody>
-      <% @option_groups.each do |group| %>
-        <tr>
-          <td class="border px-2 py-1"><%= group.key %></td>
-          <td class="border px-2 py-1"><%= link_to group.label, admin_option_group_path(group) %></td>
+<% content_for :page_title, "選択肢グループ" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">選択肢グループ</h2>
+      <p class="text-sm text-slate-500">フォーム等で使う選択肢（都道府県・支払方法など）のグループを管理します。</p>
+    </div>
+    <% if policy(OptionGroup).create? %>
+      <%= link_to "新規作成", new_admin_option_group_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">システムキー</th>
+          <th class="px-4 py-3">表示名</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @option_groups.empty? %>
+          <tr>
+            <td colspan="4" class="px-4 py-8 text-center text-slate-500">選択肢グループが登録されていません</td>
+          </tr>
+        <% end %>
+        <% @option_groups.each do |group| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono text-slate-600"><%= group.key %></td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to group.label, admin_option_group_path(group), class: "hover:underline" %></td>
+            <td class="px-4 py-3"><%= active_badge(group.is_active?) %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_option_group_path(group), class: "text-indigo-600 hover:underline" %>
+              <% if policy(group).update? %>
+                <%= link_to "編集", edit_admin_option_group_path(group), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(group).destroy? %>
+                <%= button_to "削除", admin_option_group_path(group), method: :delete,
+                      form: { data: { turbo_confirm: "#{group.label} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>

@@ -1,19 +1,43 @@
-<%= form_with model: option_value, url: url, class: "flex flex-col gap-3 max-w-md" do |f| %>
-  <% if option_value.errors.any? %><div class="text-red-700"><%= option_value.errors.full_messages.to_sentence %></div><% end %>
-  <div>
-    <%= f.label :option_group_id, "所属グループ" %>
-    <%= f.collection_select :option_group_id, OptionGroup.order(:label), :id, :label, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :parent_id, "親選択肢" %>
-    <%# 循環参照・グループ越境バグ修正: 親候補は同一option_group_id内かつ自分自身を除く選択肢のみに絞る
-        （異なるグループの値を親にできてしまうと、OptionValueのグループ越境バリデーションで弾かれるだけの
-        無効な選択肢が延々と一覧に出てしまうため）。%>
-    <%= f.collection_select :parent_id, OptionValue.where(option_group_id: option_value.option_group_id).where.not(id: option_value.id).order(:label), :id, :label, { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div><%= f.label :value, "内部値" %><%= f.text_field :value, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :label, "表示名" %><%= f.text_field :label, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :sort_order, "表示順" %><%= f.number_field :sort_order, class: "border rounded px-2 py-1 w-full" %></div>
-  <div><%= f.label :is_active, "有効" %><%= f.check_box :is_active %></div>
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
-<% end %>
+<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <%= form_with model: option_value, url: url, class: "flex flex-col gap-4 max-w-md" do |f| %>
+    <% if option_value.errors.any? %>
+      <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= option_value.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <div>
+      <%= f.label :option_group_id, "所属グループ", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.collection_select :option_group_id, OptionGroup.order(:label), :id, :label,
+            { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :parent_id, "親選択肢", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%# 循環参照・グループ越境バグ修正: 親候補は同一option_group_id内かつ自分自身を除く選択肢のみに絞る
+          （異なるグループの値を親にできてしまうと、OptionValueのグループ越境バリデーションで弾かれるだけの
+          無効な選択肢が延々と一覧に出てしまうため）。%>
+      <%= f.collection_select :parent_id,
+            OptionValue.where(option_group_id: option_value.option_group_id).where.not(id: option_value.id).order(:label),
+            :id, :label, { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :value, "内部値", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :value, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono" %>
+    </div>
+    <div>
+      <%= f.label :label, "表示名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.text_field :label, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :sort_order, "表示順", class: "mb-1 block text-sm font-medium text-slate-700" %>
+      <%= f.number_field :sort_order, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= f.check_box :is_active, class: "h-4 w-4 rounded border-slate-300" %>
+      <%= f.label :is_active, "有効", class: "text-sm font-medium text-slate-700" %>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <%= link_to "キャンセル", admin_option_values_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+    </div>
+  <% end %>
+</div>

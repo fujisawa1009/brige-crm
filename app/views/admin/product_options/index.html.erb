@@ -1,17 +1,56 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">商材オプション</h1>
-  <% if policy(ProductOption).create? %><%= link_to "新規作成", new_admin_product_option_path, class: "underline w-fit" %><% end %>
-  <table class="border-collapse w-full text-sm">
-    <thead><tr><th class="border px-2 py-1 text-left">商材</th><th class="border px-2 py-1 text-left">名称</th><th class="border px-2 py-1 text-left">月額料金</th></tr></thead>
-    <tbody>
-      <% @product_options.each do |option| %>
-        <tr>
-          <td class="border px-2 py-1"><%= option.product.name %></td>
-          <td class="border px-2 py-1"><%= link_to option.name, admin_product_option_path(option) %></td>
-          <td class="border px-2 py-1"><%= option.monthly_fee %></td>
+<% content_for :page_title, "商材オプション" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">商材オプション</h2>
+      <p class="text-sm text-slate-500">商材ごとの追加オプションを管理します。</p>
+    </div>
+    <% if policy(ProductOption).create? %>
+      <%= link_to "新規作成", new_admin_product_option_path,
+            class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <% end %>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <th class="px-4 py-3">商材</th>
+          <th class="px-4 py-3">名称</th>
+          <th class="px-4 py-3">月額料金</th>
+          <th class="px-4 py-3">状態</th>
+          <th class="px-4 py-3"></th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @product_options.empty? %>
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-slate-500">オプションが登録されていません</td>
+          </tr>
+        <% end %>
+        <% @product_options.each do |option| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 text-slate-600"><%= link_to option.product.name, admin_product_path(option.product), class: "hover:underline" %></td>
+            <td class="px-4 py-3 font-medium text-slate-800"><%= link_to option.name, admin_product_option_path(option), class: "hover:underline" %></td>
+            <td class="px-4 py-3 text-slate-600"><%= number_to_currency(option.monthly_fee, unit: "¥", precision: 0) if option.monthly_fee %></td>
+            <td class="px-4 py-3"><%= active_badge(option.is_active?) %></td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <%= link_to "詳細", admin_product_option_path(option), class: "text-indigo-600 hover:underline" %>
+              <% if policy(option).update? %>
+                <%= link_to "編集", edit_admin_product_option_path(option), class: "ml-3 text-indigo-600 hover:underline" %>
+              <% end %>
+              <% if policy(option).destroy? %>
+                <%= button_to "削除", admin_product_option_path(option), method: :delete,
+                      form: { data: { turbo_confirm: "#{option.name} を削除しますか？" }, class: "inline ml-3" },
+                      class: "text-red-600 hover:underline" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
   <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
 </div>

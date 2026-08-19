@@ -1,15 +1,67 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @option_value.label %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">グループ</dt><dd><%= @option_value.option_group.label %></dd>
-    <dt class="font-bold">親選択肢</dt><dd><%= @option_value.parent&.label %></dd>
-    <dt class="font-bold">内部値</dt><dd><%= @option_value.value %></dd>
-  </dl>
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_option_values_path, class: "underline" %>
-    <% if policy(@option_value).update? %><%= link_to "編集", edit_admin_option_value_path(@option_value), class: "underline" %><% end %>
-    <% if policy(@option_value).destroy? %>
-      <%= button_to "削除", admin_option_value_path(@option_value), method: :delete, form: { data: { turbo_confirm: "削除しますか？" } } %>
-    <% end %>
+<% content_for :page_title, "選択肢詳細" %>
+
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @option_value.label %></h2>
+      <p class="text-sm text-slate-500"><%= @option_value.option_group.label %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_option_values_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@option_value).update? %>
+        <%= link_to "編集", edit_admin_option_value_path(@option_value),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
   </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">所属グループ</dt>
+        <dd class="mt-1"><%= link_to @option_value.option_group.label, admin_option_group_path(@option_value.option_group), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">親選択肢</dt>
+        <dd class="mt-1">
+          <% if @option_value.parent %>
+            <%= link_to @option_value.parent.label, admin_option_value_path(@option_value.parent), class: "text-indigo-600 hover:underline" %>
+          <% else %>
+            <span class="text-slate-500">—（ルート）</span>
+          <% end %>
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">内部値</dt>
+        <dd class="mt-1 font-mono text-slate-800"><%= @option_value.value %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">状態</dt>
+        <dd class="mt-1"><%= active_badge(@option_value.is_active?) %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% if @option_value.children.any? %>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">子選択肢（<%= @option_value.children.size %>件）</h3>
+      <ul class="divide-y divide-slate-100">
+        <% @option_value.children.each do |child| %>
+          <li class="py-2 text-sm">
+            <%= link_to child.label, admin_option_value_path(child), class: "font-medium text-slate-800 hover:underline" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% if policy(@option_value).destroy? %>
+    <div>
+      <%= button_to "この選択肢を削除", admin_option_value_path(@option_value), method: :delete,
+            form: { data: { turbo_confirm: "#{@option_value.label} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>

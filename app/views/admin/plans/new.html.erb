@@ -1,4 +1,6 @@
+<% content_for :page_title, "プラン新規作成" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">プランの新規作成</h1>
+  <h2 class="text-xl font-bold text-slate-900">プラン新規作成</h2>
   <%= render "form", plan: @plan, url: admin_plans_path %>
 </div>

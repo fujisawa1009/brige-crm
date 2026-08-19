@@ -1,4 +1,6 @@
+<% content_for :page_title, "初期費用編集" %>
+
 <div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold">初期費用の編集</h1>
+  <h2 class="text-xl font-bold text-slate-900">初期費用編集</h2>
   <%= render "form", product_initial_fee: @product_initial_fee, url: admin_product_initial_fee_path(@product_initial_fee) %>
 </div>
