@@ -1,57 +1,57 @@
 <%# ローカル変数: f（FormField用のfields_forビルダー） %>
-<div data-nested-form-target="item" class="border rounded p-2 flex flex-col gap-2 bg-white text-sm">
+<div data-nested-form-target="item" class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
   <%= f.hidden_field :id %>
   <%= f.hidden_field :_destroy %>
 
-  <div class="grid grid-cols-2 gap-2">
+  <div class="grid grid-cols-2 gap-3">
     <div>
-      <%= f.label :field_key, "キー（英小文字・数字・_）" %>
-      <%= f.text_field :field_key, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :field_key, "キー（英小文字・数字・_）", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.text_field :field_key, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div>
-      <%= f.label :label, "表示ラベル" %>
-      <%= f.text_field :label, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :label, "表示ラベル", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.text_field :label, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div>
-      <%= f.label :field_type, "入力形式" %>
-      <%= f.select :field_type, FormField::FIELD_TYPES, {}, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :field_type, "入力形式", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.select :field_type, FormField::FIELD_TYPES, {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div>
-      <%= f.label :target_table, "反映先モデル" %>
-      <%= f.select :target_table, FormField::TARGET_TABLES, {}, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :target_table, "反映先モデル", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.select :target_table, FormField::TARGET_TABLES, {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div>
-      <%= f.label :target_column, "反映先カラム（例: name / product_option_ids）" %>
-      <%= f.text_field :target_column, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :target_column, "反映先カラム（例: name / product_option_ids）", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.text_field :target_column, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div>
-      <%= f.label :sort_order, "表示順" %>
-      <%= f.number_field :sort_order, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :sort_order, "表示順", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.number_field :sort_order, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div class="flex items-center gap-2">
-      <%= f.check_box :required %>
-      <%= f.label :required, "必須" %>
+      <%= f.check_box :required, class: "h-4 w-4 rounded border-slate-300" %>
+      <%= f.label :required, "必須", class: "text-xs font-medium text-slate-700" %>
     </div>
     <div>
-      <%= f.label :lock_after_status, "編集ロック閾ステータス（order_statuses.code。任意）" %>
-      <%= f.text_field :lock_after_status, class: "border rounded px-2 py-1 w-full" %>
+      <%= f.label :lock_after_status, "編集ロック閾ステータス（order_statuses.code。任意）", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.text_field :lock_after_status, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div class="col-span-2">
-      <%= f.label :editable_by_tier, "編集可能区分" %>
+      <%= f.label :editable_by_tier, "編集可能区分", class: "mb-1 block text-xs font-medium text-slate-700" %>
       <%= f.collection_check_boxes :editable_by_tier, FormField::TIERS, :itself, :itself do |b| %>
-        <span class="mr-3 inline-flex items-center gap-1"><%= b.check_box %> <%= b.label %></span>
+        <span class="mr-3 inline-flex items-center gap-1 text-sm text-slate-700"><%= b.check_box(class: "h-4 w-4 rounded border-slate-300") %> <%= b.label %></span>
       <% end %>
     </div>
     <div class="col-span-2">
-      <%= f.label :input_options_json, "選択肢（JSON。例: {\"choices\":[[\"yes\",\"はい\"],[\"no\",\"いいえ\"]]}）" %>
+      <%= f.label :input_options_json, "選択肢（JSON。例: {\"choices\":[[\"yes\",\"はい\"],[\"no\",\"いいえ\"]]}）", class: "mb-1 block text-xs font-medium text-slate-700" %>
       <%= f.text_area :input_options_json, value: f.object.input_options.presence&.to_json,
-            class: "border rounded px-2 py-1 w-full font-mono", rows: 2 %>
+            class: "w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm", rows: 2 %>
     </div>
     <div class="col-span-2">
-      <%= f.label :validation_rules_json, "検証ルール（JSON。例: {\"max_length\":100}）" %>
+      <%= f.label :validation_rules_json, "検証ルール（JSON。例: {\"max_length\":100}）", class: "mb-1 block text-xs font-medium text-slate-700" %>
       <%= f.text_area :validation_rules_json, value: f.object.validation_rules.presence&.to_json,
-            class: "border rounded px-2 py-1 w-full font-mono", rows: 2 %>
+            class: "w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm", rows: 2 %>
     </div>
   </div>
-  <button type="button" data-action="nested-form#remove" class="text-red-700 underline w-fit">フィールドを削除</button>
+  <button type="button" data-action="nested-form#remove" class="w-fit text-xs font-medium text-red-600 hover:underline">フィールドを削除</button>
 </div>

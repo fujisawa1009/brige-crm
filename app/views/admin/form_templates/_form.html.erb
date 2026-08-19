@@ -1,26 +1,31 @@
-<%= form_with model: form_template, url: url, scope: :form_template, class: "flex flex-col gap-4 max-w-4xl" do |f| %>
+<%= form_with model: form_template, url: url, scope: :form_template, class: "flex flex-col gap-6 max-w-4xl" do |f| %>
   <% if form_template.errors.any? %>
-    <div class="text-red-700"><%= form_template.errors.full_messages.to_sentence %></div>
+    <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700"><%= form_template.errors.full_messages.to_sentence %></div>
   <% end %>
 
-  <div>
-    <%= f.label :product_id, "対象商材" %>
-    <%= f.collection_select :product_id, Product.order(:name), :id, :name,
-          { include_blank: true }, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.label :name, "テンプレート名" %>
-    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
-  </div>
-  <div>
-    <%= f.check_box :is_active %>
-    <%= f.label :is_active, "有効" %>
+  <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <div class="flex flex-col gap-4 max-w-md">
+      <div>
+        <%= f.label :product_id, "対象商材", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :product_id, Product.order(:name), :id, :name,
+              { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :name, "テンプレート名", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.text_field :name, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= f.check_box :is_active, class: "h-4 w-4 rounded border-slate-300" %>
+        <%= f.label :is_active, "有効", class: "text-sm font-medium text-slate-700" %>
+      </div>
+    </div>
   </div>
 
   <%# 04 R3タスク6: ステップの動的追加・削除（nested-form Stimulusコントローラ）。 %>
   <div data-controller="nested-form" data-nested-form-placeholder-value="NEW_STEP_RECORD"
-       class="flex flex-col gap-4 border-t pt-4">
-    <h2 class="font-bold">ステップ</h2>
+       class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">ステップ</h3>
 
     <div data-nested-form-target="container" class="flex flex-col gap-4">
       <%= f.fields_for :form_steps do |step_f| %>
@@ -34,8 +39,12 @@
       <% end %>
     </template>
 
-    <button type="button" data-action="nested-form#add" class="underline w-fit">ステップを追加</button>
+    <button type="button" data-action="nested-form#add"
+            class="mt-4 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">ステップを追加</button>
   </div>
 
-  <%= f.submit "保存", class: "bg-blue-600 text-white rounded px-4 py-2 w-fit" %>
+  <div class="flex gap-2">
+    <%= f.submit "保存", class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+    <%= link_to "キャンセル", admin_form_templates_path, class: "rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" %>
+  </div>
 <% end %>

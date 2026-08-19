@@ -1,50 +1,72 @@
-<div class="flex flex-col gap-4">
-  <h1 class="text-2xl font-bold"><%= @form_template.name %></h1>
-  <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
-    <dt class="font-bold">商材</dt><dd><%= @form_template.product.name %></dd>
-    <dt class="font-bold">有効</dt><dd><%= @form_template.is_active? %></dd>
-  </dl>
+<% content_for :page_title, "フォームテンプレート詳細" %>
 
-  <div class="flex flex-col gap-4">
-    <% @form_template.form_steps.each do |step| %>
-      <div class="border rounded p-3">
-        <h2 class="font-bold">ステップ<%= step.step_number %>: <%= step.name %></h2>
-        <table class="border-collapse w-full text-sm mt-2">
+<div class="flex flex-col gap-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900"><%= @form_template.name %></h2>
+      <p class="text-sm text-slate-500"><%= @form_template.product.name %></p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "一覧に戻る", admin_form_templates_path,
+            class: "rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" %>
+      <% if policy(@form_template).update? %>
+        <%= link_to "編集", edit_admin_form_template_path(@form_template),
+              class: "rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">基本情報</h3>
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs text-slate-500">対象商材</dt>
+        <dd class="mt-1"><%= link_to @form_template.product.name, admin_product_path(@form_template.product), class: "text-indigo-600 hover:underline" %></dd>
+      </div>
+      <div>
+        <dt class="text-xs text-slate-500">状態</dt>
+        <dd class="mt-1"><%= active_badge(@form_template.is_active?) %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <% @form_template.form_steps.order(:step_number).each do |step| %>
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h3 class="mb-3 text-sm font-semibold text-slate-800">ステップ<%= step.step_number %>: <%= step.name %></h3>
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full text-sm">
           <thead>
-            <tr>
-              <th class="border px-2 py-1 text-left">キー</th>
-              <th class="border px-2 py-1 text-left">ラベル</th>
-              <th class="border px-2 py-1 text-left">入力形式</th>
-              <th class="border px-2 py-1 text-left">反映先</th>
-              <th class="border px-2 py-1 text-left">必須</th>
-              <th class="border px-2 py-1 text-left">編集可能区分</th>
+            <tr class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <th class="px-3 py-2">キー</th>
+              <th class="px-3 py-2">ラベル</th>
+              <th class="px-3 py-2">入力形式</th>
+              <th class="px-3 py-2">反映先</th>
+              <th class="px-3 py-2">必須</th>
+              <th class="px-3 py-2">編集可能区分</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-100">
             <% step.form_fields.ordered.each do |field| %>
               <tr>
-                <td class="border px-2 py-1"><%= field.field_key %></td>
-                <td class="border px-2 py-1"><%= field.label %></td>
-                <td class="border px-2 py-1"><%= field.field_type %></td>
-                <td class="border px-2 py-1"><%= field.target_table %>.<%= field.target_column %></td>
-                <td class="border px-2 py-1"><%= field.required? %></td>
-                <td class="border px-2 py-1"><%= field.editable_by_tier.join(", ") %></td>
+                <td class="px-3 py-2 font-mono text-slate-600"><%= field.field_key %></td>
+                <td class="px-3 py-2 text-slate-800"><%= field.label %></td>
+                <td class="px-3 py-2 text-slate-600"><%= field.field_type %></td>
+                <td class="px-3 py-2 text-slate-600"><%= field.target_table %>.<%= field.target_column %></td>
+                <td class="px-3 py-2"><%= field.required? ? "必須" : "任意" %></td>
+                <td class="px-3 py-2 text-slate-600"><%= field.editable_by_tier.join(", ") %></td>
               </tr>
             <% end %>
           </tbody>
         </table>
       </div>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
 
-  <div class="flex gap-3">
-    <%= link_to "一覧に戻る", admin_form_templates_path, class: "underline" %>
-    <% if policy(@form_template).update? %>
-      <%= link_to "編集", edit_admin_form_template_path(@form_template), class: "underline" %>
-    <% end %>
-    <% if policy(@form_template).destroy? %>
-      <%= button_to "削除", admin_form_template_path(@form_template), method: :delete,
-            form: { data: { turbo_confirm: "削除しますか？" } } %>
-    <% end %>
-  </div>
+  <% if policy(@form_template).destroy? %>
+    <div>
+      <%= button_to "このテンプレートを削除", admin_form_template_path(@form_template), method: :delete,
+            form: { data: { turbo_confirm: "#{@form_template.name} を削除しますか？" } },
+            class: "rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100" %>
+    </div>
+  <% end %>
 </div>
