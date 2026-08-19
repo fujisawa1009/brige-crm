@@ -116,6 +116,25 @@ RSpec.describe FormField, type: :model, seed_status_catalog: true do
         field = build(:form_field, target_table: "order", target_column: "product_option_ids")
         expect(field).to be_valid
       end
+
+      # v5 セキュリティ修正: Devise/メールOTP認証列（encrypted_password等）とnetmove_member_id等の
+      # 決済連携列がホワイトリストに含まれていた（form-template-mapping.md §9-2 #2 指摘）。
+      it "Customerの認証列（encrypted_password/otp_code_digest/otp_code_expires_at/otp_attempts/unlock_token/locked_at/failed_attempts）は許可しない" do
+        %w[encrypted_password otp_code_digest otp_code_expires_at otp_attempts unlock_token locked_at failed_attempts].each do |column|
+          field = build(:form_field, target_table: "customer", target_column: column)
+          expect(field).not_to be_valid, "#{column} は許可されるべきではない"
+          expect(field.errors[:target_column]).to be_present
+        end
+      end
+
+      it "決済連携でシステムが設定する列（netmove_member_id/netmove_registered_at）は許可しない" do
+        field = build(:form_field, target_table: "customer", target_column: "netmove_member_id")
+        expect(field).not_to be_valid
+        expect(field.errors[:target_column]).to be_present
+
+        field2 = build(:form_field, target_table: "customer", target_column: "netmove_registered_at")
+        expect(field2).not_to be_valid
+      end
     end
   end
 

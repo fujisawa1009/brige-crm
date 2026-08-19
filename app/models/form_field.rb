@@ -74,11 +74,23 @@ class FormField < ApplicationRecord
   }.freeze
 
   # SequenceCounterでモデル内部が採番する列（Customer#assign_customer_number／
-  # Order#assign_order_number）。フォーム入力者が上書きできてはならない。
+  # Order#assign_order_number）に加え、決済連携（ネットムーブ会員ID登録）で
+  # システムが設定する列。いずれも申込フォーム入力者が上書きできてはならない。
   AUTO_ASSIGNED_COLUMNS = {
-    "customer" => %w[customer_number],
+    "customer" => %w[customer_number netmove_member_id netmove_registered_at],
     "order" => %w[order_number]
   }.freeze
+
+  # Devise/メールOTP認証に使う列（04 R3残タスク・セキュリティ）。target_tableがcustomerの
+  # 場合、これらはCustomer#authenticate_userやOTP検証が参照する認証状態そのものであり、
+  # フォーム入力者（営業担当者）が申込フォーム経由で上書きできると、他人のパスワードハッシュや
+  # ロック状態・OTPコードを書き換えるアカウント乗っ取りの穴になる。foreign_key・暗号化列の
+  # 除外ロジックでは捕捉できないため、列名を直接列挙して一律除外する。
+  AUTHENTICATION_COLUMNS = %w[
+    encrypted_password
+    otp_code_digest otp_code_expires_at otp_attempts
+    unlock_token locked_at failed_attempts
+  ].freeze
 
   # 主キー・タイムスタンプ・TracksUser由来の追跡列は、どのtarget_tableでもフォーム入力対象にしない。
   SYSTEM_COLUMNS = %w[id created_at updated_at created_by_id updated_by_id lock_version].freeze
@@ -103,7 +115,9 @@ class FormField < ApplicationRecord
   #     sales_representative_id/contract_condition_id等はいずれもここに含まれる）
   #   - 暗号化列（Model.encrypted_attributes。OrderWorkDetailのSNS認証情報8カラムに加え、
   #     Order#billing_passwordのような同種の暗号化列も一律で対象にする）
-  #   - 自動採番列（AUTO_ASSIGNED_COLUMNS）
+  #   - Devise/メールOTP認証列（AUTHENTICATION_COLUMNS。encrypted_password等はbcryptハッシュで
+  #     Model.encrypted_attributesには乗らないため上記の暗号化列除外では捕捉できず、別枠で除外する）
+  #   - 自動採番列（AUTO_ASSIGNED_COLUMNS。netmove_member_id等の決済連携でシステムが設定する列を含む）
   #   - ワークフロー制御用の業務ステータス列（WORKFLOW_STATUS_COLUMNS）
   # に、product_option_idsのような実カラムでない正規の書き込み先（EXTRA_ALLOWED_COLUMNS）を加える。
   def self.allowed_target_columns_for(target_table)
@@ -112,7 +126,7 @@ class FormField < ApplicationRecord
 
     foreign_keys       = model.reflect_on_all_associations(:belongs_to).map(&:foreign_key)
     encrypted_columns   = model.encrypted_attributes.to_a.map(&:to_s)
-    disallowed_columns = SYSTEM_COLUMNS + foreign_keys + encrypted_columns +
+    disallowed_columns = SYSTEM_COLUMNS + foreign_keys + encrypted_columns + AUTHENTICATION_COLUMNS +
                           Array(AUTO_ASSIGNED_COLUMNS[target_table]) + WORKFLOW_STATUS_COLUMNS
 
     (model.column_names - disallowed_columns + Array(EXTRA_ALLOWED_COLUMNS[target_table])).freeze
