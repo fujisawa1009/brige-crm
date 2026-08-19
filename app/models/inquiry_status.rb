@@ -22,8 +22,8 @@
 #
 # Indexes
 #
-#  index_inquiry_statuses_on_category_and_code           (category,code) UNIQUE
-#  index_inquiry_statuses_on_category_active_order        (category,is_active,sort_order)
+#  index_inquiry_statuses_on_category_active_order  (category,is_active,sort_order)
+#  index_inquiry_statuses_on_category_and_code      (category,code) UNIQUE
 #
 # Foreign Keys
 #

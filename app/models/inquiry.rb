@@ -20,10 +20,10 @@
 #  after_area           :string
 #  after_type           :string
 #  after_urgency        :string
+#  category             :string           not null
 #  first_responder_name :string
 #  inquiry_number       :string           not null
 #  is_visible_to_agent  :boolean          default(TRUE), not null
-#  category             :string           not null
 #  next_responder_name  :string
 #  reception_channel    :string
 #  status               :string           not null
@@ -36,9 +36,9 @@
 #
 # Indexes
 #
-#  index_inquiries_on_inquiry_number  (inquiry_number) UNIQUE
-#  index_inquiries_on_order_id        (order_id)
 #  index_inquiries_on_category_and_status  (category,status)
+#  index_inquiries_on_inquiry_number       (inquiry_number) UNIQUE
+#  index_inquiries_on_order_id             (order_id)
 #
 # Foreign Keys
 #

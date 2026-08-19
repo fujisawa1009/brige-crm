@@ -18,8 +18,8 @@
 #
 # Indexes
 #
-#  index_system_notifications_on_recipient_and_read_at  (recipient_type,recipient_id,read_at)
 #  index_system_notifications_on_expires_at             (expires_at)
+#  index_system_notifications_on_recipient_and_read_at  (recipient_type,recipient_id,read_at)
 #
 class SystemNotification < ApplicationRecord
   TYPE_INQUIRY_CREATED        = "inquiry_created"

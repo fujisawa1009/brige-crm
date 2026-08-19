@@ -34,6 +34,8 @@ require "rails_helper"
 #  contractor_name_kana     :string(255)
 #  customer_number          :string(20)       not null
 #  email                    :string(255)
+#  encrypted_password       :string           default(""), not null
+#  failed_attempts          :integer          default(0), not null
 #  fax_number               :string(20)
 #  industry                 :string(50)
 #  industry_sub             :string(50)
@@ -46,12 +48,16 @@ require "rails_helper"
 #  invoice_phone            :string(20)
 #  invoice_postal_code      :string(8)
 #  lbc_code                 :string(20)
+#  locked_at                :datetime
 #  mobile_contact_person    :string(50)
 #  mobile_phone             :string(20)
 #  name                     :string(255)      not null
 #  netmove_registered_at    :date
 #  num_employees            :integer
 #  num_offices              :integer
+#  otp_attempts             :integer          default(0), not null
+#  otp_code_digest          :string
+#  otp_code_expires_at      :datetime
 #  phone                    :string(20)
 #  postal_code              :string(8)
 #  prefecture               :string(20)
@@ -61,6 +67,7 @@ require "rails_helper"
 #  sms_mobile_number        :string(20)
 #  status                   :string(50)       default("applied"), not null
 #  town                     :string(100)
+#  unlock_token             :string
 #  years_in_business        :string(20)
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
@@ -75,9 +82,11 @@ require "rails_helper"
 #  index_customers_on_agency_id                (agency_id)
 #  index_customers_on_applied_at               (applied_at)
 #  index_customers_on_customer_number          (customer_number) UNIQUE
+#  index_customers_on_email                    (email) UNIQUE
 #  index_customers_on_name                     (name)
 #  index_customers_on_sales_representative_id  (sales_representative_id)
 #  index_customers_on_status                   (status)
+#  index_customers_on_unlock_token             (unlock_token) UNIQUE
 #
 # Foreign Keys
 #

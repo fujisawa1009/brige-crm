@@ -16,6 +16,7 @@
 #
 # Indexes
 #
+#  idx_on_recipient_type_recipient_id_7b525e48ed     (recipient_type,recipient_id)
 #  index_notification_recipients_on_notification_id  (notification_id)
 #
 # Foreign Keys

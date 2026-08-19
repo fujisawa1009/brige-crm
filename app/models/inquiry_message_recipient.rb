@@ -6,17 +6,18 @@
 #
 # Table name: inquiry_message_recipients
 #
-#  id                  :uuid             not null, primary key
-#  recipient_type      :string           not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  inquiry_message_id  :uuid             not null
-#  recipient_id        :uuid             not null
+#  id                 :uuid             not null, primary key
+#  recipient_type     :string           not null
+#  resolved_email     :string
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  inquiry_message_id :uuid             not null
+#  recipient_id       :uuid             not null
 #
 # Indexes
 #
+#  idx_on_recipient_type_recipient_id_bf7c4c784f   (recipient_type,recipient_id)
 #  index_inquiry_message_recipients_on_message_id  (inquiry_message_id)
-#  index_inquiry_message_recipients_on_recipient_type_and_recipient_id  (recipient_type,recipient_id)
 #
 # Foreign Keys
 #

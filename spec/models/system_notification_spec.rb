@@ -1,6 +1,25 @@
 require "rails_helper"
 
 # 04 R4タスク4: アプリ内通知。既定有効期限の付与・既読化・期限切れpruneを検証する。
+# == Schema Information
+#
+# Table name: system_notifications
+#
+#  id                :uuid             not null, primary key
+#  data              :jsonb            not null
+#  expires_at        :datetime         not null
+#  notification_type :string           not null
+#  read_at           :datetime
+#  recipient_type    :string           not null
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  recipient_id      :uuid             not null
+#
+# Indexes
+#
+#  index_system_notifications_on_expires_at             (expires_at)
+#  index_system_notifications_on_recipient_and_read_at  (recipient_type,recipient_id,read_at)
+#
 RSpec.describe SystemNotification, type: :model do
   it "作成時にexpires_at（30日後）を自動付与する" do
     notification = create(:system_notification)
