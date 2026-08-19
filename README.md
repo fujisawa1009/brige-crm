@@ -8,6 +8,15 @@
 `config/master.key` は非コミット（.gitignore対象）。別途配布された鍵をこのパスに置くか、
 `RAILS_MASTER_KEY` 環境変数で直接渡すこと。
 
+手順は以下の通りです。既存の config/credentials.yml.enc は鍵を持たないと復号できないため、いったん退避してから新規生成します。
+
+[初回手順]
+1. 既存 config/credentials.yml.enc をバックアップ（念のため）してから削除
+2. docker compose build web（アセットprecompileはダミーのSECRET_KEY_BASEを使うため鍵不要）
+3. docker compose run --rm -e EDITOR=true web bin/rails credentials:edit
+→ コンテナ内で config/master.key と新しい config/credentials.yml.enc が生成され、bind mount経由でホスト（このリポジトリ）にも反映されます
+4. 生成された config/master.key の存在・パーミッションを確認
+
 ```bash
 RAILS_MASTER_KEY=$(cat config/master.key) docker compose build
 RAILS_MASTER_KEY=$(cat config/master.key) docker compose up -d db
@@ -17,6 +26,11 @@ RAILS_MASTER_KEY=$(cat config/master.key) docker compose up
 
 - web: http://localhost:3000
 - mailpit（開発用SMTPキャッチャー。OTPメール等の確認用）: http://localhost:8025
+
+[ログイン情報]
+- メールアドレス: admin@example.com
+- パスワード: Password1234
+- ロール: admin（super_admin相当）
 
 ## セットアップ（ローカルRuby + Docker db のみ）
 
