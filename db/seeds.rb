@@ -28,4 +28,8 @@ if Rails.env.development?
     UserSystemRole.create!(user: admin, system_role: admin_role)
     puts "development seed: created #{admin_email} / Password1234 (admin role)"
   end
+
+  # 画面確認用サンプルデータ（顧客・案件・問い合わせ）。実データの代理店・商材に紐づけて生成する
+  # （db/seeds/sample_transactions.rb参照。7e12d94で廃止された旧sample_data.rbの復元）。
+  load Rails.root.join("db/seeds/sample_transactions.rb")
 end
