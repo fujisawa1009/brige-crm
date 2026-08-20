@@ -122,6 +122,170 @@ RSpec.describe "Admin::Customers", type: :request, seed_permission_catalog: true
       expect(response).to have_http_status(:forbidden)
     end
   end
+
+  # CEO指示 2026-08-20: 顧客一覧の検索条件を旧ジャスミン相当の9条件へ拡充した
+  # （app/services/customer_search.rb）。9条件それぞれと、参照制御・ページ送りでの保持を検証する。
+  describe "一覧の検索条件（CEO指示 2026-08-20 の9条件）" do
+    let!(:admin_user) { user_with_role("admin") }
+
+    let!(:group_x) { create(:agency_group, group_code: "GRPX", name: "エックス商事グループ") }
+    let!(:group_y) { create(:agency_group, group_code: "GRPY", name: "ワイ物産グループ") }
+    let!(:agency_x) { create(:agency, agency_group: group_x, agency_code: "AGX", name: "エックス東京支店") }
+    let!(:agency_y) { create(:agency, agency_group: group_y, agency_code: "AGY", name: "ワイ大阪支店") }
+
+    let!(:target) do
+      create(:customer, agency: agency_x, name: "検索対象ターゲット商店",
+                        contractor_name_kana: "ケンサクタイショウ", representative_name: "検索太郎",
+                        email: "target-hit@example.com", phone: "0312345678",
+                        status: CustomerStatus::CODE_APPLIED, applied_at: Date.new(2026, 5, 10))
+    end
+    let!(:other) do
+      create(:customer, agency: agency_y, name: "対象外オフィス",
+                        email: "miss@example.com", phone: "0699999999",
+                        status: CustomerStatus::CODE_WITHDRAWN, applied_at: Date.new(2026, 7, 20))
+    end
+
+    before { sign_in_with_otp!(admin_user) }
+
+    # 検索結果の判定は一覧に出る顧客名で行う（target が残り other が消えることを見る）。
+    def expect_only_target(params)
+      get admin_customers_path, params: params
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(target.name)
+      expect(response.body).not_to include(other.name)
+    end
+
+    it "1. フリーワード: 氏名で絞り込める" do
+      expect_only_target(q: "ターゲット")
+    end
+
+    it "1. フリーワード: 氏名以外（カナ・代表者名・メール・電話）も対象に含む" do
+      expect_only_target(q: "ケンサクタイショウ")
+      expect_only_target(q: "検索太郎")
+      expect_only_target(q: "target-hit@example.com")
+      expect_only_target(q: "0312345678")
+    end
+
+    it "1. フリーワード: LIKEのメタ文字はエスケープされ、ワイルドカードとして解釈されない" do
+      get admin_customers_path, params: { q: "%" }
+      expect(response.body).not_to include(target.name)
+      expect(response.body).not_to include(other.name)
+    end
+
+    it "2. FTWEB顧客番号: 部分一致で絞り込める（旧実装踏襲）" do
+      expect_only_target(customer_number: target.customer_number)
+      expect_only_target(customer_number: target.customer_number.last(4))
+    end
+
+    it "3. グループ会社コード: 完全一致で絞り込める" do
+      expect_only_target(group_code: "GRPX")
+    end
+
+    it "3. グループ会社コード: 部分文字列では一致しない（完全一致のため）" do
+      get admin_customers_path, params: { group_code: "GRP" }
+      expect(response.body).not_to include(target.name)
+      expect(response.body).not_to include(other.name)
+    end
+
+    it "4. グループ会社名: 部分一致で絞り込める" do
+      expect_only_target(group_name: "エックス商事")
+    end
+
+    it "5. 代理店コード: 完全一致で絞り込める" do
+      expect_only_target(agency_code: "AGX")
+    end
+
+    it "6. 代理店名: 部分一致で絞り込める" do
+      expect_only_target(agency_name: "東京")
+    end
+
+    it "7. 状況（ステータス）: 完全一致で絞り込める" do
+      expect_only_target(status: CustomerStatus::CODE_APPLIED)
+    end
+
+    it "8. お申込日: from〜to の期間指定で絞り込める" do
+      expect_only_target(applied_from: "2026-05-01", applied_to: "2026-05-31")
+    end
+
+    it "8. お申込日: from のみ／to のみでも動く" do
+      get admin_customers_path, params: { applied_from: "2026-07-01" }
+      expect(response.body).not_to include(target.name)
+      expect(response.body).to include(other.name)
+
+      expect_only_target(applied_to: "2026-06-30")
+    end
+
+    it "8. お申込日: 不正な日付文字列は条件なしとして扱う（500にしない）" do
+      get admin_customers_path, params: { applied_from: "not-a-date" }
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(target.name, other.name)
+    end
+
+    it "9. 最終更新日時: from〜to の期間指定で絞り込める（当日を含む）" do
+      other.update_column(:updated_at, 10.days.ago)
+      today = Date.current.to_fs(:iso8601)
+      expect_only_target(updated_from: today, updated_to: today)
+    end
+
+    it "9. 最終更新日時: from のみ／to のみでも動く" do
+      other.update_column(:updated_at, 10.days.ago)
+      expect_only_target(updated_from: 1.day.ago.to_date.to_fs(:iso8601))
+
+      get admin_customers_path, params: { updated_to: 5.days.ago.to_date.to_fs(:iso8601) }
+      expect(response.body).to include(other.name)
+      expect(response.body).not_to include(target.name)
+    end
+
+    it "複数条件はAND結合される" do
+      get admin_customers_path, params: { q: "ターゲット", group_code: "GRPY" }
+      expect(response.body).not_to include(target.name)
+      expect(response.body).not_to include(other.name)
+    end
+
+    it "検索条件がページ送りのリンクに引き継がれる（共通ページネーション）" do
+      create_list(:customer, 30, agency: agency_x, name: "ページ送り検証顧客")
+
+      get admin_customers_path, params: { agency_code: "AGX" }
+
+      expect(response.body).to include("agency_code=AGX")
+      expect(response.body).to match(/page=2[^0-9]/)
+      # 共通ページネーション（app/views/shared/_pagination.html.erb）の総件数・表示範囲。
+      expect(response.body).to match(/全 31 件中 1〜\d+ 件を表示/)
+    end
+
+    it "1件もヒットしない場合もページネーションが崩れない（全 0 件と表示する）" do
+      get admin_customers_path, params: { q: "該当なしのはずのキーワード" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(%(<p class="pagination-summary">全 0 件</p>))
+    end
+  end
+
+  # 検索条件は policy_scope の内側でしか効かない（絞り込みパラメータを参照制御の抜け道にしない）。
+  describe "検索条件はpolicy_scopeを迂回しない" do
+    let!(:group_x) { create(:agency_group, group_code: "GRPX2") }
+    let!(:group_y) { create(:agency_group, group_code: "GRPY2") }
+    let!(:agency_x) { create(:agency, agency_group: group_x, agency_code: "AGX2", name: "エックス東京支店") }
+    let!(:agency_y) { create(:agency, agency_group: group_y, agency_code: "AGY2", name: "ワイ大阪支店") }
+    let!(:other_agency_customer) { create(:customer, agency: agency_y, name: "他代理店の顧客") }
+    let!(:agency_user) { user_with_role("代理店用", agency: agency_x) }
+
+    before { sign_in_with_otp!(agency_user) }
+
+    it "他代理店の代理店コードを直接指定しても、その顧客は見えない" do
+      get admin_customers_path, params: { agency_code: "AGY2" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(other_agency_customer.name)
+    end
+
+    it "他代理店グループのグループ会社コードを直接指定しても、その顧客は見えない" do
+      get admin_customers_path, params: { group_code: "GRPY2" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(other_agency_customer.name)
+    end
+  end
 end
 
 # 04 R2追補: customer_numberの自動採番の並行安全性を、spec/models/customer_spec.rbのモデル層検証に
