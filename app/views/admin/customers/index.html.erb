@@ -20,11 +20,11 @@
 
   <%#
     顧客検索（CEO指示 2026-08-20 の9条件）。条件の実体は app/services/customer_search.rb。
-    フリーワードとステータスは常時表示、残り7条件は<details>「詳細条件」に畳んで縦の間延びを防ぐ
-    （条件が入っている状態でリロード／ページ送りしたときは open で開いた状態にする）。
+    当初は7条件を details「詳細条件」に畳んでいたが、CEO指示（2026-08-20 画面目視）により
+    折りたたみを廃止し、9条件すべてを最初から見えている状態にした。
+    縦の間延びを防ぐため、テキスト系条件は3列グリッド、日付レンジは1行2列に分けて並べる。
   %>
-  <% input_class = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
-  <% advanced_open = CustomerSearch::ADVANCED_KEYS.any? { |key| customer_search_params[key].present? } %>
+  <% input_class = "w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm" %>
   <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <%= form_with url: admin_customers_path, method: :get, class: "flex flex-col gap-3" do %>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -38,57 +38,54 @@
           <%= select_tag :status, options_from_collection_for_select(CustomerStatus.ordered, :code, :label, customer_search_params[:status]),
                 include_blank: "すべて", class: input_class %>
         </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500">FTWEB顧客番号</label>
+          <%= text_field_tag :customer_number, customer_search_params[:customer_number], placeholder: "C-000001",
+                class: input_class %>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500">グループ会社コード</label>
+          <%= text_field_tag :group_code, customer_search_params[:group_code], placeholder: "完全一致",
+                class: input_class %>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500">グループ会社名</label>
+          <%= text_field_tag :group_name, customer_search_params[:group_name], placeholder: "部分一致",
+                class: input_class %>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500">代理店コード</label>
+          <%= text_field_tag :agency_code, customer_search_params[:agency_code], placeholder: "完全一致",
+                class: input_class %>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500">代理店名</label>
+          <%= text_field_tag :agency_name, customer_search_params[:agency_name], placeholder: "部分一致",
+                class: input_class %>
+        </div>
       </div>
 
-      <details class="rounded-lg border border-slate-200 bg-slate-50/60" <%= "open" if advanced_open %>>
-        <summary class="cursor-pointer select-none px-3 py-2 text-sm font-medium text-slate-600">詳細条件</summary>
-        <div class="grid grid-cols-1 gap-3 border-t border-slate-200 p-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500">FTWEB顧客番号</label>
-            <%= text_field_tag :customer_number, customer_search_params[:customer_number], placeholder: "C-000001",
-                  class: input_class %>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500">グループ会社コード</label>
-            <%= text_field_tag :group_code, customer_search_params[:group_code], placeholder: "完全一致",
-                  class: input_class %>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500">グループ会社名</label>
-            <%= text_field_tag :group_name, customer_search_params[:group_name], placeholder: "部分一致",
-                  class: input_class %>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500">代理店コード</label>
-            <%= text_field_tag :agency_code, customer_search_params[:agency_code], placeholder: "完全一致",
-                  class: input_class %>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-500">代理店名</label>
-            <%= text_field_tag :agency_name, customer_search_params[:agency_name], placeholder: "部分一致",
-                  class: input_class %>
-          </div>
-          <div class="hidden lg:block"></div>
-          <div class="sm:col-span-2 lg:col-span-1">
-            <label class="mb-1 block text-xs font-medium text-slate-500">お申込日</label>
-            <div class="flex items-center gap-2">
-              <%= date_field_tag :applied_from, customer_search_params[:applied_from], class: input_class %>
-              <span class="text-sm text-slate-400">〜</span>
-              <%= date_field_tag :applied_to, customer_search_params[:applied_to], class: input_class %>
-            </div>
-          </div>
-          <div class="sm:col-span-2 lg:col-span-1">
-            <label class="mb-1 block text-xs font-medium text-slate-500">最終更新日時</label>
-            <div class="flex items-center gap-2">
-              <%= date_field_tag :updated_from, customer_search_params[:updated_from], class: input_class %>
-              <span class="text-sm text-slate-400">〜</span>
-              <%= date_field_tag :updated_to, customer_search_params[:updated_to], class: input_class %>
-            </div>
+      <%# 日付レンジは1つのセルに入力欄が2つ入るため、テキスト系より広い1行2列で並べる。 %>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500">お申込日</label>
+          <div class="flex items-center gap-2">
+            <%= date_field_tag :applied_from, customer_search_params[:applied_from], class: input_class %>
+            <span class="text-sm text-slate-400">〜</span>
+            <%= date_field_tag :applied_to, customer_search_params[:applied_to], class: input_class %>
           </div>
         </div>
-      </details>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500">最終更新日時</label>
+          <div class="flex items-center gap-2">
+            <%= date_field_tag :updated_from, customer_search_params[:updated_from], class: input_class %>
+            <span class="text-sm text-slate-400">〜</span>
+            <%= date_field_tag :updated_to, customer_search_params[:updated_to], class: input_class %>
+          </div>
+        </div>
+      </div>
 
-      <div class="flex items-center justify-between pt-1">
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
           <%= link_to "クリア", admin_customers_path, class: "btn-secondary" %>

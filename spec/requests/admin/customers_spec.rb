@@ -261,6 +261,36 @@ RSpec.describe "Admin::Customers", type: :request, seed_permission_catalog: true
     end
   end
 
+  # CEO指示 2026-08-20（画面目視）: 「詳細条件」の折りたたみ（details）を廃止し、
+  # 9条件すべてを最初から表示する。折りたたみが復活していないことを回帰として見る。
+  describe "検索フォームは9条件を常時表示する（折りたたみ廃止）" do
+    let!(:admin_user) { user_with_role("admin") }
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "details/summary（詳細条件の折りたたみ）が存在しない" do
+      get admin_customers_path
+
+      expect(response.body).not_to include("<details")
+      expect(response.body).not_to include("詳細条件")
+    end
+
+    it "9条件すべての入力欄が最初から描画されている" do
+      get admin_customers_path
+
+      %w[
+        q status customer_number group_code group_name agency_code agency_name
+        applied_from applied_to updated_from updated_to
+      ].each do |field|
+        expect(response.body).to include(%(name="#{field}")), "検索条件 #{field} の入力欄が無い"
+      end
+
+      expect(response.body).to include("フリーワード", "FTWEB顧客番号", "グループ会社コード",
+                                       "グループ会社名", "代理店コード", "代理店名",
+                                       "ステータス", "お申込日", "最終更新日時")
+    end
+  end
+
   # 検索条件は policy_scope の内側でしか効かない（絞り込みパラメータを参照制御の抜け道にしない）。
   describe "検索条件はpolicy_scopeを迂回しない" do
     let!(:group_x) { create(:agency_group, group_code: "GRPX2") }

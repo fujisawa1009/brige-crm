@@ -36,9 +36,6 @@ class CustomerSearch
     applied_from applied_to updated_from updated_to
   ].freeze
 
-  # フリーワード以外の条件が1つでも入っていれば、詳細条件パネルを開いた状態で描画する。
-  ADVANCED_KEYS = (PERMITTED_KEYS - %i[q status]).freeze
-
   def initialize(scope, params)
     @scope = scope
     @params = params || {}
