@@ -1,14 +1,16 @@
 <%#
   admin配下の全一覧画面で共有するページネーション（CEO指示 2026-08-20 タスクC）。
-  従来は各画面が `pagy_nav(@pagy)` を直接呼んでおり、pagy 既定のHTML（class="pagy nav"）に
+  従来は各画面が pagy_nav を直接呼んでおり、pagy 既定のHTML（class="pagy nav"）に
   対応するCSSが無いため画面ごとに見え方が揃わなかった。ここに一本化する。
 
-    <%= render "shared/pagination", pagy: @pagy %>
+  呼び出し方: render "shared/pagination" に pagy: @pagy を渡す。
 
   - 総件数と表示範囲は常に出す（1ページに収まる場合・0件の場合も出す）。
   - ページ番号のリンクは pagy_url_for が request.GET をそのまま引き継ぐため、
     検索条件はページ送りをまたいで保持される。
   - 見た目は app/assets/tailwind/application.css の .pagination-* クラス（Tailwind v4）。
+  - このコメント内に ERB の閉じタグを書かないこと。ERB は最初の閉じタグでコメントを
+    打ち切るため、以降の行が画面にそのまま出力される（2026-08-20 に実際に発生）。
 %>
 <% return if pagy.blank? %>
 <nav class="pagination" aria-label="ページネーション">
