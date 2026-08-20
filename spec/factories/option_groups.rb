@@ -26,8 +26,11 @@
 #
 FactoryBot.define do
   factory :option_group do
-    sequence(:key) { |n| "group_key_#{n}" }
-    sequence(:label) { |n| "選択肢グループ#{n}" }
+    # keyは「テスト用と一目で分かる名前」にする（master-data-design-policy.md §5-2）。
+    # 旧値 group_key_1 / group_key_2 は実データと見分けが付かず、開発DBへ紛れ込んだ結果
+    # 管理画面の選択肢一覧に「選択肢グループ1/2」として残り、運用開始前タスク化されていた。
+    sequence(:key) { |n| "spec_dummy_group_#{n}" }
+    sequence(:label) { |n| "【テスト用】選択肢グループ#{n}" }
     is_active { true }
   end
 end

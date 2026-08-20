@@ -189,11 +189,40 @@ class BridgePlusFormTemplateSeeder
   end
 
   def call
+    prune_obsolete_option_groups
     seed_option_groups
     seed_form_template
   end
 
   private
+
+  # 選択肢マスタから「もう選択肢であってはいけない行」を落とす（master-data-design-policy.md §5-2/§5-3）。
+  # OptionGroup は管理画面の選択肢一覧にそのまま出るため、開発の残骸が残っていると運用開始時に
+  # 業務用でない値が並んでしまう。db/seeds.rb を流せば必ず消えるよう、投入と同じ入口で掃除する。
+  #
+  # 対象1: `group_key_<数字>`
+  #   RSpec の FactoryBot シーケンス（spec/factories/option_groups.rb の旧定義）が生成したキー。
+  #   実データではなく、テスト用DB以外に存在してよい理由が無いため無条件に削除する
+  #   （ファクトリ側のキーも `spec_dummy_group_<数字>` へ変更済みで、今後この形は生成されない）。
+  #
+  # 対象2: `payment_method`
+  #   R5-5b（commit f819fb2）で専用テーブル PaymentMethod へ昇格し、OPTION_GROUPS からも外した。
+  #   OptionGroup 側に古い2値（預金口座振替/クレジット）が残っていると、専用マスタの3値
+  #   （口振/クレカ/おまとめ）と食い違う選択肢が管理画面に並ぶ。ただし移行前のDBを壊さないよう、
+  #   PaymentMethod マスタに行がある（＝昇格済み）ときだけ削除する。
+  OBSOLETE_OPTION_GROUP_KEY_PATTERN = /\Agroup_key_\d+\z/
+
+  def prune_obsolete_option_groups
+    obsolete = OptionGroup.all.select { |group| group.key.match?(OBSOLETE_OPTION_GROUP_KEY_PATTERN) }
+    obsolete << OptionGroup.find_by(key: "payment_method") if PaymentMethod.exists?
+    obsolete.compact!
+
+    return if obsolete.empty?
+
+    # option_values は option_group_id へのFKが ON DELETE CASCADE のため、親の削除で一緒に消える。
+    obsolete.each(&:destroy!)
+    Rails.logger.info("BridgePlusFormTemplateSeeder: 廃止済みのOptionGroupを削除しました (#{obsolete.map(&:key).join(', ')})")
+  end
 
   def seed_option_groups
     OPTION_GROUPS.each do |key, definition|
@@ -236,9 +265,20 @@ class BridgePlusFormTemplateSeeder
     end
   end
 
+  # 選択肢の出所がコードマスタ（PaymentMethod）であるフィールドのキー。
+  # 通常のフィールドは「無ければ作る」だけでフォームビルダーの手編集を尊重するが、これらは
+  # 保存される値が Order のバリデーション（PaymentMethod.exists?(code:)）と直結しており、
+  # R5-5b 昇格前にシードされた環境では旧OptionGroup由来のラベル値（「預金口座振替」等）が
+  # 残って申込が保存できなくなる。そのため choices だけは毎回マスタから同期し直す。
+  MASTER_DERIVED_OPTION_GROUPS = %w[payment_method].freeze
+
   def seed_field(step, field_def, index)
     field = step.form_fields.find_or_initialize_by(field_key: field_def[:key])
-    return if field.persisted?
+
+    if field.persisted?
+      sync_master_derived_choices(field, field_def)
+      return
+    end
 
     field.label = field_def[:label]
     field.field_type = field_def[:type]
@@ -253,6 +293,17 @@ class BridgePlusFormTemplateSeeder
     field.input_options = choices_for(field_def[:option_group])
     field.validation_rules = {}
     field.save!
+  end
+
+  def sync_master_derived_choices(field, field_def)
+    option_group_key = field_def[:option_group]
+    return unless MASTER_DERIVED_OPTION_GROUPS.include?(option_group_key)
+
+    expected = choices_for(option_group_key)
+    return if field.input_options == expected
+
+    field.update!(input_options: expected)
+    Rails.logger.info("BridgePlusFormTemplateSeeder: #{field.field_key} の選択肢をマスタから再同期しました")
   end
 
   def choices_for(option_group_key)

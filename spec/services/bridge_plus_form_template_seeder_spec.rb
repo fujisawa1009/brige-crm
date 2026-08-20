@@ -67,4 +67,59 @@ RSpec.describe BridgePlusFormTemplateSeeder do
     group = OptionGroup.find_by!(key: "prefecture")
     expect(group.option_values.count).to eq(47)
   end
+
+  # master-data-design-policy.md §5-2/§5-3: 管理画面の選択肢一覧に「業務用でない値」を残さない。
+  describe "廃止済みOptionGroupの掃除" do
+    it "開発用ダミー（group_key_<数字>）はOptionValueごと削除される" do
+      dummy = OptionGroup.create!(key: "group_key_1", label: "選択肢グループ1")
+      dummy.option_values.create!(value: "a", label: "a")
+      other = OptionGroup.create!(key: "group_key_99", label: "選択肢グループ99")
+
+      described_class.call
+
+      expect(OptionGroup.exists?(dummy.id)).to be false
+      expect(OptionGroup.exists?(other.id)).to be false
+      expect(OptionValue.where(option_group_id: dummy.id)).to be_empty
+    end
+
+    it "似た名前でも実データ（group_key_main等）は削除しない" do
+      keeper = OptionGroup.create!(key: "group_key_main", label: "実データ")
+
+      described_class.call
+
+      expect(OptionGroup.exists?(keeper.id)).to be true
+    end
+
+    it "R5-5b昇格後は旧OptionGroup(payment_method)を削除する" do
+      StatusSeeder.call # PaymentMethodマスタを投入＝昇格済みの状態
+      OptionGroup.create!(key: "payment_method", label: "お支払方法")
+
+      described_class.call
+
+      expect(OptionGroup.exists?(key: "payment_method")).to be false
+    end
+
+    it "R5-5b昇格前にシードされた古いpayment_method選択肢は再実行でマスタの値へ同期される" do
+      StatusSeeder.call
+      described_class.call
+      field = FormField.find_by!(field_key: "payment_method")
+      # 昇格前の状態（旧OptionGroup由来のラベル値）を再現する
+      field.update!(input_options: { "choices" => [ %w[預金口座振替 預金口座振替], %w[クレジット クレジット] ] })
+
+      described_class.call
+
+      expect(field.reload.input_options["choices"]).to eq(
+        [ %w[bank_transfer 預金口座振替], %w[credit クレジット], %w[bundled おまとめ] ]
+      )
+    end
+
+    it "PaymentMethodマスタが未投入（昇格前）のときは旧OptionGroup(payment_method)を残す" do
+      PaymentMethod.delete_all
+      legacy = OptionGroup.create!(key: "payment_method", label: "お支払方法")
+
+      described_class.call
+
+      expect(OptionGroup.exists?(legacy.id)).to be true
+    end
+  end
 end
