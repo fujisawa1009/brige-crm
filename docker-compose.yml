@@ -81,6 +81,11 @@ services:
       POSTGRES_PASSWORD: brige_crm_password
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
       BUNDLE_WITHOUT: ""
+      # メール送信は ActionMailer::MailDeliveryJob 経由でこの worker が実行するため、
+      # web と同じ SMTP 接続先が必須。未設定だと development.rb の既定 localhost:1025 に
+      # フォールバックし、raise_delivery_errors=false のため無言で送信失敗する。
+      SMTP_ADDRESS: mailpit
+      SMTP_PORT: 1025
     volumes:
       - .:/rails
     depends_on:
