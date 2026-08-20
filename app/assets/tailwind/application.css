@@ -33,3 +33,25 @@
   .btn-danger { @apply btn border border-red-300 bg-red-50 text-red-600 hover:bg-red-100; }
   .btn-secondary { @apply btn border border-slate-300 text-slate-600 hover:bg-slate-50; }
 }
+
+/*
+ * 共通ページネーション（CEO指示 2026-08-20 タスクC。app/views/shared/_pagination.html.erb）。
+ * .btn / .badge と同じ理由で、派生クラスから @apply できるよう基底の .pagination-link は
+ * @utility で定義する（@layer components 内のクラスは @apply の対象にできない）。
+ * hover 等のバリアントは派生側（@layer components）にだけ書く。
+ */
+@utility pagination-link {
+  @apply inline-flex min-w-9 items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors;
+}
+
+@layer components {
+  .pagination { @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between; }
+  .pagination-summary { @apply text-sm text-slate-500; }
+  /* ページ番号が多い・画面が狭いときは折り返す（スマホ幅で横スクロールを出さない）。 */
+  .pagination-pages { @apply flex list-none flex-wrap items-center gap-1; }
+
+  .pagination-page { @apply pagination-link border-slate-300 bg-white text-slate-600 hover:bg-slate-50; }
+  .pagination-page-current { @apply pagination-link border-indigo-600 bg-indigo-600 text-white; }
+  .pagination-page-disabled { @apply pagination-link border-slate-200 bg-white text-slate-300; }
+  .pagination-gap { @apply px-1 text-sm text-slate-400; }
+}

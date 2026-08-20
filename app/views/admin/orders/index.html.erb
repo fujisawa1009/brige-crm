@@ -28,7 +28,7 @@
               class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
       <div>
-        <label class="mb-1 block text-xs font-medium text-slate-500">案件ステータス</label>
+        <label class="mb-1 block text-xs font-medium text-slate-500">ステータス</label>
         <%= select_tag :status, options_from_collection_for_select(OrderStatus.ordered, :code, :label, params[:status]),
               include_blank: "すべて", class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
@@ -61,7 +61,7 @@
           <th class="px-4 py-3">契約顧客</th>
           <th class="px-4 py-3">販売代理店</th>
           <th class="px-4 py-3">受注日</th>
-          <th class="px-4 py-3">案件ステータス</th>
+          <th class="px-4 py-3">ステータス</th>
           <th class="px-4 py-3"></th>
         </tr>
       </thead>
@@ -92,5 +92,5 @@
     </table>
   </div>
 
-  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+  <%= render "shared/pagination", pagy: @pagy %>
 </div>

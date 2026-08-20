@@ -1,0 +1,50 @@
+<%#
+  admin配下の全一覧画面で共有するページネーション（CEO指示 2026-08-20 タスクC）。
+  従来は各画面が `pagy_nav(@pagy)` を直接呼んでおり、pagy 既定のHTML（class="pagy nav"）に
+  対応するCSSが無いため画面ごとに見え方が揃わなかった。ここに一本化する。
+
+    <%= render "shared/pagination", pagy: @pagy %>
+
+  - 総件数と表示範囲は常に出す（1ページに収まる場合・0件の場合も出す）。
+  - ページ番号のリンクは pagy_url_for が request.GET をそのまま引き継ぐため、
+    検索条件はページ送りをまたいで保持される。
+  - 見た目は app/assets/tailwind/application.css の .pagination-* クラス（Tailwind v4）。
+%>
+<% return if pagy.blank? %>
+<nav class="pagination" aria-label="ページネーション">
+  <p class="pagination-summary"><%= pagination_summary(pagy) %></p>
+
+  <% if pagy.pages > 1 %>
+    <ul class="pagination-pages">
+      <li>
+        <% if pagy.prev %>
+          <%= link_to "前へ", pagy_url_for(pagy, pagy.prev), class: "pagination-page", rel: "prev" %>
+        <% else %>
+          <span class="pagination-page-disabled" aria-disabled="true">前へ</span>
+        <% end %>
+      </li>
+
+      <%# pagy.series の例: [1, :gap, 7, 8, "9", 10, 11, :gap, 36]（Stringが現在ページ） %>
+      <% pagy.series.each do |item| %>
+        <li>
+          <% case item %>
+          <% when Integer %>
+            <%= link_to item, pagy_url_for(pagy, item), class: "pagination-page" %>
+          <% when String %>
+            <span class="pagination-page-current" aria-current="page"><%= item %></span>
+          <% else %>
+            <span class="pagination-gap">…</span>
+          <% end %>
+        </li>
+      <% end %>
+
+      <li>
+        <% if pagy.next %>
+          <%= link_to "次へ", pagy_url_for(pagy, pagy.next), class: "pagination-page", rel: "next" %>
+        <% else %>
+          <span class="pagination-page-disabled" aria-disabled="true">次へ</span>
+        <% end %>
+      </li>
+    </ul>
+  <% end %>
+</nav>
