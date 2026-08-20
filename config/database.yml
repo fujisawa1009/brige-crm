@@ -26,9 +26,19 @@ default: &default
   password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 
+# Solid Queue は production と同じく専用データベース（queue）へ分離する。
+# development を単一DBのままにすると db/queue_schema.rb がどこからも読み込まれず、
+# `bin/jobs`(worker) が solid_queue_processes 不在で起動できない。production と同じ
+# 「別DB + queue_schema.rb」構成に揃えることで、`bin/rails db:prepare` だけで
+# brige_crm_development_queue が作成されスキーマが流し込まれる（dev/prod parity）。
 development:
-  <<: *default
-  database: brige_crm_development
+  primary: &primary_development
+    <<: *default
+    database: brige_crm_development
+  queue:
+    <<: *primary_development
+    database: brige_crm_development_queue
+    migrations_paths: db/queue_migrate
 
   # The specified database role being used to connect to PostgreSQL.
   # To create additional roles in PostgreSQL see `$ createuser --help`.
