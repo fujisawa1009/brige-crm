@@ -5,7 +5,9 @@ class Admin::StoresController < Admin::BaseController
   before_action :set_store, only: %i[show edit update destroy]
 
   def index
-    @stores = policy_scope(Store).where(customer: @customer).order(:store_name)
+    # ページネーション追加（CEO指示 2026-08-20 タスク6）。多店舗の顧客で行数が伸びるため。
+    # store_name は一意でないので、ページ送りの順序を安定させる第2キーに id を添える。
+    @pagy, @stores = pagy(policy_scope(Store).where(customer: @customer).order(:store_name, :id))
   end
 
   def show

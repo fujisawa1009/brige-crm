@@ -2,7 +2,9 @@
 # コントローラー（例: Admin::CustomersController#export）が担い、ここは結果の受け皿に徹する。
 class Admin::CsvExportsController < Admin::BaseController
   def index
-    @csv_exports = policy_scope(CsvExport).order(created_at: :desc)
+    # ページネーション追加（CEO指示 2026-08-20 タスク6）。エクスポート履歴は使うほど
+    # 単調に増える一方で消えないため、全件描画のままでは行数が青天井になる。
+    @pagy, @csv_exports = pagy(policy_scope(CsvExport).order(created_at: :desc, id: :asc))
   end
 
   def show
