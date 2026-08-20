@@ -55,3 +55,74 @@
   .pagination-page-disabled { @apply pagination-link border-slate-200 bg-white text-slate-300; }
   .pagination-gap { @apply px-1 text-sm text-slate-400; }
 }
+
+/*
+ * 期間指定カレンダー（CEO指示 2026-08-20「1つのフィールドでカレンダーを押すと開始と終了を選べる」）。
+ * 素の見た目は app/assets/stylesheets/flatpickr.css（ライブラリ同梱CSSをそのまま取り込んだもの）で、
+ * ここはCRM側の配色（indigo / slate）へ寄せる上書きと、カレンダー下部に足す操作列の定義だけを持つ。
+ *
+ * 注意: これらは @layer に入れず素のCSSとして書くこと。CSSカスケードレイヤーの規則で
+ * 「レイヤーに属さない宣言」は「レイヤーに属する宣言」より強いため、@layer components へ入れると
+ * flatpickr.css（レイヤー無し）に負けて上書きが効かない。逆にレイヤー無しで書けば、
+ * flatpickr.css より後ろに読まれる tailwind.css 側のこの記述が勝つ。
+ * また、ここで display を指定しないこと（JS側が .hidden で出し分けるため）。
+ */
+.flatpickr-calendar {
+  @apply rounded-lg border border-slate-200 text-slate-700 shadow-lg;
+}
+
+.flatpickr-day {
+  @apply text-slate-700;
+}
+
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+  @apply border-slate-100 bg-slate-100;
+}
+
+.flatpickr-day.today {
+  @apply border-indigo-300;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+  @apply border-indigo-600 bg-indigo-600 text-white;
+}
+
+.flatpickr-day.inRange,
+.flatpickr-day.inRange:hover {
+  @apply border-indigo-50 bg-indigo-50 text-indigo-900;
+  /* 日セルの隙間を埋めて帯に見せるための影。色は上の bg-indigo-50 と揃える。 */
+  box-shadow: -5px 0 0 var(--color-indigo-50), 5px 0 0 var(--color-indigo-50);
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  @apply text-slate-300;
+}
+
+/*
+ * カレンダー下部の操作列（date_range_controller.js が生成）。
+ * 「この日から / この日まで」は、1日だけ選んだときにその日を開始日と終了日のどちらとして
+ * 扱うかを決めるボタン。変更前は to だけ入力すれば「◯日以前」を絞り込めたので、その手段を残す。
+ */
+.date-range-footer {
+  @apply flex items-center gap-2 border-t border-slate-200 px-3 py-2;
+}
+
+.date-range-side {
+  @apply rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50;
+}
+
+.date-range-side-active {
+  @apply border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-500;
+}
+
+.date-range-clear {
+  @apply ml-auto rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700;
+}

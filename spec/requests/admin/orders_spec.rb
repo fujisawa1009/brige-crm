@@ -317,6 +317,40 @@ RSpec.describe "Admin::Orders", type: :request, seed_permission_catalog: true, s
       end
     end
 
+    # CEO指示 2026-08-20（目視確認）: 日付の期間指定は「1欄のカレンダーで開始と終了を選ぶ」形にした。
+    # サーバ側（OrderSearch）のパラメータ名は from/to のまま変えていないので、この画面の検索仕様は
+    # 上のテスト群がそのまま担保する。ここで守るのはHTML側の2点だけ:
+    #   - 6種すべてがレンジピッカー（date-rangeコントローラ）に接続されていること
+    #   - JS未接続でも検索できるよう、素の date 入力2つが初期状態で描画されていること
+    #     （hiddenにしてからJSで表示する作りにすると、JSが動かない環境で日付検索が不能になる）
+    # カレンダーを開いて範囲を選ぶ操作そのものはJS依存のため、ここでは検証できない（CEO目視確認に委ねる）。
+    it "日付6種がレンジピッカーに接続され、JS未接続時のフォールバック（date入力2つ）も描画される" do
+      get admin_orders_path
+
+      expect(response.body.scan('data-controller="date-range"').size).to eq(6)
+      expect(response.body.scan('data-date-range-target="picker"').size).to eq(6)
+      # picker 側は最初 hidden。JSが繋がったときだけ manual と入れ替わる。
+      expect(response.body).to include(%(class="relative hidden" data-date-range-target="picker"))
+
+      %w[
+        ordered_from ordered_to contract_start_from contract_start_to
+        cancelled_from cancelled_to terminated_from terminated_to
+        payment_collected_from payment_collected_to inspection_call_from inspection_call_to
+      ].each do |field|
+        expect(response.body).to match(/<input[^>]*name="#{field}"[^>]*>/),
+                                 "#{field} の入力欄が無い"
+        expect(response.body[/<input[^>]*name="#{field}"[^>]*>/]).to include(%(type="date")),
+                                                                     "#{field} が date 入力ではない"
+      end
+    end
+
+    it "検索した期間はレンジピッカーの元になる from/to 入力へ復元される" do
+      get admin_orders_path, params: { ordered_from: "2026-05-01", ordered_to: "2026-05-31" }
+
+      expect(response.body[/<input[^>]*name="ordered_from"[^>]*>/]).to include(%(value="2026-05-01"))
+      expect(response.body[/<input[^>]*name="ordered_to"[^>]*>/]).to include(%(value="2026-05-31"))
+    end
+
     it "検索条件がページ送りのリンクに引き継がれる" do
       create_list(:order, 31, agency: agency_x, customer: target_customer, contract_condition: cc_x,
                               member_id: "B236690368")

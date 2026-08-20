@@ -22,12 +22,16 @@
     顧客検索（CEO指示 2026-08-20 の9条件）。条件の実体は app/services/customer_search.rb。
     当初は7条件を details「詳細条件」に畳んでいたが、CEO指示（2026-08-20 画面目視）により
     折りたたみを廃止し、9条件すべてを最初から見えている状態にした。
-    縦の間延びを防ぐため、テキスト系条件は3列グリッド、日付レンジは1行2列に分けて並べる。
+
+    レイアウト（CEO指示 2026-08-20 目視確認「フィールドが多くみずらいです」）:
+    日付2種を from/to の2入力（計4欄）から「期間を1欄で選ぶカレンダー」（計2欄）へ変えたことで、
+    日付もテキスト・選択系と同じ幅で扱えるようになったため、日付だけ別グリッドに分ける必要が
+    無くなった。1グリッドへ統合し、広い画面では4列まで使って縦の行数を詰める。
   %>
   <% input_class = "w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm" %>
   <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <%= form_with url: admin_customers_path, method: :get, class: "flex flex-col gap-3" do %>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <div class="sm:col-span-2">
           <label class="mb-1 block text-xs font-medium text-slate-500">フリーワード</label>
           <%= text_field_tag :q, customer_search_params[:q], placeholder: "顧客番号・氏名・カナ・代表者名・メール・電話",
@@ -63,41 +67,25 @@
           <%= text_field_tag :agency_name, customer_search_params[:agency_name], placeholder: "部分一致",
                 class: input_class %>
         </div>
+        <%# 期間指定2種。1欄＝1期間（app/views/shared/_date_range_field.html.erb）。 %>
+        <%= render "shared/date_range_field", label: "お申込日",
+              from_key: :applied_from, to_key: :applied_to, search_params: customer_search_params %>
+        <%= render "shared/date_range_field", label: "最終更新日時",
+              from_key: :updated_from, to_key: :updated_to, search_params: customer_search_params %>
+
         <%#
           退会済みの表示切替（CEO指示 2026-08-20。旧ジャスミンの show_withdrawn 相当）。
           一覧は既定で退会済みを除外し、チェックしたときだけ含める。他の入力欄と下端を
-          揃えたいので items-end で下寄せする（他はラベル1行ぶん上に積まれているため）。
+          揃えたいので self-end で下寄せする（他はラベル1行ぶん上に積まれているため）。
         %>
-        <div class="flex items-end">
-          <label class="flex w-full cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
-            <%= check_box_tag :show_withdrawn, "1", CustomerSearch.show_withdrawn?(customer_search_params),
-                  class: "h-4 w-4 rounded border-slate-300 text-slate-800" %>
-            退会済みを含む
-          </label>
-        </div>
+        <label class="flex cursor-pointer items-center gap-2 self-end rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
+          <%= check_box_tag :show_withdrawn, "1", CustomerSearch.show_withdrawn?(customer_search_params),
+                class: "h-4 w-4 shrink-0 rounded border-slate-300 text-slate-800" %>
+          退会済みを含む
+        </label>
       </div>
 
-      <%# 日付レンジは1つのセルに入力欄が2つ入るため、テキスト系より広い1行2列で並べる。 %>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div>
-          <label class="mb-1 block text-xs font-medium text-slate-500">お申込日</label>
-          <div class="flex items-center gap-2">
-            <%= date_field_tag :applied_from, customer_search_params[:applied_from], class: input_class %>
-            <span class="text-sm text-slate-400">〜</span>
-            <%= date_field_tag :applied_to, customer_search_params[:applied_to], class: input_class %>
-          </div>
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-slate-500">最終更新日時</label>
-          <div class="flex items-center gap-2">
-            <%= date_field_tag :updated_from, customer_search_params[:updated_from], class: input_class %>
-            <span class="text-sm text-slate-400">〜</span>
-            <%= date_field_tag :updated_to, customer_search_params[:updated_to], class: input_class %>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
           <%= link_to "クリア", admin_customers_path, class: "btn-secondary" %>

@@ -292,6 +292,22 @@ RSpec.describe "Admin::Customers", type: :request, seed_permission_catalog: true
                                        "グループ会社名", "代理店コード", "代理店名",
                                        "ステータス", "お申込日", "最終更新日時")
     end
+
+    # CEO指示 2026-08-20（目視確認）: 日付の期間指定は「1欄のカレンダーで開始と終了を選ぶ」形にした。
+    # 案件一覧（spec/requests/admin/orders_spec.rb）と同じ共通パーシャルを使う。サーバ側
+    # （CustomerSearch）のパラメータ名は from/to のままなので、絞り込み仕様は上のテスト群が担保する。
+    # ここで守るのは「JS未接続でも検索できる素の date 入力が初期状態で出ていること」。
+    it "日付2種がレンジピッカーに接続され、JS未接続時のフォールバック（date入力2つ）も描画される" do
+      get admin_customers_path
+
+      expect(response.body.scan('data-controller="date-range"').size).to eq(2)
+      expect(response.body).to include(%(class="relative hidden" data-date-range-target="picker"))
+
+      %w[applied_from applied_to updated_from updated_to].each do |field|
+        expect(response.body[/<input[^>]*name="#{field}"[^>]*>/]).to include(%(type="date")),
+                                                                     "#{field} が date 入力ではない"
+      end
+    end
   end
 
   # CEO指示 2026-08-20: 顧客一覧は既定で退会済みを除外し、「退会済みを含む」チェックを

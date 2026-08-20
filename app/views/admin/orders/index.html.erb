@@ -23,7 +23,12 @@
   <%#
     案件検索（CEO指示 2026-08-20 タスク7 の12条件）。条件の実体は app/services/order_search.rb。
     顧客一覧（タスク2）と同じくCEO指示により折りたたみは使わず全条件を常時表示する。
-    テキスト・選択系と日付レンジ（6種）でグリッドを分け、日付は1セルに入力欄が2つ入るぶん広く取る。
+
+    レイアウト（CEO指示 2026-08-20 目視確認「フィールドが多くみずらいです」）:
+    日付6種を from/to の2入力（計12欄）から「期間を1欄で選ぶカレンダー」（計6欄）へ変えたことで、
+    日付もテキスト・選択系と同じ幅で扱えるようになった。そこで従来の2グリッド（テキスト系3列 +
+    日付系3列）を1グリッドへ統合し、広い画面では4列まで使って縦の行数を詰める。
+    折りたたみは使わない（全条件常時表示はCEO指示）。
 
     ラベル「顧客ステータス」は CEO決定 2026-08-20（status-naming-analysis.md §0-0）。
     この画面は案件自身のステータスと顧客のステータスが並ぶため区別が要る。案件自身は「ステータス」のまま。
@@ -32,7 +37,7 @@
   <% label_class = "mb-1 block text-xs font-medium text-slate-500" %>
   <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
     <%= form_with url: admin_orders_path, method: :get, class: "flex flex-col gap-3" do %>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <div class="sm:col-span-2">
           <label class="<%= label_class %>">フリーワード</label>
           <%= text_field_tag :q, order_search_params[:q], placeholder: "案件番号・会員管理ID・顧客番号・顧客名・カナ・代表者名・メール・電話",
@@ -63,29 +68,8 @@
           <%= select_tag :customer_status, options_from_collection_for_select(CustomerStatus.ordered, :code, :label, order_search_params[:customer_status]),
                 include_blank: "すべて", class: input_class %>
         </div>
-        <%#
-          R6-6: 既定は完了/終了系ステータス（OrderStatus#is_completed）を除外して表示する。
-          チェックを入れると include_completed=1 が送信され、CompletionStatusFilterが絞り込みを外す。
-        %>
-        <div class="flex items-end">
-          <label class="flex w-full cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
-            <%= check_box_tag :include_completed, "1", order_search_params[:include_completed].present?,
-                  class: "h-4 w-4 rounded border-slate-300" %>
-            完了済みを含む
-          </label>
-        </div>
-        <%# 項目12: 検収確認コール完了日が入っている案件だけを抜く（NOT NULL）。 %>
-        <div class="flex items-end sm:col-span-2">
-          <label class="flex w-full cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
-            <%= check_box_tag :inspection_call_present, "1", OrderSearch.inspection_call_present?(order_search_params),
-                  class: "h-4 w-4 rounded border-slate-300" %>
-            検収確認コール完了日の入力があるものすべて
-          </label>
-        </div>
-      </div>
 
-      <%# 期間指定6種。1セルに入力欄が2つ入るため、3列になるのは xl 以上に絞って狭さを避ける。 %>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <%# 期間指定6種。1欄＝1期間（app/views/shared/_date_range_field.html.erb）。 %>
         <% {
              "受注日" => %i[ordered_from ordered_to],
              "契約開始日" => %i[contract_start_from contract_start_to],
@@ -94,18 +78,31 @@
              "決済回収日" => %i[payment_collected_from payment_collected_to],
              "検収確認コール完了日" => %i[inspection_call_from inspection_call_to]
            }.each do |label, (from_key, to_key)| %>
-          <div>
-            <label class="<%= label_class %>"><%= label %></label>
-            <div class="flex items-center gap-2">
-              <%= date_field_tag from_key, order_search_params[from_key], class: input_class %>
-              <span class="text-sm text-slate-400">〜</span>
-              <%= date_field_tag to_key, order_search_params[to_key], class: input_class %>
-            </div>
-          </div>
+          <%= render "shared/date_range_field", label: label, from_key: from_key, to_key: to_key,
+                search_params: order_search_params %>
         <% end %>
+
+        <%#
+          チェックは2つまとめて1セル（広い画面では2列ぶん）に置き、ラベル行が無いぶん下端を揃える。
+          - 完了済みを含む（R6-6）: 既定は完了/終了系ステータス（OrderStatus#is_completed）を除外し、
+            チェックすると include_completed=1 が送信されて CompletionStatusFilter が絞り込みを外す。
+          - 検収確認コール完了日の入力があるものすべて（項目12）: 当該日が NOT NULL の案件だけを抜く。
+        %>
+        <div class="flex flex-col gap-2 self-end sm:col-span-2 sm:flex-row">
+          <label class="flex flex-1 cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
+            <%= check_box_tag :include_completed, "1", order_search_params[:include_completed].present?,
+                  class: "h-4 w-4 shrink-0 rounded border-slate-300" %>
+            完了済みを含む
+          </label>
+          <label class="flex flex-1 cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
+            <%= check_box_tag :inspection_call_present, "1", OrderSearch.inspection_call_present?(order_search_params),
+                  class: "h-4 w-4 shrink-0 rounded border-slate-300" %>
+            検収確認コール完了日あり
+          </label>
+        </div>
       </div>
 
-      <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
           <%= link_to "クリア", admin_orders_path, class: "btn-secondary" %>
