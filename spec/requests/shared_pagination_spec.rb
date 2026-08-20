@@ -27,7 +27,8 @@ RSpec.describe "共通ページネーションのERBコメントが画面に漏�
   # 一覧画面の代表2画面。どちらも `render "shared/pagination"` を通る。
   {
     "顧客一覧" => "/admin/customers",
-    "ユーザー一覧" => "/admin/users"
+    "ユーザー一覧" => "/admin/users",
+    "案件一覧" => "/admin/orders"
   }.each do |screen, path|
     it "#{screen}のレスポンスにコメント本文が出力されない" do
       get path

@@ -141,6 +141,265 @@ RSpec.describe "Admin::Orders", type: :request, seed_permission_catalog: true, s
   # R6-6: 一覧の「完了済みを含む」検索。CompletionStatusFilter(status_klass: OrderStatus)が
   # コントローラーの#indexへ正しく結線されていることを確認する（単体ロジック自体は
   # spec/services/completion_status_filter_spec.rbで検証済み）。
+  # CEO指示 2026-08-20 タスク7: 案件一覧の検索条件を12件へ拡充した（app/services/order_search.rb）。
+  # 12条件それぞれと、参照制御・ページ送りでの保持を検証する。
+  describe "一覧の検索条件（CEO指示 2026-08-20 の12条件）" do
+    let!(:admin_user) { user_with_role("admin") }
+
+    let!(:agency_x) { create(:agency, agency_group: group_a) }
+    let!(:cc_x) { create(:contract_condition, agency: agency_x) }
+    let!(:target_customer) do
+      create(:customer, agency: agency_x, name: "案件検索ターゲット商店",
+                        contractor_name_kana: "アンケンケンサク", representative_name: "案件太郎",
+                        email: "order-target@example.com", phone: "0311112222",
+                        status: CustomerStatus::CODE_APPLIED)
+    end
+    let!(:other_customer) do
+      create(:customer, agency: agency_x, name: "案件対象外オフィス",
+                        email: "order-miss@example.com", phone: "0399998888",
+                        status: "contracted")
+    end
+
+    let!(:target) do
+      create(:order, agency: agency_x, customer: target_customer, contract_condition: cc_x,
+                     order_number: "ORD-TARGET-001", member_id: "B236690368",
+                     ordered_at: Date.new(2026, 5, 10), contract_start_date: Date.new(2026, 5, 20),
+                     cancelled_at: Date.new(2026, 5, 25), terminated_at: Date.new(2026, 5, 28),
+                     payment_collected_at: Date.new(2026, 5, 30),
+                     inspection_call_completed_at: Date.new(2026, 6, 1))
+    end
+    let!(:other) do
+      create(:order, agency: agency_x, customer: other_customer, contract_condition: cc_x,
+                     order_number: "ORD-OTHER-999", member_id: "B999999999",
+                     ordered_at: Date.new(2026, 7, 10), contract_start_date: Date.new(2026, 7, 20),
+                     cancelled_at: Date.new(2026, 7, 25), terminated_at: Date.new(2026, 7, 28),
+                     payment_collected_at: Date.new(2026, 7, 30),
+                     inspection_call_completed_at: nil)
+    end
+
+    before { sign_in_with_otp!(admin_user) }
+
+    # 検索結果の判定は一覧に出る案件番号で行う（target が残り other が消えることを見る）。
+    def expect_only_target(params)
+      get admin_orders_path, params: params
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(target.order_number)
+      expect(response.body).not_to include(other.order_number)
+    end
+
+    it "1. フリーワード: 案件番号で絞り込める" do
+      expect_only_target(q: "ORD-TARGET")
+    end
+
+    it "1. フリーワード: 会員管理ID・顧客側の情報（顧客名・カナ・代表者名・メール・電話）も対象" do
+      expect_only_target(q: "B236690368")
+      expect_only_target(q: "案件検索ターゲット")
+      expect_only_target(q: "アンケンケンサク")
+      expect_only_target(q: "案件太郎")
+      expect_only_target(q: "order-target@example.com")
+      expect_only_target(q: "0311112222")
+    end
+
+    it "1. フリーワード: LIKEのメタ文字はエスケープされ、ワイルドカードとして解釈されない" do
+      get admin_orders_path, params: { q: "%" }
+      expect(response.body).not_to include(target.order_number)
+      expect(response.body).not_to include(other.order_number)
+    end
+
+    it "2. 顧客番号: 部分一致で絞り込める" do
+      expect_only_target(customer_number: target_customer.customer_number)
+      expect_only_target(customer_number: target_customer.customer_number.last(4))
+    end
+
+    it "3. 案件番号: 部分一致で絞り込める" do
+      expect_only_target(order_number: "ORD-TARGET-001")
+      expect_only_target(order_number: "TARGET")
+    end
+
+    it "4. 会員管理ID: 部分一致で絞り込める" do
+      expect_only_target(member_id: "B236690368")
+      expect_only_target(member_id: "2366")
+    end
+
+    it "5. 顧客ステータス: プルダウンの値で絞り込める（案件自身のステータスとは別物）" do
+      expect_only_target(customer_status: CustomerStatus::CODE_APPLIED)
+    end
+
+    it "5. 顧客ステータス: 検索フォームに「顧客ステータス」のプルダウンがある" do
+      get admin_orders_path
+
+      expect(response.body).to include("顧客ステータス")
+      expect(response.body).to include(%(name="customer_status"))
+    end
+
+    it "6. 受注日: from〜to の期間指定で絞り込める" do
+      expect_only_target(ordered_from: "2026-05-01", ordered_to: "2026-05-31")
+    end
+
+    it "7. 契約開始日: from〜to の期間指定で絞り込める" do
+      expect_only_target(contract_start_from: "2026-05-01", contract_start_to: "2026-05-31")
+    end
+
+    it "8. キャンセル日: from〜to の期間指定で絞り込める" do
+      expect_only_target(cancelled_from: "2026-05-01", cancelled_to: "2026-05-31")
+    end
+
+    it "9. 解約日: from〜to の期間指定で絞り込める" do
+      expect_only_target(terminated_from: "2026-05-01", terminated_to: "2026-05-31")
+    end
+
+    it "10. 決済回収日: from〜to の期間指定で絞り込める" do
+      expect_only_target(payment_collected_from: "2026-05-01", payment_collected_to: "2026-05-31")
+    end
+
+    it "11. 検収確認コール完了日: from〜to の期間指定で絞り込める" do
+      expect_only_target(inspection_call_from: "2026-06-01", inspection_call_to: "2026-06-30")
+    end
+
+    it "6〜11. 日付は from のみ／to のみでも動く" do
+      expect_only_target(ordered_to: "2026-06-30")
+
+      get admin_orders_path, params: { ordered_from: "2026-07-01" }
+      expect(response.body).to include(other.order_number)
+      expect(response.body).not_to include(target.order_number)
+    end
+
+    it "6〜11. 日付は date 型なので to に指定した当日そのものを含む" do
+      expect_only_target(ordered_from: "2026-05-10", ordered_to: "2026-05-10")
+    end
+
+    it "6〜11. 不正な日付文字列は条件なしとして扱う（500にしない）" do
+      get admin_orders_path, params: { ordered_from: "not-a-date" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(target.order_number, other.order_number)
+    end
+
+    it "12. 検収確認コール完了日の入力があるものすべて: チェックでNOT NULLの案件だけになる" do
+      expect_only_target(inspection_call_present: "1")
+    end
+
+    it "12. チェックを外すと（未送信）入力の無い案件も表示される" do
+      get admin_orders_path
+
+      expect(response.body).to include(target.order_number, other.order_number)
+    end
+
+    it "12. 期間指定（項目11）と同時指定した場合はANDで重なる" do
+      expect_only_target(inspection_call_present: "1",
+                         inspection_call_from: "2026-06-01", inspection_call_to: "2026-06-30")
+
+      # 期間から外れれば、チェックが入っていても0件になる。
+      get admin_orders_path, params: { inspection_call_present: "1",
+                                       inspection_call_from: "2026-09-01" }
+      expect(response.body).not_to include(target.order_number)
+      expect(response.body).not_to include(other.order_number)
+    end
+
+    it "複数条件はAND結合される" do
+      get admin_orders_path, params: { q: "ORD-TARGET", member_id: "B999999999" }
+
+      expect(response.body).not_to include(target.order_number)
+      expect(response.body).not_to include(other.order_number)
+    end
+
+    it "検索フォームは12条件を常時表示する（折りたたみを使わない）" do
+      get admin_orders_path
+
+      expect(response.body).not_to include("<details")
+      %w[
+        q order_number customer_number member_id customer_status inspection_call_present
+        ordered_from ordered_to contract_start_from contract_start_to
+        cancelled_from cancelled_to terminated_from terminated_to
+        payment_collected_from payment_collected_to inspection_call_from inspection_call_to
+      ].each do |field|
+        expect(response.body).to include(%(name="#{field}")), "検索条件 #{field} の入力欄が無い"
+      end
+    end
+
+    it "検索条件がページ送りのリンクに引き継がれる" do
+      create_list(:order, 31, agency: agency_x, customer: target_customer, contract_condition: cc_x,
+                              member_id: "B236690368")
+
+      get admin_orders_path, params: { member_id: "B236690368" }
+
+      expect(response.body).to include("member_id=B236690368")
+      expect(response.body).to match(/page=2[^0-9]/)
+    end
+  end
+
+  # CEO指示 2026-08-20 タスク7: 既定の並び順を order_number 降順から「受注日の新しい順」へ変更した
+  # （顧客一覧の「お申込日の新しい順」と揃える。受注日=旧項目33は customers.applied_at と同じ転記元）。
+  describe "案件一覧の既定の並び順（受注日の新しい順）" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:agency_o) { create(:agency, agency_group: group_a) }
+    let!(:cc_o) { create(:contract_condition, agency: agency_o) }
+    let!(:customer_o) { create(:customer, agency: agency_o) }
+
+    # 案件番号の降順と受注日の降順がわざと逆になるように作る（旧順序のままなら検知できる）。
+    let!(:newest) do
+      create(:order, agency: agency_o, customer: customer_o, contract_condition: cc_o,
+                     order_number: "SORT-001", ordered_at: Date.new(2026, 8, 1))
+    end
+    let!(:middle) do
+      create(:order, agency: agency_o, customer: customer_o, contract_condition: cc_o,
+                     order_number: "SORT-002", ordered_at: Date.new(2026, 4, 10))
+    end
+    let!(:oldest) do
+      create(:order, agency: agency_o, customer: customer_o, contract_condition: cc_o,
+                     order_number: "SORT-003", ordered_at: Date.new(2026, 1, 5))
+    end
+    let!(:undated) do
+      create(:order, agency: agency_o, customer: customer_o, contract_condition: cc_o,
+                     order_number: "SORT-004", ordered_at: nil)
+    end
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "受注日の新しい順に並び、受注日が未入力の案件は末尾（NULLS LAST）" do
+      get admin_orders_path, params: { q: "SORT-" }
+
+      positions = [ newest, middle, oldest, undated ].map { |o| response.body.index(o.order_number) }
+      expect(positions).to eq(positions.compact.sort)
+    end
+
+    it "受注日が同値でも第2キー（案件番号の降順）で安定して並ぶ" do
+      same_day = Date.new(2026, 6, 1)
+      create(:order, agency: agency_o, customer: customer_o, contract_condition: cc_o,
+                     order_number: "SAME-001", ordered_at: same_day)
+      create(:order, agency: agency_o, customer: customer_o, contract_condition: cc_o,
+                     order_number: "SAME-002", ordered_at: same_day)
+
+      get admin_orders_path, params: { q: "SAME-" }
+
+      positions = [ "SAME-002", "SAME-001" ].map { |n| response.body.index(n) }
+      expect(positions).to eq(positions.compact.sort)
+    end
+  end
+
+  # 絞り込みパラメータを参照制御の抜け道にしない（顧客一覧と同じ方針）。
+  describe "案件一覧の検索条件はpolicy_scopeを迂回しない" do
+    let!(:agency_user) { user_with_role("代理店用", agency: agency_a1) }
+
+    before { sign_in_with_otp!(agency_user) }
+
+    it "他代理店の案件の会員管理IDを直接指定しても、その案件は見えない" do
+      order_b.update!(member_id: "B000000001")
+
+      get admin_orders_path, params: { member_id: "B000000001" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(order_b.order_number)
+    end
+
+    it "他代理店の顧客番号を直接指定しても、その案件は見えない" do
+      get admin_orders_path, params: { customer_number: customer_b.customer_number }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(order_b.order_number)
+    end
+  end
+
   describe "R6-6: 完了済みを含む検索" do
     let!(:admin_user) { user_with_role("admin") }
     let!(:completed_order) do

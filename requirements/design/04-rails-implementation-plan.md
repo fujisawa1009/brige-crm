@@ -360,7 +360,23 @@
 
 **R6 追加タスク（2026-08-19 v4追記。出典: `review/review-06` サマリA・D・F・G・H）**:
 - **【2026-08-19 v5 CEO決定＝実装する】問い合わせ返信テンプレート機能**（FAQ 12カテゴリマスタ・差し込み変数展開・返信画面でのテンプレ選択UI。出典: `legacy-research/13-faq-templates.md`）。FAQ 318件のデータ投入はR7と合わせて実施。
-- 一覧検索強化を一括タスク化: ユーザ一覧（氏名/メール/権限/所属/状態＋pagy）・顧客一覧（代理店/ステータス/期間、既定=退会済み除外）・案件一覧（顧客メールアドレス条件 P4-6。現行は order_number/status のみ）・問い合わせ一覧（category 以外）・Store 一覧（検索・pagy・CSV）。pg_bigm フリー検索も検討（`basic-design.md` §1-2/§4-2/§15-1/§17-2）
+- 一覧検索強化を一括タスク化: ユーザ一覧（氏名/メール/権限/所属/状態＋pagy）・~~顧客一覧（代理店/ステータス/期間、既定=退会済み除外）~~（✅ 2026-08-20 CEO指示で実装済み）・~~案件一覧（顧客メールアドレス条件 P4-6。現行は order_number/status のみ）~~（✅ 2026-08-20 CEO指示で12条件を実装済み）・問い合わせ一覧（category 以外）・~~Store 一覧（pagy）~~（✅ 2026-08-20 実装済み。検索・CSVは未実装）。pg_bigm フリー検索も検討（`basic-design.md` §1-2/§4-2/§15-1/§17-2）
+  - **CEO指示 2026-08-20（画面目視確認・一連の実装）**:
+    - 顧客一覧: 9条件（`app/services/customer_search.rb`）を**折りたたみ無しで常時表示**。既定で**退会済みを除外**し
+      「退会済みを含む」チェックで表示（`CustomerStatus::CODE_WITHDRAWN`。旧ジャスミンの `show_withdrawn` 相当）。
+      ステータスで「退会済み」を明示選択した場合はチェック無しでも表示する。
+      既定の並び順は**お申込日の新しい順**（`applied_at DESC NULLS LAST, customer_number`。旧ジャスミン準拠）。
+    - 案件一覧: **12条件**（`app/services/order_search.rb`）を折りたたみ無しで常時表示。
+      フリーワード／顧客番号／案件番号／会員管理ID（`orders.member_id`・旧項目31）／顧客ステータス（プルダウン）／
+      受注日・契約開始日・キャンセル日・解約日・決済回収日・検収確認コール完了日の期間指定6種／
+      「検収確認コール完了日の入力があるものすべて」チェック（NOT NULL）。
+      既定の並び順は**受注日の新しい順**（`ordered_at DESC NULLS LAST, order_number DESC`）。
+      **項目ラベル「顧客ステータス」は CEO決定 2026-08-20（`status-naming-analysis.md` §0-0 追記）で
+      D-8 の使用禁止語制約を上書きしたもの。巻き戻さないこと。**
+    - 一覧の表示件数を**全画面30件に統一**（`config/initializers/pagy.rb`。旧ジャスミン準拠）。
+    - ページネーション未設置だったCSVエクスポート・ログイン履歴・店舗一覧へ共通パーシャル `shared/_pagination` を追加。
+      ログイン履歴の「直近200件」上限は**撤廃**（監査用途で201件目以降へ到達できないため。ページネーションのほうが
+      1リクエストあたりの読み取り行数を小さく抑えられる）。
 - 汎用監査ログ検索画面 `Admin::AuditLogsController`（ユーザ/操作種別/対象/期間・CSV）+ `logout` イベント記録＋form の CD照合失敗記録（P4-16残。`basic-design.md` §16、`release-readiness.md` E-10）
   - **2026-08-20 ftlog調査で判明した注意点**: ftlog本体では監査ログCSVエクスポートの「ボタン表示」のみビュー側で`super_admin`（グローバル種別フラグ）限定にしており、コントローラーの`export`アクション自体にはそのガードが無い（`system_admin`ロールならURL直叩きでエクスポート実行できる可能性）。brige-crm側は本タスク着手時点でこの画面自体が未実装（現状`Admin::LoginHistoriesController`は`index`のみでCSV機能なし、`AuditLog`は`CsvExportJob::EXPORT_TARGETS`にも未登録）のため実害は無いが、**`Admin::AuditLogsController#export`実装時はコントローラー側にも明示的な権限チェックを入れること**（ビュー非表示だけに頼らない）
 - 顧客側問い合わせ導線（マイページにスレッド表示・返信フォーム、メールリンク→マイページログイン→返信）、マイページ機能拡充（P4-9）、通知一覧・既読UI・C1/C2 通知設定・C6（`notification-matrix.md` 論点15）

@@ -2,10 +2,13 @@
 # 案件のみ、代理店グループユーザは配下代理店の案件のみに絞られる（OrderPolicy参照）。
 class Admin::OrdersController < Admin::BaseController
   before_action :set_order, only: %i[show edit update destroy]
+  helper_method :order_search_params
 
   def index
-    scope = policy_scope(Order).includes(:customer, :agency).order(order_number: :desc)
-    scope = scope.where("order_number ILIKE :q", q: "%#{params[:q]}%") if params[:q].present?
+    scope = policy_scope(Order).includes(:customer, :agency).order(*default_order)
+    # 検索条件（CEO指示 2026-08-20 タスク7 の12条件）の実体は app/services/order_search.rb。
+    # 顧客一覧と同じく、絞り込みは常に policy_scope を通したスコープの内側で行う。
+    scope = OrderSearch.new(scope, order_search_params).results
 
     if params[:status].present?
       # ステータスを明示指定した場合はそれを優先する（例: 「16:完了」を選んだのに完了系除外の
@@ -94,6 +97,24 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   private
+
+  # 一覧の既定の並び順（CEO指示 2026-08-20 タスク7）。従来は order_number の降順だった。
+  # 旧システム側に案件一覧の既定並び順を定めた資料は見つからなかったため、顧客一覧（タスク4で
+  # 「お申込日の新しい順」に変更）と揃えて「受注日の新しい順」とする。受注日（orders.ordered_at）は
+  # 旧項目33「受注日（申込日）」で、顧客一覧が使う customers.applied_at と同じ日付の転記元
+  # （11-order-field-mapping.md）なので、2画面の既定順が業務上も一致する。
+  #
+  # NULLS LAST・第2キーの理由は Admin::CustomersController#default_order と同じ
+  # （PostgreSQL の DESC は既定 NULLS FIRST／date 型は同値が多くページ送りで順序がぶれる）。
+  def default_order
+    [ Order.arel_table[:ordered_at].desc.nulls_last, { order_number: :desc } ]
+  end
+
+  # 検索フォームの値。ビューからも参照する（ページ送りをまたいだ保持は pagy_url_for が
+  # request.GET をそのまま引き継ぐことで成立する）。
+  def order_search_params
+    @order_search_params ||= params.permit(*OrderSearch::PERMITTED_KEYS).to_h.symbolize_keys
+  end
 
   def set_order
     @order = Order.find(params[:id])
