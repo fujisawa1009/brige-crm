@@ -82,13 +82,33 @@ class RecipientResolver
     unless inquiry.is_visible_to_customer?
       order_parties = order_parties.reject { |party| %w[Customer SalesRepresentative].include?(party.type) }
     end
-    routed_groups = self.class.route_for(category: inquiry.category, status_code: inquiry.status)
+    routed_groups = next_responder_groups
 
     order_parties.map { |party| { type: party.type, id: party.id } } +
       routed_groups.map { |group| { type: "RecipientGroup", id: group.id } }
   end
 
   private
+
+  # E10 次回対応者ルーティング（notification-matrix.md E10 / 05 §5-2）。
+  # 2026-08-18浅賀MTG（development-plan Q-21）の業務決定「送付先＝次回対応者。未指定時も自動送付
+  # （宛先ゼロの状態を作らない）」を、2026-08-20 CEO決定の実装方式（RecipientGroup参照・R4追補で先行・
+  # 未指定時は既存ルートへフォールバック）で実装する。
+  #
+  # 次回対応者が指定されていればそのグループ**のみ**を宛先グループとする（ステータス×ルートは併用
+  # しない）。「送付先は次回対応者に指定されたユーザーとする」という決定どおり、担当を明示した投稿が
+  # 部門ルートへも同報されて誰の担当か曖昧になる状態を作らないため。
+  # グループが無効化（is_active=false）されている場合は指定が無いものとして扱いフォールバックする
+  # （運用でグループを閉じた瞬間に宛先ゼロで通知が消える事故を防ぐ）。
+  #
+  # 案件経由の自動宛先（代理店/営業担当者/顧客）との一本化は 2026-08-19 論点(c) として保留中のため、
+  # 現状は併用のまま（このメソッドはグループ宛先のみを差し替える）。
+  def next_responder_groups
+    group = inquiry.next_responder_group
+    return [ group ] if group&.is_active?
+
+    self.class.route_for(category: inquiry.category, status_code: inquiry.status)
+  end
 
   attr_reader :inquiry
 

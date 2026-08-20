@@ -22,6 +22,13 @@
         <%= f.label :category, "掲示板種別", class: "mb-1 block text-sm font-medium text-slate-700" %>
         <%= f.select :category, Inquiry::CATEGORIES, {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
+      <%# E10: 次回対応者（部門）。旧システムの「営業担当/FT管理/FT運用/FTコール/なし」に相当し、
+          選んだ部門の宛先グループへ通知が飛ぶ。未選択（なし）ならステータス×ルートの既定宛先へ送る。 %>
+      <div>
+        <%= f.label :next_responder_group_id, "次回対応者（任意）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.collection_select :next_responder_group_id, @recipient_groups, :id, :name,
+              { include_blank: "なし（既定の宛先へ送る）" }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
       <div>
         <%= f.label :first_message_body, "本文", class: "mb-1 block text-sm font-medium text-slate-700" %>
         <%= text_area_tag "inquiry[first_message_body]", nil, rows: 4, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>

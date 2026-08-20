@@ -33,6 +33,12 @@
         <dt class="text-xs text-slate-500">顧客への公開</dt>
         <dd class="mt-1 text-slate-800"><%= @inquiry.is_visible_to_customer? ? "公開" : "非公開（社内限定）" %></dd>
       </div>
+      <div>
+        <dt class="text-xs text-slate-500">次回対応者</dt>
+        <dd class="mt-1 text-slate-800">
+          <%= @inquiry.next_responder_group&.name || "なし（既定の宛先へ送信）" %>
+        </dd>
+      </div>
     </dl>
   </div>
 
@@ -91,6 +97,15 @@
         <%= label_tag :status, "ステータス変更（任意）", class: "mb-1 block text-sm font-medium text-slate-700" %>
         <%= select_tag :status,
               options_for_select(InquiryStatus.for_category(@inquiry.category).ordered.pluck(:label, :code), @inquiry.status),
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      </div>
+      <%# E10: 返信と同時に次回対応者（部門）を引き継ぐ。選択した部門の宛先グループへ通知が飛び、
+          「なし」を選べばステータス×ルートの既定宛先へフォールバックする。 %>
+      <div>
+        <%= label_tag :next_responder_group_id, "次回対応者（任意）", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= select_tag :next_responder_group_id,
+              options_for_select(@recipient_groups.map { |g| [ g.name, g.id ] }, @inquiry.next_responder_group_id),
+              include_blank: "なし（既定の宛先へ送る）",
               class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
       <%= f.submit "送信", class: "w-fit btn-primary" %>

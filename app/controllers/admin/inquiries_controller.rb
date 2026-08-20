@@ -22,12 +22,17 @@ class Admin::InquiriesController < Admin::BaseController
     # 参照専用のマスタ読み出しのためauthorize/policy_scopeは通さない（InquiryTemplatePolicyは
     # 別途Admin::InquiryTemplatesController側のCRUD操作を守る）。
     @inquiry_templates = InquiryTemplate.order(:category, :name)
+    # E10: 返信時に次回対応者（部門）を切り替えるための選択肢。InquiryStatus/InquiryTemplateと同じく
+    # 参照専用のマスタ読み出しのためauthorize/policy_scopeは通さない（RecipientGroupPolicyが
+    # Admin::RecipientGroupsController側のCRUDを守る）。
+    @recipient_groups = RecipientGroup.active.order(:name)
   end
 
   def new
     @inquiry = Inquiry.new(order_id: params[:order_id])
     authorize @inquiry
     @orders = policy_scope(Order).order(:order_number)
+    @recipient_groups = RecipientGroup.active.order(:name)
   end
 
   def create
@@ -49,6 +54,7 @@ class Admin::InquiriesController < Admin::BaseController
     redirect_to admin_inquiry_path(@inquiry), notice: "問い合わせを作成しました。"
   rescue ActiveRecord::RecordInvalid
     @orders = policy_scope(Order).order(:order_number)
+    @recipient_groups = RecipientGroup.active.order(:name)
     render :new, status: :unprocessable_entity
   end
 
@@ -62,7 +68,7 @@ class Admin::InquiriesController < Admin::BaseController
     params.require(:inquiry).permit(
       :order_id, :title, :category, :status, :is_visible_to_agent, :is_visible_to_customer,
       :after_urgency, :after_type, :after_area, :reception_channel,
-      :first_responder_name, :next_responder_name
+      :first_responder_name, :next_responder_name, :next_responder_group_id
     )
   end
 end

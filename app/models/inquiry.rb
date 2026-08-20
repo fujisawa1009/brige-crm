@@ -16,34 +16,37 @@
 #
 # Table name: inquiries
 #
-#  id                     :uuid             not null, primary key
-#  after_area             :string
-#  after_type             :string
-#  after_urgency          :string
-#  category               :string           not null
-#  first_responder_name   :string
-#  inquiry_number         :string           not null
-#  is_visible_to_agent    :boolean          default(TRUE), not null
-#  is_visible_to_customer :boolean          default(TRUE), not null
-#  next_responder_name    :string
-#  reception_channel      :string
-#  status                 :string           not null
-#  title                  :string
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  created_by_id          :uuid
-#  order_id               :uuid             not null
-#  updated_by_id          :uuid
+#  id                      :uuid             not null, primary key
+#  after_area              :string
+#  after_type              :string
+#  after_urgency           :string
+#  category                :string           not null
+#  first_responder_name    :string
+#  inquiry_number          :string           not null
+#  is_visible_to_agent     :boolean          default(TRUE), not null
+#  is_visible_to_customer  :boolean          default(TRUE), not null
+#  next_responder_name     :string
+#  reception_channel       :string
+#  status                  :string           not null
+#  title                   :string
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  created_by_id           :uuid
+#  next_responder_group_id :uuid
+#  order_id                :uuid             not null
+#  updated_by_id           :uuid
 #
 # Indexes
 #
-#  index_inquiries_on_category_and_status  (category,status)
-#  index_inquiries_on_inquiry_number       (inquiry_number) UNIQUE
-#  index_inquiries_on_order_id             (order_id)
+#  index_inquiries_on_category_and_status      (category,status)
+#  index_inquiries_on_inquiry_number           (inquiry_number) UNIQUE
+#  index_inquiries_on_next_responder_group_id  (next_responder_group_id)
+#  index_inquiries_on_order_id                 (order_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (next_responder_group_id => recipient_groups.id)
 #  fk_rails_...  (order_id => orders.id) ON DELETE => restrict
 #  fk_rails_...  (updated_by_id => users.id)
 #
@@ -70,6 +73,12 @@ class Inquiry < ApplicationRecord
   }.freeze
 
   belongs_to :order
+  # E10 次回対応者（2026-08-20 CEO決定）。旧システムの選択肢5値（営業担当/FT管理/FT運用/FTコール/
+  # なし）は個人ではなく部門を指すため、User個人ではなくRecipientGroup（部門）を参照する。
+  # 「なし」＝未指定はNULLで表現し、宛先解決はステータス×ルートへフォールバックする
+  # （RecipientResolver#recipients_for_inquiry）。自由入力のnext_responder_nameはR7移行時に
+  # 原文を保持する受け皿として併存させる（name-matching-process.md）。
+  belongs_to :next_responder_group, class_name: "RecipientGroup", optional: true
 
   has_many :inquiry_messages, -> { order(:created_at) }, dependent: :destroy, inverse_of: :inquiry
 

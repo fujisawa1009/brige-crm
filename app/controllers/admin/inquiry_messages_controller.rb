@@ -8,7 +8,13 @@ class Admin::InquiryMessagesController < Admin::BaseController
   def create
     authorize @inquiry, :show?
 
-    @inquiry.update!(status: params[:status]) if params[:status].present?
+    # E10（2026-08-20 CEO決定）: 返信時に次回対応者（部門＝RecipientGroup）も切り替えられるようにする。
+    # 業務上「次回対応者」は返信のたびに引き継がれるため、statusと同じく返信フォームから受ける。
+    # 空文字は「なし（未指定）」＝NULLとして扱い、宛先解決はステータス×ルートへフォールバックする。
+    inquiry_attrs = {}
+    inquiry_attrs[:status] = params[:status] if params[:status].present?
+    inquiry_attrs[:next_responder_group_id] = params[:next_responder_group_id].presence if params.key?(:next_responder_group_id)
+    @inquiry.update!(inquiry_attrs) if inquiry_attrs.any?
 
     message = @inquiry.inquiry_messages.new(inquiry_message_params)
 

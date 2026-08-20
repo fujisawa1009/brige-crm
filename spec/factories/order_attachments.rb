@@ -8,11 +8,21 @@
 #  id                     :uuid             not null, primary key
 #  file_type              :string(50)
 #  is_visible_to_customer :boolean          default(FALSE), not null
-#  created_at              :datetime         not null
-#  updated_at              :datetime         not null
-#  created_by_id           :uuid
-#  order_id                :uuid             not null
-#  updated_by_id           :uuid
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  created_by_id          :uuid
+#  order_id               :uuid             not null
+#  updated_by_id          :uuid
+#
+# Indexes
+#
+#  index_order_attachments_on_order_id  (order_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (order_id => orders.id) ON DELETE => cascade
+#  fk_rails_...  (updated_by_id => users.id)
 #
 FactoryBot.define do
   factory :order_attachment do

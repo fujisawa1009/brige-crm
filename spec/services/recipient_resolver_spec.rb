@@ -162,5 +162,51 @@ RSpec.describe RecipientResolver, type: :service, seed_status_catalog: true do
 
       expect(result).to eq([ { type: "RecipientGroup", id: group.id } ])
     end
+
+    # E10 次回対応者ルーティング（2026-08-18浅賀MTG Q-21の業務決定＋2026-08-20 CEO決定の実装方式）
+    context "E10 次回対応者ルーティング" do
+      it "次回対応者(RecipientGroup)が指定されていればステータス×ルートではなくそのグループへ送る" do
+        order = create(:order)
+        routed_group = create(:recipient_group, name: "ステータスルートの既定宛先")
+        next_group = create(:recipient_group, name: "FT運用")
+        inquiry = create(:inquiry, order: order, category: Inquiry::CATEGORY_AFTER,
+                                   next_responder_group: next_group)
+        create(:inquiry_recipient_route, recipient_group: routed_group,
+                                         category: Inquiry::CATEGORY_AFTER, status_code: inquiry.status)
+
+        result = described_class.recipients_for_inquiry(inquiry)
+
+        expect(result).to include({ type: "RecipientGroup", id: next_group.id })
+        expect(result).not_to include({ type: "RecipientGroup", id: routed_group.id })
+      end
+
+      it "次回対応者が未指定なら既存のステータス×ルートへフォールバックする（宛先ゼロを作らない）" do
+        order = create(:order)
+        routed_group = create(:recipient_group)
+        inquiry = create(:inquiry, order: order, category: Inquiry::CATEGORY_AFTER,
+                                   next_responder_group: nil)
+        create(:inquiry_recipient_route, recipient_group: routed_group,
+                                         category: Inquiry::CATEGORY_AFTER, status_code: inquiry.status)
+
+        result = described_class.recipients_for_inquiry(inquiry)
+
+        expect(result).to include({ type: "RecipientGroup", id: routed_group.id })
+      end
+
+      it "次回対応者のグループが無効化されていればフォールバックする（運用でグループを閉じても通知が消えない）" do
+        order = create(:order)
+        routed_group = create(:recipient_group)
+        next_group = create(:recipient_group, is_active: false)
+        inquiry = create(:inquiry, order: order, category: Inquiry::CATEGORY_AFTER,
+                                   next_responder_group: next_group)
+        create(:inquiry_recipient_route, recipient_group: routed_group,
+                                         category: Inquiry::CATEGORY_AFTER, status_code: inquiry.status)
+
+        result = described_class.recipients_for_inquiry(inquiry)
+
+        expect(result).to include({ type: "RecipientGroup", id: routed_group.id })
+        expect(result).not_to include({ type: "RecipientGroup", id: next_group.id })
+      end
+    end
   end
 end

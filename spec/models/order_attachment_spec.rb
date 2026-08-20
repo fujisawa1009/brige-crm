@@ -15,6 +15,16 @@ require "rails_helper"
 #  order_id               :uuid             not null
 #  updated_by_id          :uuid
 #
+# Indexes
+#
+#  index_order_attachments_on_order_id  (order_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (created_by_id => users.id)
+#  fk_rails_...  (order_id => orders.id) ON DELETE => cascade
+#  fk_rails_...  (updated_by_id => users.id)
+#
 RSpec.describe OrderAttachment, type: :model, seed_status_catalog: true do
   def attach_dummy_file(order_attachment, size_bytes: 10, filename: "a.txt")
     order_attachment.file.attach(

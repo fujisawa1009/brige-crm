@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_060100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -392,6 +392,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_060100) do
     t.string "inquiry_number", null: false
     t.boolean "is_visible_to_agent", default: true, null: false
     t.boolean "is_visible_to_customer", default: true, null: false
+    t.uuid "next_responder_group_id"
     t.string "next_responder_name"
     t.uuid "order_id", null: false
     t.string "reception_channel"
@@ -401,6 +402,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_060100) do
     t.uuid "updated_by_id"
     t.index ["category", "status"], name: "index_inquiries_on_category_and_status"
     t.index ["inquiry_number"], name: "index_inquiries_on_inquiry_number", unique: true
+    t.index ["next_responder_group_id"], name: "index_inquiries_on_next_responder_group_id"
     t.index ["order_id"], name: "index_inquiries_on_order_id"
   end
 
@@ -1121,6 +1123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_060100) do
   add_foreign_key "form_templates", "users", column: "created_by_id"
   add_foreign_key "form_templates", "users", column: "updated_by_id"
   add_foreign_key "inquiries", "orders", on_delete: :restrict
+  add_foreign_key "inquiries", "recipient_groups", column: "next_responder_group_id"
   add_foreign_key "inquiries", "users", column: "created_by_id"
   add_foreign_key "inquiries", "users", column: "updated_by_id"
   add_foreign_key "inquiry_message_recipients", "inquiry_messages", on_delete: :cascade
