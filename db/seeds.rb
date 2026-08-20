@@ -3,6 +3,9 @@ SystemPermissionSyncService.call
 RoleSeeder.call
 # 04 R2タスク4: 顧客/案件ステータスマスタの既定値。
 StatusSeeder.call
+# 04 R4追補「リスク・注意」7: 問い合わせ宛先（RecipientGroup / InquiryRecipientRoute）の初期データ。
+# InquiryRecipientRoute は inquiry_statuses に存在するコードしか受け付けないため StatusSeeder の後。
+InquiryRecipientSeeder.call
 # 04 R3残（form-template-mapping.md §9-2 #1）: BRIDGE_PLUS申込フォームの初期テンプレート67フィールド
 # ＋OptionGroup（prefecture/payment_method/yes_no等8種）の投入。全環境で必要な実商材マスタのため
 # development限定ブロックの外に置く。

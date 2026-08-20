@@ -197,7 +197,7 @@
 >   `after_area`（カテゴリ3）/ `reception_channel`（受電窓口）/ `first_responder_name` / `next_responder_name` として統合済み。
 >   「次回対応者→送付先」ルーティングは `InquiryRecipientRoute` の status_code ベースで表現するか、対応者ベースの経路を追加するかは
 >   **未確定**（現状は status_code のみ）。
-> - **本表の具体的な転送先アドレス（13件）を `RecipientGroup` / `InquiryRecipientRoute` に投入する初期データは未作成**（R7 の初期データ投入で扱う）。
+> - **✅ 2026-08-20: 本表（§5-1/§5-2）の転送先を `RecipientGroup` / `InquiryRecipientRoute` へ投入する初期データを作成済み**（`app/services/inquiry_recipient_seeder.rb`・`db/seeds.rb` から実行）。グループ5件＋ルート4件。「販売店にメール」の行は `RecipientResolver#resolve_from_order` が全ステータスで自動送信するためルートを作らない。**転送先アドレスそのもの（共有メールアドレス13件）は投入していない**——`RecipientGroupMember` は `User` / `ProductionCompany` しか持てず、実在しないログインユーザーを作らないため、メンバー割当は運用作業（管理画面）として残してある。グループ名は暫定で業務確認待ち。
 
 ---
 
