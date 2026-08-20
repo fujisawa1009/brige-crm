@@ -6,7 +6,7 @@ class Admin::CustomersController < Admin::BaseController
   helper_method :customer_status_label, :customer_search_params
 
   def index
-    scope = policy_scope(Customer).includes(:agency, :sales_representative).order(:customer_number)
+    scope = policy_scope(Customer).includes(:agency, :sales_representative).order(*default_order)
     # 検索条件そのものには参照制御を持たせない。policy_scope を通したスコープを渡すことで、
     # 代理店ユーザーが他代理店の代理店コード/名を直接入力しても結果には出ない（2重の防御ではなく
     # 「絞り込みは常にpolicy_scopeの内側で行う」という一方向の設計）。
@@ -72,6 +72,19 @@ class Admin::CustomersController < Admin::BaseController
   end
 
   private
+
+  # 一覧の既定の並び順（CEO指示 2026-08-20 タスク4）。旧ジャスミン（Laravel版）は
+  # `applied_at DESC` 固定で、Rails版の `customer_number ASC` は旧と非互換だったため旧に合わせる。
+  #
+  # - NULL の扱いは **NULLS LAST**（お申込日が未入力の顧客は末尾）。PostgreSQL の DESC は
+  #   既定が NULLS FIRST のため、指定しないと未入力の顧客が一覧の先頭を占めてしまう。
+  #   「新しい順」の意図として日付不明を最新扱いするのは不自然であり、旧実装（MySQL）の
+  #   `DESC` も NULL を末尾に置くため、挙動としても旧と一致する。
+  # - 第2キーに customer_number を添える。applied_at は日付（時刻を持たない）ため同値が
+  #   多発し、第2キーが無いとページ送りのたびに順序がぶれて同じ行が2度出たり消えたりする。
+  def default_order
+    [ Customer.arel_table[:applied_at].desc.nulls_last, :customer_number ]
+  end
 
   # 検索フォームの値。ビューからも参照する（ページ送りをまたいだ保持は pagy_url_for が
   # request.GET をそのまま引き継ぐことで成立する）。

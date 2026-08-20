@@ -370,6 +370,73 @@ RSpec.describe "Admin::Customers", type: :request, seed_permission_catalog: true
     end
   end
 
+  # CEO決定 2026-08-20 タスク4: 一覧の既定の並び順を旧ジャスミン（Laravel版）と同じ
+  # 「お申込日の新しい順」に合わせる（旧は applied_at DESC 固定。Rails版は customer_number ASC だった）。
+  describe "一覧の既定の並び順（お申込日の新しい順）" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:agency_s) { create(:agency) }
+
+    # 顧客番号の昇順と申込日の降順がわざと逆になるように作る（旧順序のままなら検知できる）。
+    let!(:oldest) { create(:customer, agency: agency_s, name: "並び順_古い", applied_at: Date.new(2026, 1, 5)) }
+    let!(:newest) { create(:customer, agency: agency_s, name: "並び順_新しい", applied_at: Date.new(2026, 8, 1)) }
+    let!(:middle) { create(:customer, agency: agency_s, name: "並び順_中間", applied_at: Date.new(2026, 4, 10)) }
+    let!(:undated) { create(:customer, agency: agency_s, name: "並び順_未入力", applied_at: nil) }
+
+    before { sign_in_with_otp!(admin_user) }
+
+    def displayed_order(names)
+      names.map { |name| response.body.index(name) }
+    end
+
+    it "お申込日の新しい順に並ぶ" do
+      get admin_customers_path, params: { q: "並び順_" }
+
+      positions = displayed_order([ newest.name, middle.name, oldest.name ])
+      expect(positions).to eq(positions.compact.sort)
+    end
+
+    it "お申込日が未入力の顧客は末尾に並ぶ（NULLS LAST）" do
+      get admin_customers_path, params: { q: "並び順_" }
+
+      positions = displayed_order([ newest.name, middle.name, oldest.name, undated.name ])
+      expect(positions).to eq(positions.compact.sort)
+    end
+
+    it "お申込日が同値でも第2キー（顧客番号）で安定して並ぶ" do
+      same_day = Date.new(2026, 6, 1)
+      a = create(:customer, agency: agency_s, name: "同日_甲", applied_at: same_day)
+      b = create(:customer, agency: agency_s, name: "同日_乙", applied_at: same_day)
+      expected = [ a, b ].sort_by(&:customer_number).map(&:name)
+
+      get admin_customers_path, params: { q: "同日_" }
+
+      positions = displayed_order(expected)
+      expect(positions).to eq(positions.compact.sort)
+    end
+  end
+
+  # CEO決定 2026-08-20 タスク5: 1ページの表示件数を旧と同じ30件に統一する
+  # （pagy 既定の20件から変更。config/initializers/pagy.rb で一元管理）。
+  describe "1ページの表示件数" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:agency_p) { create(:agency) }
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "1ページ30件で区切られる" do
+      create_list(:customer, 31, agency: agency_p, name: "件数検証顧客")
+
+      get admin_customers_path, params: { q: "件数検証顧客" }
+
+      expect(response.body).to include("全 31 件中 1〜30 件を表示")
+      expect(response.body).to match(/page=2[^0-9]/)
+    end
+
+    it "pagyの既定値が30に設定されている" do
+      expect(Pagy::DEFAULT[:items]).to eq(30)
+    end
+  end
+
   # 検索条件は policy_scope の内側でしか効かない（絞り込みパラメータを参照制御の抜け道にしない）。
   describe "検索条件はpolicy_scopeを迂回しない" do
     let!(:group_x) { create(:agency_group, group_code: "GRPX2") }
