@@ -32,6 +32,20 @@ class CsvExportJob < ApplicationJob
     }
   }.freeze
 
+  # 出力の先頭に付けるUTF-8のBOM（CEO決定 2026-08-20。export-profile-design.md §3・§172 の未決事項を確定）。
+  #
+  # 経緯: CEOから「顧客一覧のCSVエクスポートでダウンロードすると文字化けしている」との報告。
+  # 日本語版Windowsの Excel は、BOMの無いCSVをCP932（Windows-31J）として開くため、UTF-8で
+  # 書かれた日本語がすべて化ける。BOMを付ければ Excel はUTF-8と判定して正しく開く。
+  #
+  # CP932へ変換する案は採らない。①・髙・〜・― などCP932に対応字が無い文字が実データに現れ、
+  # `String#encode` が例外になるか（invalid/undef: :replace を付ければ）文字が欠落するため、
+  # 「化けない代わりにデータが壊れる」形になるだけで解決にならない。
+  #
+  # 付与はここ1箇所だけで行う。Admin::CsvExportsController#show は file_data をそのまま
+  # send_data するので、BOMを二重に付ける経路は作らないこと。
+  BOM = "\uFEFF".freeze
+
   def perform(csv_export_id)
     export = CsvExport.find(csv_export_id)
     user   = export.requested_by
@@ -46,7 +60,7 @@ class CsvExportJob < ApplicationJob
       scope.find_each { |record| rows << columns.map { |c| record.public_send(c) } }
     end
 
-    export.update!(status: "completed", file_data: csv, row_count: scope.count)
+    export.update!(status: "completed", file_data: BOM + csv, row_count: scope.count)
   rescue StandardError => e
     export&.update!(status: "failed", error_message: e.message)
     raise

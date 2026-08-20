@@ -60,4 +60,38 @@ RSpec.describe CsvExportJob, type: :job, seed_status_catalog: true do
     expect(export.file_data).not_to include(order_b.order_number)
     expect(export.row_count).to eq(1)
   end
+
+  # CEO報告 2026-08-20:「顧客一覧のCSVエクスポートでダウンロードすると文字化けしている」。
+  # 原因はBOMなしUTF-8を日本語版WindowsのExcelがCP932と誤認して開くこと。
+  # CEO決定により既定の出力を UTF-8 + BOM へ変更した（export-profile-design.md §3・§172 の未決事項を確定）。
+  describe "文字コード（UTF-8 BOM。CEO決定 2026-08-20）" do
+    let!(:export) { CsvExport.create!(resource_type: "Customer", requested_by: agency_user, status: "pending") }
+
+    it "出力の先頭にUTF-8のBOMが付く" do
+      described_class.perform_now(export.id)
+
+      # 実際にファイルへ書き出されるバイト列で確認する（\uFEFF との比較だと、UTF-8として
+      # 正しい3バイトになっているかまでは分からないため）。
+      expect(export.reload.file_data.b).to start_with("\xEF\xBB\xBF".b)
+    end
+
+    it "BOMを除いた本体は従来どおり（ヘッダ行＋データ行のUTF-8 CSV）で変わらない" do
+      described_class.perform_now(export.id)
+
+      body = export.reload.file_data.delete_prefix(described_class::BOM)
+      expect(body.lines.first.chomp).to eq(described_class::EXPORT_TARGETS["Customer"][:columns].join(","))
+      expect(body).not_to include(described_class::BOM)
+      expect(body.encoding).to eq(Encoding::UTF_8)
+    end
+
+    it "CP932に無い文字を含む日本語データもそのまま往復する" do
+      # ①・髙・〜 は CP932 へ変換できない/化けやすい代表例。CP932変換ではなくBOM付与を選んだ理由。
+      customer_a.update!(name: "株式会社髙島①〜テスト")
+
+      described_class.perform_now(export.id)
+
+      rows = CSV.parse(export.reload.file_data.delete_prefix(described_class::BOM), headers: true)
+      expect(rows.map { |r| r["name"] }).to include("株式会社髙島①〜テスト")
+    end
+  end
 end
