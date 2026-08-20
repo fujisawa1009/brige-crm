@@ -148,6 +148,14 @@
 - **【要対応】ステータス呼称（Q-B）の実装が中途半端な状態で放置されている**（出典: `status-naming-analysis.md`）。同書の推奨案A（DB変更なしで表示用語のみ「案件ステータス」「申込ステータス」「契約ステータス」の3語に統一）に対し、実装は`order_statuses`側のみ「案件ステータス」表記へ統一済みで、`customer_statuses`側は`app/views/admin/customer_statuses/index.html.erb`等で依然「顧客ステータス」のまま。決定D（モデル名の`jasmin_`除去）とは別問題である点に注意。
   - **2026-08-19 v4訂正**: 案Aは `development-plan.md` §8 の **D-8（2026-07-26 CEO承認）で決定済み**であり、未決ではなく「決定の適用漏れ」。本書に決定として記録する: **Q-B = 案A採用（D-8）。表示用語は「案件ステータス（order_statuses）」「申込ステータス（customer_statuses）」「契約ステータス（R5契約ワークフロー）」の3語**。テーブルリネーム（Phase 2）は行わない（`ApplicationStatus` 命名が既存 `Application` モデルと衝突するため）。
   - 対応（R5着手前・CTO判断で実施可）: `status-naming-analysis.md` §4-1/4-1b の修正ファイル一覧に従い、`app/views/admin/customer_statuses/{index,new,edit}.html.erb` の h1、`admin/customers/{_form,show,index}.html.erb` のラベルを「申込ステータス」へ、`admin/orders/{_form,show,index}.html.erb`・`mypage/dashboard/index.html.erb` のラベルを「案件ステータス」へ統一。`Column.md` §9/§10 の呼称も同時に揃える。**✅ 2026-08-19実装済み**（commit `8c506d5`。customer_statuses画面3枚＋customers/orders各3画面のラベルを統一。マイページ顧客向け表示のみ業務確認保留のため対象外のまま維持）。
+  - **【最上位・2026-08-20 CEO決定】D-8 の「表示名」ルールをCEOが上書きした**（画面目視確認による）。**管理画面の項目ラベルは原則「ステータス」と表示する**。
+    D-8 の用語体系（案件／申込／契約の3語）・テーブル名・カラム名・コメント・設計文書中の用語は**変更しない**（「顧客ステータス」は引き続き使用禁止語）。変わるのは画面ラベルのみ。
+    - 適用ルール: ①その画面の**主エンティティ自身**のステータス＝「ステータス」／②**顧客と案件のステータスが同一画面に並ぶ**場合＝修飾付きを維持（顧客詳細）／
+      ③**案件と契約のステータスが同一画面に並ぶ**場合＝修飾付きを維持（案件詳細・案件フォーム）／④**マスタ管理画面の画面名・ナビゲーション**＝修飾付きを維持／
+      ⑤**CSVエクスポートのヘッダ**＝修飾付きを維持（現行は英字カラム名のため該当なし）。詳細表は `status-naming-analysis.md` §0-0。
+    - ✅ 2026-08-20実装済み: `admin/customers/{index,_form}`・`admin/orders/index` を「ステータス」へ。併せて使用禁止語「顧客ステータス」の残存
+      （`admin_nav_helper.rb` のサイドナビ・`admin/system_settings/show.html.erb`）を「申込ステータス」へ是正。
+    - **巻き戻し禁止**: 8c506d5 で「申込ステータス」へ統一した箇所を再び戻す作業を行わないこと。リスク6（決定の記録漏れによる巻き戻し）の再発防止として本項を記録する。
 - 未収情報フィールド（売上伝票番号・未回収額等）の追加要否（出典: 旧`remaining-tasks.md`7-1。同ファイルは2026-08-19に削除済みだが本項目のみ拾い上げ）。現行schemaに該当カラムが見当たらず本文書にも未記載。R2追加カラムとするかR6（集計・請求まわり）で扱うかを含めて要否から判断すること。
 
 **R2 追加タスク（2026-08-19 v4追記・Column.md/schema.rb 突合で判明。出典: `Column.md` §4/§7/§8/§14、`legacy-research/12`）**:
@@ -328,6 +336,7 @@
 | 論点 | 内容 | 状態 | 出典 |
 |---|---|---|---|
 | **Q-B適用** | D-8 決定済みの呼称統一（`customer_statuses`=申込ステータス）をビューへ適用完了 | ✅ 2026-08-19実装済み（commit `8c506d5`） | status-naming-analysis.md §4-1 |
+| **ステータス表示ラベル** | **CEO決定 2026-08-20**: 画面の項目ラベルは原則「ステータス」（D-8 の表示名ルールを上書き。用語体系・テーブル名は据え置き）。区別が必要な画面（顧客詳細／案件詳細・フォーム／マスタ画面名／CSVヘッダ）のみ修飾付きを維持 | ✅ 2026-08-20実装済み | status-naming-analysis.md §0-0 |
 | **G-10** | 案件ステータス全35値のシード投入（現行 `StatusSeeder` は5値のみ）＋統廃合後コード表・code 安定キー化 | ✅ 2026-08-19実装済み（統廃合後31値。旧Laravel側原本＋`legacy-research/03`統廃合指針を反映。commit `114a174`） | business-flow-analysis.md §3-1/§3-3、status-naming-analysis.md §1-2 |
 | **verify系** | `after_action :verify_authorized`/`verify_policy_scope` 導入（R0見送り事項の格上げ） | ✅ 2026-08-19実装済み（commit `ee8965d`） | release-readiness.md F-10 |
 | **rack-attack** | form/mypage の OTP・ログイン、`/users/sign_in` へのスロットル拡張 | ✅ 2026-08-19実装済み（commit `fc184ff`） | release-readiness.md C-6 |
@@ -452,6 +461,7 @@
    - ~~R3残: `FormField` ホワイトリストから認証列・`netmove_member_id` を除外（セキュリティ）~~ ✅ 2026-08-19実装済み（commit `efe7857`）
    - ~~R0追加: rack-attack スロットルを form/mypage/`/users/sign_in` へ拡張~~ ✅ 2026-08-19実装済み（commit `fc184ff`）／~~`verify_authorized`/`verify_policy_scope` 導入~~ ✅ 2026-08-19実装済み（commit `ee8965d`）
    - ~~R2追加: Q-B（D-8）適用 — `customer_statuses` 側ビューを「申込ステータス」、案件側を「案件ステータス」へ統一~~ ✅ 2026-08-19実装済み（commit `8c506d5`）
+   - ~~**CEO決定 2026-08-20**: 画面の項目ラベルは原則「ステータス」（D-8 の表示名ルールを上書き）。適用ルールは `status-naming-analysis.md` §0-0~~ ✅ 2026-08-20実装済み
    - ~~R4追補: `RecipientResolver#recipients_for_inquiry` の宛先絞り込み修正（v5決定）~~ ✅ 2026-08-19実装済み（commit `0006f43`）
    - ~~G-10: 案件ステータス35値のシード（統廃合後コード表は `status-naming-analysis.md` §3-3）~~ ✅ 2026-08-19実装済み（統廃合後31値。commit `114a174`）
    - ~~R3残: BRIDGE_PLUS テンプレ67フィールド＋OptionGroup の seed/rake 投入~~ ✅ 2026-08-19実装済み（commit `63c52e9`）

@@ -19,7 +19,7 @@
               { include_blank: true }, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>
       <div>
-        <%= f.label :status, "申込ステータス", class: "mb-1 block text-sm font-medium text-slate-700" %>
+        <%= f.label :status, "ステータス", class: "mb-1 block text-sm font-medium text-slate-700" %>
         <%= f.collection_select :status, CustomerStatus.ordered, :code, :label,
               {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
       </div>

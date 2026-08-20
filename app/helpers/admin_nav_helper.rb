@@ -57,7 +57,7 @@ module AdminNavHelper
                           controller: "admin/option_values", action: "index")
       ]),
       AdminNavSection.new(title: "ステータス・ルーティング", items: [
-        AdminNavItem.new(label: "顧客ステータス", path: admin_customer_statuses_path,
+        AdminNavItem.new(label: "申込ステータス", path: admin_customer_statuses_path,
                           controller: "admin/customer_statuses", action: "index"),
         AdminNavItem.new(label: "案件ステータス", path: admin_order_statuses_path,
                           controller: "admin/order_statuses", action: "index"),
