@@ -63,6 +63,18 @@
           <%= text_field_tag :agency_name, customer_search_params[:agency_name], placeholder: "部分一致",
                 class: input_class %>
         </div>
+        <%#
+          退会済みの表示切替（CEO指示 2026-08-20。旧ジャスミンの show_withdrawn 相当）。
+          一覧は既定で退会済みを除外し、チェックしたときだけ含める。他の入力欄と下端を
+          揃えたいので items-end で下寄せする（他はラベル1行ぶん上に積まれているため）。
+        %>
+        <div class="flex items-end">
+          <label class="flex w-full cursor-pointer items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700">
+            <%= check_box_tag :show_withdrawn, "1", CustomerSearch.show_withdrawn?(customer_search_params),
+                  class: "h-4 w-4 rounded border-slate-300 text-slate-800" %>
+            退会済みを含む
+          </label>
+        </div>
       </div>
 
       <%# 日付レンジは1つのセルに入力欄が2つ入るため、テキスト系より広い1行2列で並べる。 %>

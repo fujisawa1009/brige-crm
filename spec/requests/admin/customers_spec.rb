@@ -139,10 +139,13 @@ RSpec.describe "Admin::Customers", type: :request, seed_permission_catalog: true
                         email: "target-hit@example.com", phone: "0312345678",
                         status: CustomerStatus::CODE_APPLIED, applied_at: Date.new(2026, 5, 10))
     end
+    # other は退会済みにしない。一覧は既定で退会済みを除外する（CEO指示 2026-08-20）ため、
+    # 退会済みにすると各条件が効いたのか既定除外で消えたのかを区別できなくなる。
+    # 退会済みの挙動そのものは後段の専用 describe で検証する。
     let!(:other) do
       create(:customer, agency: agency_y, name: "対象外オフィス",
                         email: "miss@example.com", phone: "0699999999",
-                        status: CustomerStatus::CODE_WITHDRAWN, applied_at: Date.new(2026, 7, 20))
+                        status: "contracted", applied_at: Date.new(2026, 7, 20))
     end
 
     before { sign_in_with_otp!(admin_user) }
@@ -288,6 +291,82 @@ RSpec.describe "Admin::Customers", type: :request, seed_permission_catalog: true
       expect(response.body).to include("フリーワード", "FTWEB顧客番号", "グループ会社コード",
                                        "グループ会社名", "代理店コード", "代理店名",
                                        "ステータス", "お申込日", "最終更新日時")
+    end
+  end
+
+  # CEO指示 2026-08-20: 顧客一覧は既定で退会済みを除外し、「退会済みを含む」チェックを
+  # 入れたときだけ表示する（旧ジャスミン Laravel 版の show_withdrawn と同じ挙動）。
+  # 退会の判定は customers.status == CustomerStatus::CODE_WITHDRAWN（Customer.active スコープ）。
+  describe "退会済み顧客の表示（show_withdrawn）" do
+    let!(:admin_user) { user_with_role("admin") }
+    let!(:agency_w) { create(:agency) }
+    let!(:active_customer) do
+      create(:customer, agency: agency_w, name: "現役ゼット商会", status: CustomerStatus::CODE_APPLIED)
+    end
+    let!(:withdrawn_customer) do
+      create(:customer, agency: agency_w, name: "退会済みゼット商会", status: CustomerStatus::CODE_WITHDRAWN)
+    end
+
+    before { sign_in_with_otp!(admin_user) }
+
+    it "既定（パラメータ無し）では退会済みが表示されない" do
+      get admin_customers_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(active_customer.name)
+      expect(response.body).not_to include(withdrawn_customer.name)
+    end
+
+    it "「退会済みを含む」にチェックすると退会済みも表示される" do
+      get admin_customers_path, params: { show_withdrawn: "1" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(active_customer.name, withdrawn_customer.name)
+    end
+
+    it "チェックを外した状態（show_withdrawn=0）では退会済みが表示されない" do
+      get admin_customers_path, params: { show_withdrawn: "0" }
+
+      expect(response.body).to include(active_customer.name)
+      expect(response.body).not_to include(withdrawn_customer.name)
+    end
+
+    it "他の検索条件と併用しても既定除外が効く" do
+      get admin_customers_path, params: { q: "ゼット商会" }
+
+      expect(response.body).to include(active_customer.name)
+      expect(response.body).not_to include(withdrawn_customer.name)
+    end
+
+    # 採用した挙動: ステータスで「退会済み」を明示選択した場合は、チェックが無くても表示する。
+    # そうしないと選択した瞬間に必ず0件になり、絞り込みとして意味を成さないため。
+    it "ステータスで退会済みを明示選択した場合はチェック無しでも表示される" do
+      get admin_customers_path, params: { status: CustomerStatus::CODE_WITHDRAWN }
+
+      expect(response.body).to include(withdrawn_customer.name)
+      expect(response.body).not_to include(active_customer.name)
+    end
+
+    it "検索フォームに「退会済みを含む」チェックボックスがあり、既定は未チェック" do
+      get admin_customers_path
+
+      expect(response.body).to include("退会済みを含む")
+      expect(response.body).to include(%(name="show_withdrawn"))
+      expect(response.body).not_to match(/name="show_withdrawn"[^>]*checked/)
+    end
+
+    it "チェック状態はリロード後もフォームに保持される" do
+      get admin_customers_path, params: { show_withdrawn: "1" }
+
+      expect(response.body).to match(/name="show_withdrawn"[^>]*checked|checked[^>]*name="show_withdrawn"/)
+    end
+
+    it "退会済みの件数はページネーションの総件数にも含まれない" do
+      get admin_customers_path, params: { q: "ゼット商会" }
+      expect(response.body).to include("全 1 件")
+
+      get admin_customers_path, params: { q: "ゼット商会", show_withdrawn: "1" }
+      expect(response.body).to include("全 2 件")
     end
   end
 

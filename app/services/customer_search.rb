@@ -12,6 +12,10 @@
 #   8. お申込日              → customers.applied_at の期間指定（from/to 片側のみでも可）
 #   9. 最終更新日時          → customers.updated_at の期間指定（from/to 片側のみでも可）
 #
+# これに加えて「退会済みを含む」チェック（show_withdrawn）を持つ（CEO指示 2026-08-20）。
+# 旧ジャスミン（Laravel `Admin\JasminCustomerController#index` の `show_withdrawn`）と同じく、
+# 顧客一覧は既定で退会済み（`CustomerStatus::CODE_WITHDRAWN`）を除外し、チェック時のみ含める。
+#
 # 参照制御はここでは行わない。呼び出し側が policy_scope(Customer) を通したスコープを渡すこと
 # （代理店ユーザーが代理店コード/名を直接入力しても、policy_scope の外へは決して出られない）。
 #
@@ -33,8 +37,14 @@ class CustomerSearch
   # ビュー（検索フォーム）とコントローラで共有する許可パラメータ。
   PERMITTED_KEYS = %i[
     q customer_number group_code group_name agency_code agency_name status
-    applied_from applied_to updated_from updated_to
+    applied_from applied_to updated_from updated_to show_withdrawn
   ].freeze
+
+  # 「退会済みを含む」チェックの状態。チェックボックスは未チェック時にパラメータ自体が
+  # 送られてこないため、nil = false として扱う。ビューの checked 状態もこれで判定する。
+  def self.show_withdrawn?(params)
+    ActiveModel::Type::Boolean.new.cast((params || {})[:show_withdrawn]) || false
+  end
 
   def initialize(scope, params)
     @scope = scope
@@ -50,7 +60,8 @@ class CustomerSearch
     scope = filter_agency(scope)
     scope = filter_status(scope)
     scope = filter_applied_at(scope)
-    filter_updated_at(scope)
+    scope = filter_updated_at(scope)
+    filter_withdrawn(scope)
   end
 
   private
@@ -125,6 +136,22 @@ class CustomerSearch
     scope = scope.where(customers: { updated_at: from.beginning_of_day.. }) if from
     scope = scope.where(customers: { updated_at: ..to.end_of_day }) if to
     scope
+  end
+
+  # 退会済みの除外（既定）／表示（チェック時）。CEO指示 2026-08-20。
+  #
+  # ステータスで「退会済み」を明示的に選んだ場合は、チェックが無くても退会済みを表示する。
+  # そうしないと「退会済み」を選んだ瞬間に必ず0件になり、絞り込みとして意味を成さないため
+  # （basic-design.md §5-3「退会済みの顧客は通常の一覧表示には含めず、検索条件により表示可能」の
+  # 「検索条件」にはステータス絞込も含まれる、という解釈）。
+  def filter_withdrawn(scope)
+    return scope if self.class.show_withdrawn?(@params)
+    return scope if value(:status) == CustomerStatus::CODE_WITHDRAWN
+
+    # `scope.merge(Customer.active)` は使わない。merge は同じカラムに対する既存の where を
+    # 置き換えるため、ステータス絞込（`where(status: ...)`）が消えて絞り込みが効かなくなる
+    # （2026-08-20 実装時に spec で検出）。`where.not` を直接チェーンして AND にする。
+    scope.where.not(customers: { status: CustomerStatus::CODE_WITHDRAWN })
   end
 
   # 不正な日付文字列（ブラウザのdate入力を通さず直接叩かれた場合等）は「条件なし」として扱う。
