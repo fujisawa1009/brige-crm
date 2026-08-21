@@ -3,7 +3,8 @@ require "rails_helper"
 # AILINK商材（2026-08-21 CEO指示・浅賀確認用_選択フォーム要件整理.xlsx P2〜P9）の申込フォーム
 # テンプレート投入。冪等性・件数・ホワイトリスト適合・マスタ由来選択肢を検証する。
 RSpec.describe AilinkFormTemplateSeeder do
-  # 7ステップ（事前入力/契約者/店舗施設/支払方法/GBP登録/架電日時/アカウント情報）・108フィールド
+  # 8ステップ（事前入力/契約者/店舗施設/支払方法/GBP登録/架電日時/アカウント情報/最終確認）・112フィールド
+  # （FIX版 2026-08-21: アポインター担当コード・利用できるクレジットカードの種類・同意時年齢2項目を追加）
   EXPECTED_FIELD_COUNT = described_class::STEPS.sum { |s| s[:fields].size }
 
   it "Product/ProductInitialFee/FormTemplate/FormStep/FormField/OptionGroupを冪等に作成する" do
@@ -12,8 +13,8 @@ RSpec.describe AilinkFormTemplateSeeder do
       .and change(ProductInitialFee, :count).by(5)
 
     product = Product.find_by!(code: "AILINK")
-    expect(product.form_template.form_steps.count).to eq(7)
-    expect(EXPECTED_FIELD_COUNT).to eq(108)
+    expect(product.form_template.form_steps.count).to eq(8)
+    expect(EXPECTED_FIELD_COUNT).to eq(112)
 
     expect { described_class.call }.not_to change(FormField, :count) # 2回目は増えない
   end
@@ -54,7 +55,7 @@ RSpec.describe AilinkFormTemplateSeeder do
     expect(required_keys).to include(
       "instagram_id", "instagram_pass", "system_account_pass",
       "has_line", "has_facebook", "has_facebook_page",
-      "inventory_type", "product_initial_fee", "discount_option", "customer_email"
+      "inventory_type", "product_initial_fee", "discount_option", "customer_email", "appointer_code"
     )
   end
 

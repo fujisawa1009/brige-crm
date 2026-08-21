@@ -1,5 +1,7 @@
 # AILINK商材 申込フォームの初期テンプレート投入（2026-08-21 CEO指示・出典:
-# private/36.ジャスミン資料/新商材フォーム/浅賀確認用_選択フォーム要件整理.xlsx の P2〜P9シート）。
+# private/36.ジャスミン資料/新商材フォーム/FIX_浅賀確認用_選択フォーム要件整理.xlsx の P2〜P11シート）。
+# FIX版の色分け規約: A列黄色=別ページで入力済みの表示専用（入力フィールドにしない）、
+# A列緑色=フォームでは入力しない契約後カラム（全て既存スキーマに実在。管理画面側の業務入力）。
 # BridgePlusFormTemplateSeeder と同じ冪等パターン（「無ければ作る」投入専用。フォームビルダーでの
 # 手動編集を尊重し、既存フィールドは上書きしない。マスタ由来の選択肢のみ毎回同期）。
 #
@@ -13,6 +15,10 @@
 #   チェック＆編集不可は未対応（Stimulus拡張が必要。現状は通常入力欄として投入）。
 # - P5 請求書送付先の都道府県〜番地は customers.invoice_address 1列（string 500）のため1欄に集約。
 # - P2 受注日・プランの自動入力は Form::ApplicationSubmissionService#assign_auto_values! が担う。
+# - P10（営業担当情報）は全項目が表示専用（P1ログイン・P2アポインターコードの反映）のためステップにしない
+#   （アポインター担当者名のコードからの自動解決は表示側の対応＝未実装）。
+# - P11（最終確認画面）のうち入力項目（同意時年齢2つ）のみ「最終確認」ステップとして投入。
+#   重説レ点=R5-13の顧客導線組込、電子署名=R5-14、申込完了ボタン=既存の確認画面submitが担う。
 class AilinkFormTemplateSeeder
   PRODUCT_CODE = "AILINK"
 
@@ -186,7 +192,10 @@ class AilinkFormTemplateSeeder
         # だが現行機構では通常のチェックボックス（選択肢は商材のProductOptionから動的導出）。
         { key: "product_options", label: "オプション①", target_table: "order", target_column: "product_option_ids", type: "checkbox_group", required: true },
         { key: "discount_option", label: "オプション②（割引）", target_table: "order", target_column: "discount_option", type: "select", option_group: "discount_option", required: true },
-        { key: "customer_email", label: "お客様メールアドレス", target_table: "customer", target_column: "email", type: "text", required: true }
+        { key: "customer_email", label: "お客様メールアドレス", target_table: "customer", target_column: "email", type: "text", required: true },
+        # FIX版追加（P2）。営業担当と同一の場合は同じコードを入力する運用。営業担当者マスタとの照合は
+        # 行わない（シート上フリーワード。アポインター担当者名の自動解決は表示側の将来対応）。
+        { key: "appointer_code", label: "アポインター担当コード", target_table: "customer", target_column: "appointer_code", type: "text", required: true, max_length: 20 }
       ]
     },
     {
@@ -253,6 +262,7 @@ class AilinkFormTemplateSeeder
         { key: "directions", label: "道順", target_table: "order_work_detail", target_column: "directions", type: "textarea", max_length: 500 },
         { key: "parking", label: "駐車場", target_table: "order_work_detail", target_column: "parking", type: "text", max_length: 20 },
         { key: "parking_capacity", label: "駐車可能な台数", target_table: "order_work_detail", target_column: "parking_capacity", type: "integer" },
+        { key: "accepted_cards", label: "利用できるクレジットカードの種類", target_table: "order_work_detail", target_column: "accepted_cards", type: "text", max_length: 200 },
         { key: "opening_date", label: "開業日", target_table: "order_work_detail", target_column: "opening_date", type: "date", required: true },
         { key: "num_employees", label: "従業員数", target_table: "order_work_detail", target_column: "num_employees", type: "integer", required: true },
         { key: "gbp_url", label: "GoogleビジネスプロフィールURL", target_table: "order_work_detail", target_column: "gbp_url", type: "text", max_length: 500 },
@@ -320,6 +330,14 @@ class AilinkFormTemplateSeeder
         { key: "has_line", label: "LINEアカウントの所持", target_table: "order_work_detail", target_column: "has_line", type: "select", option_group: "sns_possession", required: true },
         { key: "system_account_pass", label: "システムアカウントPASS（半角16桁まで）", target_table: "order_work_detail", target_column: "system_account_pass", type: "text", required: true, max_length: 16 },
         { key: "order_remarks", label: "備考", target_table: "order", target_column: "remarks", type: "textarea" }
+      ]
+    },
+    {
+      # P11（最終確認画面）の入力項目のみ。重説レ点・電子署名・申込完了はステップ外（ヘッダコメント参照）。
+      name: "最終確認",
+      fields: [
+        { key: "consent_rep_age", label: "同意時代表者年齢", target_table: "order", target_column: "consent_rep_age", type: "integer" },
+        { key: "consent_contact_age", label: "同意時担当者年齢", target_table: "order", target_column: "consent_contact_age", type: "integer" }
       ]
     }
   ].freeze
