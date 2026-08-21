@@ -15,6 +15,9 @@ BridgePlusFormTemplateSeeder.call
 # 商材・プラン・代理店グループ・代理店の実データマスタ。全環境で必要なため development 限定の外に置く。
 # 実行順序: 商材 → 代理店グループ → 代理店（代理店は group_code / BRIDGE_PLUS 商材へ依存）。
 load Rails.root.join("db/seeds/products.rb")
+# 2026-08-21 CEO指示: AILINK商材の申込フォームテンプレート（P2〜P9・7ステップ）。初期費用プルダウンの
+# 選択肢を ProductInitialFee マスタから複製するため、products.rb（マスタ投入）の後に実行する。
+AilinkFormTemplateSeeder.call
 load Rails.root.join("db/seeds/agency_groups.rb")
 load Rails.root.join("db/seeds/agencies.rb")
 

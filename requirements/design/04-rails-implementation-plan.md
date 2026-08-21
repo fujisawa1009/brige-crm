@@ -199,6 +199,12 @@
 - 【低】`input_options.option_group_key`→OptionGroup 参照解決、WorkDetail 個別フィールドのフォーム組み込み範囲（R6）。
 - **2026-08-19 v5 CEO決定**: 顧客本人が入力する導線は**ハイブリッド方式**を採用（営業担当者が入力して仮申込を作成→顧客にメールでリンク送付→顧客がそのリンクから申込を再開）。`Application#token` 付き URL の別セッション許可＋有効期限管理をR5で実装。詳細はR5節「R5-6」付近の実装タスクに追加すること。
 
+**R3追補: AILINK商材・専用申込フォーム追加（2026-08-21 CEO指示）**: 新商材 AILINK（プラン=Brige_plus 1価格固定。出典: `private/36.ジャスミン資料/新商材フォーム/浅賀確認用_選択フォーム要件整理.xlsx`＝浅賀氏回答済み要件シートのP2〜P9）を追加し、`AilinkFormTemplateSeeder` で専用フォーム（7ステップ・108フィールド）を投入した。
+- **スキーマ追加3列**（Column.md反映済み）: `orders.discount_option`（P2 オプション②=割引なし/長期割引（税込11,000円）/長期割引（税込22,000円）。**Q-46 の利用規約自動切替がR5でこの値を参照**）、`order_work_details.has_facebook_page` / `has_line`（P9）。
+- **フォーム機構の拡張3点**: ①初期費用プルダウン（`order.product_initial_fee_id` を `EXTRA_ALLOWED_COLUMNS` に追加・選択肢は商材の `ProductInitialFee` から複製・他商材IDはvalidatorで拒否）／②checkbox_group回答の通常string列への「・」連結保存（GBP属性1〜11・架電日時用。桁あふれは連結後max_lengthで検証）／③受注日=申込完了日の自動記録＋有効プラン1本のみの商材のプラン自動確定（`Form::ApplicationSubmissionService#assign_auto_values!`）。
+- **要CEO確認（暫定判断）**: (1) 商材名=AILINK・プラン名=Brige_plus の解釈（シート表題はBrige_plus・P2商材ラジオはAILINK）／(2) プラン月額（シート未提示のため未設定）／(3) 販売許可は暫定で全代理店へ付与（BRIDGE_PLUS同様）／(4) ご契約者区分は既存3値と別にシートどおり2値（法人/個人事業主）で投入。
+- **シートとの既知の差分（機構制約）**: 条件付き必須（法人時の代表者名・資本金等）はR5-14入力チェック設定待ち、住所コピー・メール自動反映・オプション①のデフォルトチェック編集不可はG-5フォームビルダー拡張待ち、P5請求書送付先住所は `customers.invoice_address` 1列に集約。
+
 ## R4: 問い合わせ・通知
 
 - Inquiry / InquiryMessage / 添付 / 宛先解決（RecipientResolver移植）

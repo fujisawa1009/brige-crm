@@ -201,4 +201,70 @@ RSpec.describe "Form::Applications", type: :request, seed_status_catalog: true, 
       end
     end
   end
+
+  # AILINK商材対応で追加したフォーム機構の拡張（2026-08-21）:
+  # 1) 受注日=申込完了日の自動記録、有効プランが1本のみの商材のプラン自動確定
+  # 2) checkbox_group回答の通常string列への「・」連結保存
+  # 3) 初期費用プルダウン（order.product_initial_fee_id）と他商材の初期費用ID拒否
+  describe "AILINK形式のフォーム機構拡張" do
+    let!(:plan) { create(:plan, product: product) }
+    let!(:initial_fee) { ProductInitialFee.create!(product: product, name: "0円", amount: 0, sort_order: 1, is_active: true) }
+    let!(:extra_fields) do
+      step = form_template.form_steps.find_by!(step_number: 2)
+      create(:form_field, form_step: step, field_key: "contact_easy_day", label: "連絡が取りやすい曜日",
+             field_type: "checkbox_group", target_table: "order_work_detail", target_column: "contact_easy_day",
+             required: false, sort_order: 3,
+             input_options: { "choices" => [ [ "月", "月" ], [ "火", "火" ], [ "水", "水" ] ] })
+      create(:form_field, form_step: step, field_key: "product_initial_fee", label: "初期費用",
+             field_type: "select", target_table: "order", target_column: "product_initial_fee_id",
+             required: false, sort_order: 4,
+             input_options: { "choices" => [ [ initial_fee.id.to_s, initial_fee.name ] ] })
+    end
+    let!(:application) do
+      post form_applications_path, params: { product_id: product.id }
+      Application.last
+    end
+
+    before do
+      patch form_update_application_step_path(token: application.token, step_number: 1),
+            params: { answers: { customer_name: "山田太郎", customer_email: "yamada@example.com", store_name: "本店" } }
+    end
+
+    it "受注日が申込完了日で自動記録され、有効プラン1本のみの商材はプランも自動確定する" do
+      patch form_update_application_step_path(token: application.token, step_number: 2),
+            params: { answers: { order_remarks: "備考" } }
+      post form_submit_application_path(token: application.token)
+
+      order = application.reload.order
+      expect(order.ordered_at).to eq(Date.current)
+      expect(order.plan).to eq(plan)
+    end
+
+    it "checkbox_groupの回答は通常のstring列へ「・」連結で保存される" do
+      patch form_update_application_step_path(token: application.token, step_number: 2),
+            params: { answers: { contact_easy_day: [ "月", "水" ] } }
+      post form_submit_application_path(token: application.token)
+
+      detail = application.reload.order.order_work_detail
+      expect(detail.contact_easy_day).to eq("月・水")
+    end
+
+    it "初期費用プルダウンの選択値がorder.product_initial_fee_idへ保存される" do
+      patch form_update_application_step_path(token: application.token, step_number: 2),
+            params: { answers: { product_initial_fee: initial_fee.id.to_s } }
+      post form_submit_application_path(token: application.token)
+
+      expect(application.reload.order.product_initial_fee_id).to eq(initial_fee.id)
+    end
+
+    it "他商材の初期費用IDを直接POSTしても拒否される" do
+      other_fee = ProductInitialFee.create!(product: create(:product), name: "9円", amount: 9, sort_order: 1, is_active: true)
+
+      patch form_update_application_step_path(token: application.token, step_number: 2),
+            params: { answers: { product_initial_fee: other_fee.id.to_s } }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(application.reload.form_data).not_to have_key("product_initial_fee")
+    end
+  end
 end
