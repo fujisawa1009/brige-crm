@@ -205,7 +205,7 @@
 - **「その他補足」シートの要望3件（R5/R6タスクとして記録）**: (1) 申込フォームでの書類添付（`OrderAttachment`/R6-8ファイル基盤と接続。動的フォームにfile型フィールドが無いため機構拡張が必要→R5-14と同時に検討）／(2) 申込書送付ボタン・同意メール再送ボタン・契約書PDF閲覧ボタンの設置（R5-12/R5-14の管理画面UIに含める）／(3) 必要掲示板=後確・制作対応・検収コール・アフターの4種（R4の`RecipientGroup`/`InquiryRecipientRoute`投入済み分との対応を確認し、不足があればグループ追加）。
 - **スキーマ追加3列**（Column.md反映済み）: `orders.discount_option`（P2 オプション②=割引なし/長期割引（税込11,000円）/長期割引（税込22,000円）。**Q-46 の利用規約自動切替がR5でこの値を参照**）、`order_work_details.has_facebook_page` / `has_line`（P9）。
 - **フォーム機構の拡張3点**: ①初期費用プルダウン（`order.product_initial_fee_id` を `EXTRA_ALLOWED_COLUMNS` に追加・選択肢は商材の `ProductInitialFee` から複製・他商材IDはvalidatorで拒否）／②checkbox_group回答の通常string列への「・」連結保存（GBP属性1〜11・架電日時用。桁あふれは連結後max_lengthで検証）／③受注日=申込完了日の自動記録＋有効プラン1本のみの商材のプラン自動確定（`Form::ApplicationSubmissionService#assign_auto_values!`）。
-- **要CEO確認（暫定判断）**: (1) 商材名=AILINK・プラン名=Brige_plus の解釈（シート表題はBrige_plus・P2商材ラジオはAILINK）／(2) プラン月額（シート未提示のため未設定）／(3) 販売許可は暫定で全代理店へ付与（BRIDGE_PLUS同様）／(4) ご契約者区分は既存3値と別にシートどおり2値（法人/個人事業主）で投入。
+- **要CEO確認（暫定判断）→ 2026-08-21 CEO裁定**: (1) 商材名=AILINK・プラン名=Brige_plus ✅**このままで確定**／(2) プラン月額 ✅**未設定のままとし、確定後に管理画面（商材マスタ→プラン→Brige_plusの編集画面の「月額料金」）から入力する運用で確定**（商材・プラン・初期費用・オプションの編集画面はR2実装済み `Admin::Products/Plans/ProductInitialFees/ProductOptionsController`。書込は内部スタッフのみ=MasterDataPolicy）／(3) 販売許可=全代理店 は引き続き暫定／(4) ご契約者区分2値・アポインターコード照合・P11年齢必須化・書類添付対象は**現状のまま保留**（CEO指示「こまかいのはまだこのままでよい」）。
 - **シートとの既知の差分（機構制約）**: 条件付き必須（法人時の代表者名・資本金等）はR5-14入力チェック設定待ち、住所コピー・メール自動反映・オプション①のデフォルトチェック編集不可はG-5フォームビルダー拡張待ち、P5請求書送付先住所は `customers.invoice_address` 1列に集約。
 
 ## R4: 問い合わせ・通知
