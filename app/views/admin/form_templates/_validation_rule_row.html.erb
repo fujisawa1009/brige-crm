@@ -1,0 +1,15 @@
+<%# ローカル変数: rule_type（ルール種別。max_length等）, rule_value（値。数値） %>
+<div data-validation-rule-list-target="row" class="flex items-center gap-2">
+  <select data-role="type" data-action="change->validation-rule-list#sync"
+          class="w-1/2 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+    <option value=""<%= " selected" if rule_type.blank? %>>（未選択）</option>
+    <% Admin::FormTemplatesHelper::VALIDATION_RULE_TYPE_OPTIONS.each do |rule_label, rule_key| %>
+      <option value="<%= rule_key %>"<%= " selected" if rule_key == rule_type %>><%= rule_label %></option>
+    <% end %>
+  </select>
+  <input type="number" placeholder="値" value="<%= rule_value %>" data-role="value"
+         data-action="input->validation-rule-list#sync"
+         class="w-1/2 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+  <button type="button" data-action="validation-rule-list#remove"
+          class="shrink-0 text-xs font-medium text-red-600 hover:underline">削除</button>
+</div>

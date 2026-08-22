@@ -1,0 +1,242 @@
+# フォームビルダー（Admin::FormTemplates）の日本語ラベルカタログ。
+# 出所: requirements/design/Column.md の customers(§8) / stores(§9) / orders(§10) /
+# order_work_details(§11) 各節「カラム一覧」表の「説明」列を転記（独自の翻訳・意訳はしない）。
+# 例外: order.product_option_ids / order.product_initial_fee_id は
+# FormField::EXTRA_ALLOWED_COLUMNS 由来の集合idsライター/選択枠のため、決定者確定仕様の固定文言を使う。
+#
+# 読み込みは app/services/form_field/column_label_catalog.rb（キャッシュ付き）。
+# target_table=customer/store/order/order_work_detail それぞれ、
+# FormField.allowed_target_columns_for(テーブルキー) が返す全カラムを網羅する
+# （spec/models/form_field/column_label_catalog_spec.rb が漏れを検知する）。
+
+tables:
+  customer: 顧客
+  store: 店舗
+  order: 案件
+  order_work_detail: 案件詳細
+columns:
+  customer:
+    address_detail: 番地・ビル・建物名
+    agency_customer_code: 代理店用顧客コード
+    applicant_type: '申込者区分: 法人 / 個人事業主 / 個人'
+    applied_at: お申込日
+    appointer_code: アポインター担当者コード
+    appointer_name: アポインター担当者名
+    city: 市区郡
+    confirm_staff_code: 確認担当者コード
+    confirm_staff_name: 確認担当者名
+    consolidated_billing: 合算請求希望（true=希望する / false=希望しない）
+    contact2_dept_phone: 担当部署電話番号_2
+    contact2_name: 担当者名_2（氏名一括）
+    contact2_name_kana: 担当者名_2カナ
+    contact2_title: 担当者役職_2
+    contact_dept_phone: 担当部署電話番号
+    contact_name: '担当者名（氏名一括。例: 黒田 尚樹）'
+    contact_name_kana: '担当者名カナ（例: クロダ ナオキ）'
+    contact_title: 担当者役職
+    contracted_at: 契約日
+    contractor_name_kana: 契約者名または法人名カナ
+    email: メールアドレス。UQ（index_customers_on_email。マイページ認証キー。R4 で追加）
+    fax_number: ご連絡先FAX番号
+    industry: 業種
+    industry_sub: 業種（小区分）
+    inventory_type: '在庫区分: 新規 / etc.'
+    invoice_address: 請求書送付先ご住所（文字列）
+    invoice_destination: 請求書送付先種別（設置先住所と同一 / 契約者住所と同一 / etc.）
+    invoice_name: 請求書送付先名
+    invoice_name_kana: 請求書送付先名カナ
+    invoice_other_phone: その他の電話番号
+    invoice_phone: 日中のご連絡先電話番号
+    invoice_postal_code: 請求書送付先郵便番号
+    lbc_code: LBCコード
+    mobile_contact_person: 携帯電話ご担当者
+    mobile_phone: 携帯電話番号
+    name: 契約者名または法人名
+    num_employees: 従業員数
+    num_offices: 営業所数
+    phone: ご連絡先電話番号（旧設計名 phone_number）
+    postal_code: 郵便番号
+    prefecture: 都道府県
+    representative_name: '法人代表者名（氏名一括。例: 小笠原 勇人）'
+    representative_name_kana: '法人代表者名カナ（例: オガサワラ ハヤト）'
+    sales_mgmt_customer_code: 販売管理S顧客CD
+    sms_mobile_number: SMS送信用携帯番号
+    town: 町名
+    years_in_business: 営業年数。BridgePlusは数値文字列（「1」等）、Bridgeは選択肢文字列（「1年から5年」等）のため string(20)
+      で統一
+  store:
+    address_detail: 番地・ビル・建物名
+    business_hours_1: '営業時間1（例: 15:00～10:00）'
+    business_hours_2: 営業時間2
+    city: 市区郡
+    fax_number: ご連絡先FAX番号
+    is_active: 有効フラグ（false = 利用停止）
+    phone_number: ご連絡先電話番号
+    postal_code: 郵便番号
+    prefecture: 都道府県
+    regular_holiday: '定休日（例: 年中無休 / 毎週月曜日 等）'
+    store_code: '店舗CD（例: S00000002751）。旧システムから移行する場合に格納。新規登録時はNULL可'
+    store_name: ご利用施設名称
+    store_name_kana: ご利用施設名称（フリガナ）
+    town: 町名
+  order:
+    account_issued_at: アカウント発行日
+    accounting_month: '計上月（例: 202304）。BridgePlus側'
+    billing_password: 請求パスワード。ENC（encrypts :billing_password。pii-handling-rules.md
+      分類B。暗号文が長くなるため text。Auditable 追跡対象外）
+    bridge_accounting_month: Bridge計上月。Bridge移行案件用
+    bridge_agency_name: Bridge販売店名（移行前の代理店名記録用）
+    bridge_migration: Bridge移行フラグ（あり / なし）
+    bridge_migration_order_number: Bridge移行案件番号
+    bridge_sales_rep_name: Bridge営業担当者名（移行前の担当者記録用）
+    bundle_target_order_number: おまとめ先の案件番号
+    bundled_billing: おまとめ請求（する / しない）
+    business_auth_doc: 業務権限証明書（あり / NULL）
+    business_auth_doc_collected_at: 業務権限証明書回収日
+    business_proof: 個人事業主の場合事業証明（URLや記録）
+    cancelled_at: キャンセル日
+    citation_applied: サイテーション申し込み
+    citation_count: サイテーション申し込み数
+    citation_existing_serial: サイテーション既存シリアル
+    citation_plan: サイテーションプラン
+    confirm_call_contact_name: 確認コール担当者名（顧客側の対応者）
+    confirm_call_notes: 確認コール詳細（架電履歴・対応内容を含む長文テキスト）
+    confirm_call_preferred_date: 確認コール連絡希望日
+    confirm_call_remarks: 確認コール備考
+    confirm_call_staff_name: 確認コール架電担当名
+    confirm_call_time: '確認コール架電時間（例: ②PM 12 時～ 15 時）...）'
+    consent_contact_age: 同意時 担当者年齢
+    consent_rep_age: 同意時 代表者年齢
+    consent_status: '同意状況（例: 同意）'
+    contract_sent_at: 契約書送付日
+    contract_start_date: 契約開始日（確認コール完了日）
+    contract_status: '契約ステータス（数値コード。例: 4）。R5 契約フロー状態機械で意味づけ予定'
+    discount_option: 割引オプション（割引なし / 長期割引（税込11,000円） / 長期割引（税込22,000円）。実装追加 2026-08-21・AILINK申込フォームP2
+      オプション②。Q-46利用規約自動切替がR5で参照）
+    domestic_citation_plan: 国内サイテーションプラン
+    elderly_consent: 高齢者同意書（あり / NULL）
+    elderly_consent_collected_at: 高齢者同意書回収日
+    external_link_applied: 外部リンク申し込み
+    external_link_count: 外部リンク申し込み数
+    external_link_type: '外部リンクの型（例: ストック型）'
+    factor_notes: ファクター回収備考
+    finance_address_detail: 設置先_番地（信販用）
+    finance_building: 設置先_ビル名（信販用）
+    finance_city: 設置先_市区町村（信販用）
+    finance_division: 信販区分
+    finance_installer: 設置先（アシスト信販）
+    finance_phone: 設置先電話番号（信販用）
+    finance_postal_code: 設置先郵便番号（信販用）
+    finance_prefecture: 設置先_都道府県（信販用）
+    finance_town: 設置先_町名（信販用）
+    gbp_multilingual: GBPインバウンド多言語対策
+    google_ads_applied: Google広告申し込み
+    google_ads_count: Google広告申し込み数
+    google_review_display: Google口コミ表示
+    infobiz_applied: info Biz申し込み
+    inspection_call_completed_at: 検収確認コール完了日
+    inspection_call_history: 検収コール履歴（架電ログ）
+    inspection_call_ng_time: 検収コールNG時間帯
+    issued_at: 発注日
+    language_selection: 言語選択
+    member_id: '会員管理ID（例: B236690368）'
+    meo_existing_serial: MEO既存シリアル
+    meo_mgmt_number: 'MEO施策管理番号（例: pa00011610）'
+    meo_premium_applied: MEOプレミアム強化プランの申し込み
+    onerank_cms: Onerank CMS申込
+    ordered_at: 受注日（申込日）
+    owlet_cms: Owlet CMS申込
+    paper_address_note: 用紙の送付先住所記載
+    payment_collected_at: 決済回収日
+    payment_doc_confirmed_at: 決済書類確認日
+    payment_method: '支払方法（例: 預金口座振替 / クレジット。実装追加。旧設計 plans.payment_method の移設先）'
+    plus_applied: Plus申込有無（この案件固有の申込状態）。オプションの実体は order_options（§12-1-3）
+    portal_site_applied: ポータルサイト掲載の申し込み
+    product_initial_fee_id: 初期費用プラン
+    product_option_ids: オプション（複数選択）
+    remarks: 備考
+    reservation_system: 予約システム
+    review_heading: 口コミ表示の見出し名
+    s_plan_cms: Sプラン CMS申込
+    sales_mgmt_slip_number: 販管売上伝票番号
+    serial_id: シリアルID（旧システムの案件番号と同値。レガシー保持用）
+    shared_notes: 共有事項
+    terminated_at: 解約日
+    termination_reason: 解約理由
+    toss_up_code: トスアップCD
+    work_completed_at: 作業完了日（納品完了メール送付日）
+  order_work_detail:
+    accepted_cards: 利用できるクレジットカードの種類
+    attribute_1: 属性1
+    attribute_10: 属性10
+    attribute_11: 属性11
+    attribute_2: 属性2
+    attribute_3: 属性3
+    attribute_4: 属性4
+    attribute_5: 属性5
+    attribute_6: 属性6
+    attribute_7: 属性7
+    attribute_8: 属性8
+    attribute_9: 属性9
+    available_from: 入店可能時間
+    barrier_free: バリアフリーの有無
+    business_account_name: ビジネスアカウント名
+    business_category_keyword: キーワード(ビジネスカテゴリー)
+    business_type: '業態（例: 店舗型）'
+    capital: 資本金（法人の場合必須。文字列で格納）
+    contact_easy_day: 連絡が取りやすい曜日
+    contact_easy_day_note: 連絡が取りやすい曜日【その他】
+    contact_easy_time: 連絡が取りやすい時間帯
+    contact_easy_time_note: 連絡が取りやすい時間帯【その他】
+    dinner_hours: ディナー営業時間
+    directions: 道順
+    facebook_id: FacebookID。ENC
+    facebook_pass: FacebookPASS。ENC
+    gbp_delete_new: 既存GBP削除し、新規作成希望
+    gbp_owner_contact: オーナー権限所有者・担当者連絡先
+    gbp_owner_name: オーナー権限所有者名・担当者名
+    gbp_owner_permission: オーナー権限（わかる / 不明）
+    gbp_owner_permission_granted: オーナー権限付与（作業完了フラグ）
+    gbp_permission: GBP権限（お客様所持 / etc.）
+    gbp_site_url: ビジネスプロフィールのサイトURL
+    gbp_url: Google ビジネスプロフィール URL
+    google_account_id: GoogleアカウントID。ENC
+    google_account_pass: GoogleアカウントPASS。ENC
+    has_facebook: Facebookアカウントの所持（あり / なし）
+    has_facebook_page: Facebookページの所持（既に保有している / お客さまにて作成予定 / 代行・補助希望。実装追加 2026-08-21・AILINK申込フォームP9）
+    has_google_business: Googleビジネスアカウントの所持（あり / なし）
+    has_instagram: Instagramアカウントの所持（あり / なし）
+    has_line: LINEアカウントの所持（既に保有している / お客さまにて作成予定 / 代行・補助希望。実装追加 2026-08-21・AILINK申込フォームP9）
+    hearing_system: ヒアリングシステム
+    industry_keyword: 業種キーワード
+    instagram_account: Instagramアカウント所持区分（既存あり / 新規取得）
+    instagram_id: Instagram ID。ENC
+    instagram_login_confirmed: Instagramアカウントのログイン確認状況
+    instagram_pass: Instagram PASS。ENC
+    keyword_area_1: キーワード_通称エリア名1
+    keyword_area_2: キーワード_通称エリア名2
+    keyword_area_3: キーワード_通称エリア名3
+    keyword_city: キーワード_市町村
+    keyword_industry_main: 業種やサービス_メイン
+    keyword_industry_sub1: 業種やサービス_サブ1
+    keyword_industry_sub2: 業種やサービス_サブ2
+    keyword_industry_sub3: 業種やサービス_サブ3
+    keyword_industry_sub4: 業種やサービス_サブ4
+    keyword_prefecture: キーワード_都道府県
+    keyword_region_industry: キーワード（地域＋業種）
+    keyword_remarks: キーワード備考（通称エリア設定理由等）
+    logo_photo: ロゴ・写真データなど（状況メモ）
+    lunch_hours: ランチ営業時間
+    nearest_station: 最寄駅
+    num_employees: 従業員数
+    num_stores: ご利用の店舗数
+    opening_date: 開業日
+    operation_history: 履歴記載枠（運用）。運用中の対応記録・掲示板ログ等を含む長文テキスト
+    order_time: 注文可能時間
+    parking: 駐車場（あり / なし）
+    parking_capacity: 駐車可能な台数
+    reference_url: お客様情報参考サイトURL
+    system_account_id: システムアカウントID。ENC
+    system_account_pass: システムアカウントPASS。ENC
+    wifi_available: 設備：Wi-Fiの有無（なし / 無料Wi-Fi / 有料Wi-Fi）
+    work_progress_notes: 作業進行備考。アカウント発行〜納品までの作業メモ
