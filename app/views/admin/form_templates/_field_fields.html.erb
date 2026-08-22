@@ -1,4 +1,15 @@
 <%# ローカル変数: f（FormField用のfields_forビルダー） %>
+<%
+  # target_table select変更時に target_column select をサーバ往復なしで絞り込むためのデータ
+  # （値=カラム名、表示=日本語ラベル。Form::ColumnLabelCatalog参照）。
+  target_column_options_by_table = Form::ColumnLabelCatalog.target_column_options_by_table
+  # 初期表示のtarget_column選択肢は、現在（保存済み or 新規行のデフォルト）のtarget_tableに
+  # 対応する一覧をサーバ側で描画しておく（JS無効時もそれなりに表示できるようにする）。
+  current_target_table = f.object.target_table.presence || FormField::TARGET_TABLES.first
+  current_target_column_options = Form::ColumnLabelCatalog.target_column_options(current_target_table)
+  choices = f.object.input_options["choices"] || []
+  validation_rules = f.object.validation_rules || {}
+%>
 <div data-nested-form-target="item" class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
   <%= f.hidden_field :id %>
   <%= f.hidden_field :_destroy %>
@@ -14,43 +25,83 @@
     </div>
     <div>
       <%= f.label :field_type, "入力形式", class: "mb-1 block text-xs font-medium text-slate-700" %>
-      <%= f.select :field_type, FormField::FIELD_TYPES, {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
-    </div>
-    <div>
-      <%= f.label :target_table, "反映先モデル", class: "mb-1 block text-xs font-medium text-slate-700" %>
-      <%= f.select :target_table, FormField::TARGET_TABLES, {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
-    </div>
-    <div>
-      <%= f.label :target_column, "反映先カラム（例: name / product_option_ids）", class: "mb-1 block text-xs font-medium text-slate-700" %>
-      <%= f.text_field :target_column, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      <%= f.select :field_type, form_field_type_options, {}, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
     <div>
       <%= f.label :sort_order, "表示順", class: "mb-1 block text-xs font-medium text-slate-700" %>
       <%= f.number_field :sort_order, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
     </div>
+
+    <%# target_table / target_column: 2列とも同じ target-column-filter コントローラの管轄に置く。
+        class="contents"（display: contents）でラップし、CSS Gridの並び（grid-cols-2）を崩さない。 %>
+    <div class="contents" data-controller="target-column-filter"
+         data-target-column-filter-columns-by-table-value="<%= target_column_options_by_table.to_json %>">
+      <div>
+        <%= f.label :target_table, "反映先モデル", class: "mb-1 block text-xs font-medium text-slate-700" %>
+        <%= f.select :target_table, Form::ColumnLabelCatalog.table_options, {},
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm",
+              data: { target_column_filter_target: "table", action: "change->target-column-filter#tableChanged" } %>
+      </div>
+      <div>
+        <%= f.label :target_column, "反映先の項目", class: "mb-1 block text-xs font-medium text-slate-700" %>
+        <%= f.select :target_column, options_for_select(current_target_column_options, f.object.target_column),
+              { include_blank: "（未選択）" },
+              class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm",
+              data: { target_column_filter_target: "column" } %>
+      </div>
+    </div>
+
     <div class="flex items-center gap-2">
       <%= f.check_box :required, class: "h-4 w-4 rounded border-slate-300" %>
       <%= f.label :required, "必須", class: "text-xs font-medium text-slate-700" %>
     </div>
     <div>
-      <%= f.label :lock_after_status, "編集ロック閾ステータス（order_statuses.code。任意）", class: "mb-1 block text-xs font-medium text-slate-700" %>
-      <%= f.text_field :lock_after_status, class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      <%= f.label :lock_after_status, "編集ロック閾ステータス（任意）", class: "mb-1 block text-xs font-medium text-slate-700" %>
+      <%= f.select :lock_after_status,
+            options_for_select(OrderStatus.order(:sort_order).pluck(:label, :code), f.object.lock_after_status),
+            { include_blank: "（設定しない）" },
+            class: "w-full rounded-md border border-slate-300 px-3 py-2 text-sm" %>
+      <p class="mt-1 text-xs text-slate-500">※現在はこの設定を保存できますが、実際に編集をロックする機能はまだ動作しません。</p>
     </div>
     <div class="col-span-2">
       <%= f.label :editable_by_tier, "編集可能区分", class: "mb-1 block text-xs font-medium text-slate-700" %>
       <%= f.collection_check_boxes :editable_by_tier, FormField::TIERS, :itself, :itself do |b| %>
-        <span class="mr-3 inline-flex items-center gap-1 text-sm text-slate-700"><%= b.check_box(class: "h-4 w-4 rounded border-slate-300") %> <%= b.label %></span>
+        <span class="mr-3 inline-flex items-center gap-1 text-sm text-slate-700"><%= b.check_box(class: "h-4 w-4 rounded border-slate-300") %> <%= b.label { form_field_tier_label(b.value) } %></span>
       <% end %>
     </div>
-    <div class="col-span-2">
-      <%= f.label :input_options_json, "選択肢（JSON。例: {\"choices\":[[\"yes\",\"はい\"],[\"no\",\"いいえ\"]]}）", class: "mb-1 block text-xs font-medium text-slate-700" %>
-      <%= f.text_area :input_options_json, value: f.object.input_options.presence&.to_json,
-            class: "w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm", rows: 2 %>
+
+    <%# 選択肢（input_options["choices"]）。「値」「表示ラベル」の行入力→送信直前にJSONへ組み立てて
+        既存の input_options_json 仮想属性へ渡す（app/javascript/controllers/choice_list_controller.js）。 %>
+    <div class="col-span-2" data-controller="choice-list">
+      <span class="mb-1 block text-xs font-medium text-slate-700">選択肢（入力形式が「選択式」「複数選択」の場合に設定）</span>
+      <div data-choice-list-target="container" class="flex flex-col gap-2">
+        <% choices.each do |choice_value, choice_label| %>
+          <%= render "choice_row", value: choice_value, label: choice_label %>
+        <% end %>
+      </div>
+      <template data-choice-list-target="template">
+        <%= render "choice_row", value: "", label: "" %>
+      </template>
+      <button type="button" data-action="choice-list#add"
+              class="mt-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">選択肢を追加</button>
+      <%= f.hidden_field :input_options_json, data: { choice_list_target: "output" } %>
     </div>
-    <div class="col-span-2">
-      <%= f.label :validation_rules_json, "検証ルール（JSON。例: {\"max_length\":100}）", class: "mb-1 block text-xs font-medium text-slate-700" %>
-      <%= f.text_area :validation_rules_json, value: f.object.validation_rules.presence&.to_json,
-            class: "w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm", rows: 2 %>
+
+    <%# 検証ルール（validation_rules）。「ルール種別」「値」の行入力→送信直前にJSONへ組み立てて
+        既存の validation_rules_json 仮想属性へ渡す（app/javascript/controllers/validation_rule_list_controller.js）。 %>
+    <div class="col-span-2" data-controller="validation-rule-list">
+      <span class="mb-1 block text-xs font-medium text-slate-700">検証ルール（任意）</span>
+      <div data-validation-rule-list-target="container" class="flex flex-col gap-2">
+        <% validation_rules.each do |rule_type, rule_value| %>
+          <%= render "validation_rule_row", rule_type: rule_type, rule_value: rule_value %>
+        <% end %>
+      </div>
+      <template data-validation-rule-list-target="template">
+        <%= render "validation_rule_row", rule_type: "", rule_value: "" %>
+      </template>
+      <button type="button" data-action="validation-rule-list#add"
+              class="mt-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">検証ルールを追加</button>
+      <%= f.hidden_field :validation_rules_json, data: { validation_rule_list_target: "output" } %>
     </div>
   </div>
   <button type="button" data-action="nested-form#remove" class="w-fit text-xs font-medium text-red-600 hover:underline">フィールドを削除</button>

@@ -3,7 +3,10 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    # main だけを対象にしていると、長期作業ブランチ（feat/rails-rebuild-*）へのpushでCIが
+    # 一度も回らず、Tailwindビルド失敗のような「起動して初めて分かる崩れ」をPR作成まで検知できない。
+    # AI自律開発フローが直接pushする作業ブランチもCI対象に含める（2026-08-20）。
+    branches: [ main, "feat/**" ]
 
 jobs:
   scan_ruby:
@@ -64,6 +67,54 @@ jobs:
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
+
+  # Tailwind CSS のビルドが通ることだけを検証する軽量ジョブ（DB不要・数十秒）。
+  # 2026-08-20 の障害: `@layer components` 内で定義した `.btn` / `.badge` を派生クラスから
+  # `@apply` していたため Tailwind v4 が `Cannot apply unknown utility class` でビルド失敗し、
+  # 画面が素のHTMLで表示された。rspec本体（testジョブ）でもビルドはするが、DB起動を含む重い
+  # ジョブの中に埋もれて原因が分かりにくいため、CSS単体の崩れを最短で切り分けられるジョブを分ける。
+  assets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # tailwindcss:build はDBへ接続しないため、Postgresを起動せずに実行できる。
+      - name: Build Tailwind CSS
+        run: bin/rails tailwindcss:build
+
+      # ビルドが成功しても、基底クラスの定義方法を誤ると派生クラス（.btn-primary 等）が
+      # 生成CSSから丸ごと消えることがある。実際に出力されているかを機械チェックする。
+      - name: Verify component classes are generated
+        run: |
+          CSS=app/assets/builds/tailwind.css
+          if [ ! -f "$CSS" ]; then
+            echo "::error::$CSS が生成されていません"
+            exit 1
+          fi
+          # minify有無で改行の入り方が変わるため、1行に潰してから検査する
+          FLAT=$(mktemp)
+          tr '\n' ' ' < "$CSS" > "$FLAT"
+          MISSING=""
+          for cls in btn btn-primary btn-secondary btn-danger badge badge-blue badge-green badge-amber badge-red badge-purple badge-orange badge-slate badge-slate-muted; do
+            grep -q "\.${cls} *{" "$FLAT" || MISSING="$MISSING $cls"
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::生成CSSに次の共通UIクラスが含まれていません:$MISSING（app/assets/tailwind/application.css の定義方法を確認してください）"
+            exit 1
+          fi
+          # 派生クラスに基底(.btn)の指定が合成されているか（@apply btn が効いているか）も見る
+          if ! grep -q "\.btn-primary *{[^}]*inline-flex" "$FLAT"; then
+            echo "::error::.btn-primary に基底クラス .btn の指定が合成されていません（@apply btn が効いていない可能性）"
+            exit 1
+          fi
+          echo "OK: 共通UIクラス（btn/badge系）は生成CSSに含まれています"
 
   # 04 R0-10: rspec本体。schema.rbがpg_bigm拡張の有無に依存しないR0時点でも、将来のR2以降との
   # 差分を避けるためdb/Dockerfile（pg_bigm同梱）を使う（ftlog踏襲）。

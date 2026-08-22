@@ -40,6 +40,7 @@ module Form
           contract_condition: contract_condition
         )
         apply_attributes!(order, "order")
+        assign_auto_values!(order)
         order.save!
 
         apply_order_work_detail!(order)
@@ -74,6 +75,18 @@ module Form
       undecided_order = Order.new
       undecided_order.errors.add(:contract_condition, "が設定されていません（代理店の契約条件が未設定です）")
       raise ActiveRecord::RecordInvalid, undecided_order
+    end
+
+    # AILINKフォーム P2「受注日（申込日）＝自動入力」「プラン＝自動入力」対応。
+    # - 受注日: フォームに入力欄が無い商材では申込完了日を受注日として記録する（入力欄がある商材は
+    #   フォーム値を優先＝||=）。
+    # - プラン: 有効プランが1本しかない商材（AILINK等の1価格固定商材）のみ自動確定する。複数プランの
+    #   商材（BRIDGE_PLUS等）は従来どおり未設定のまま（プラン選択は管理画面側の業務）。
+    def assign_auto_values!(order)
+      order.ordered_at ||= Date.current
+
+      active_plans = @product.plans.active
+      order.plan ||= active_plans.first if active_plans.one?
     end
 
     def apply_attributes!(record, target_table)
@@ -112,9 +125,18 @@ module Form
       when "integer"  then value.presence && Integer(value)
       when "date"     then value.presence && Date.parse(value)
       when "boolean"  then ActiveModel::Type::Boolean.new.cast(value)
-      when "checkbox_group" then Array(value).reject(&:blank?)
+      when "checkbox_group" then cast_checkbox_group(field, value)
       else value
       end
+    end
+
+    # checkbox_groupの保存形: 集合idsライター（product_option_ids等の *_ids）へは配列のまま、
+    # 通常のstring/text列（order_work_details.attribute_1〜11・contact_easy_time等）へは
+    # 「・」連結の1文字列として保存する（配列をstring列へ代入するとto_s表現がそのまま入るため）。
+    # 桁あふれはFormFieldのvalidation_rules.max_lengthとDynamicFormValidatorの連結後チェックで防ぐ。
+    def cast_checkbox_group(field, value)
+      selected = Array(value).reject(&:blank?)
+      field.target_column.to_s.end_with?("_ids") ? selected : selected.join("・")
     end
   end
 end

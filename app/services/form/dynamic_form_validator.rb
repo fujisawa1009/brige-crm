@@ -67,8 +67,12 @@ module Form
 
     def length_errors(field, value)
       max_length = field.validation_rules["max_length"]
-      return [] if max_length.blank? || !value.respond_to?(:length)
-      return [] if value.length <= max_length.to_i
+      return [] if max_length.blank?
+
+      # checkbox_groupは保存時に「・」連結の1文字列になる（Form::ApplicationSubmissionService#cast_value）
+      # ため、桁数チェックも連結後の文字列に対して行う（attribute_1〜11等のstring(100)列あふれ対策）。
+      value = Array(value).reject(&:blank?).join("・") if field.field_type == "checkbox_group"
+      return [] if !value.respond_to?(:length) || value.length <= max_length.to_i
 
       [ "は#{max_length}文字以内で入力してください" ]
     end
@@ -77,13 +81,30 @@ module Form
     # 選ばれたIDが本当にこの商材のProductOptionかを検証する（他商材のオプションIDを紛れ込ませて
     # Orderに紐づけられてしまう権限昇格・データ不整合経路を塞ぐ）。
     def association_errors(field, value)
-      return [] unless field.target_table == "order" && field.target_column == "product_option_ids"
+      return product_option_errors(value) if order_column?(field, "product_option_ids")
+      return product_initial_fee_errors(value) if order_column?(field, "product_initial_fee_id")
 
+      []
+    end
+
+    def order_column?(field, column)
+      field.target_table == "order" && field.target_column == column
+    end
+
+    def product_option_errors(value)
       ids = Array(value).reject(&:blank?)
       return [] if ids.empty?
 
       valid_count = @product.product_options.active.where(id: ids).count
       valid_count == ids.size ? [] : [ "に商材の対象外のオプションが含まれています" ]
+    end
+
+    # 初期費用（P2）はselect選択肢の照合に加えて、値が本当にこの商材のProductInitialFeeかを検証する
+    # （選択肢はシーダー投入時点のマスタ複製のため、他商材のIDを直接POSTされる経路をここで塞ぐ）。
+    def product_initial_fee_errors(value)
+      return [] if value.blank?
+
+      @product.product_initial_fees.active.exists?(id: value) ? [] : [ "に商材の対象外の初期費用が指定されています" ]
     end
   end
 end

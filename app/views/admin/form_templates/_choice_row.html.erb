@@ -1,0 +1,11 @@
+<%# ローカル変数: value（選択肢の値）, label（選択肢の表示ラベル） %>
+<div data-choice-list-target="row" class="flex items-center gap-2">
+  <input type="text" placeholder="値（保存されるデータ）" value="<%= value %>" data-role="key"
+         data-action="input->choice-list#sync"
+         class="w-1/2 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+  <input type="text" placeholder="表示ラベル（画面に出す文言）" value="<%= label %>" data-role="label"
+         data-action="input->choice-list#sync"
+         class="w-1/2 rounded-md border border-slate-300 px-2 py-1.5 text-sm">
+  <button type="button" data-action="choice-list#remove"
+          class="shrink-0 text-xs font-medium text-red-600 hover:underline">削除</button>
+</div>

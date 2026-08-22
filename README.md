@@ -32,6 +32,57 @@ RAILS_MASTER_KEY=$(cat config/master.key) docker compose up
 - パスワード: Password1234
 - ロール: admin（super_admin相当）
 
+## 画面確認ガイド（申込フォーム）
+
+AILINK / BRIDGE_PLUS の申込フォームを画面で確認する2つの方法。事前に「セットアップ（Docker）」で
+コンテナ一式（web / db / mailpit）が起動していること。
+
+### ① 申込フォーム本体を営業担当者として実操作する
+
+営業担当者ログイン（代理店コード＋営業担当者コード＋メールOTP）から、実際の申込フローを
+ステップ1〜8まで通しで確認する方法。
+
+| 手順 | 操作 |
+|---|---|
+| 1 | http://localhost:3000/form/login を開く |
+| 2 | 販売店コードと営業担当者コード（下記）を入力してログイン |
+| 3 | 別タブで http://localhost:8025 （Mailpit）を開き、届いた認証コード（OTP）をフォームに入力 |
+| 4 | 商材選択画面で「AILINK」（または「BridgePlus」）を選ぶ |
+| 5 | ステップを順に入力して進む（必須項目のみ埋めれば次へ進める）。最後の確認画面で「申込完了」 |
+
+**開発用ログイン情報（development の `bin/rails db:seed` 投入分）:**
+
+- 販売店コード: `52314510`（株式会社壱（取次））
+- 営業担当者コード: `SR2`（伊藤 大輔）
+- OTP送信先メール: `sales-test@example.com`（実メールは飛ばず Mailpit http://localhost:8025 に届く）
+
+※ 営業担当者は開発用サンプルデータ（`db/seeds/sample_transactions.rb`・FactoryBot生成）のため、
+DBを作り直すとコードが変わることがある。現在のDBで使えるコードは以下で確認できる:
+
+```bash
+RAILS_MASTER_KEY=$(cat config/master.key) docker compose exec web bin/rails runner '
+SalesRepresentative.where(is_active: true).where.not(email: nil).each do |r|
+  puts "販売店コード=#{r.agency.agency_code}（#{r.agency.name}） 営業担当者コード=#{r.sales_rep_code}（#{r.name}） OTP宛先=#{r.email}"
+end'
+```
+
+送信後の確認先: 管理画面（http://localhost:3000/admin/dashboard）の顧客一覧・案件一覧に反映される。
+申込確認メールも Mailpit に届く。テスト送信した申込データは開発DBに残る点に注意。
+
+### ② フォーム定義の一覧を管理画面で確認する（入力せず全項目を見たい場合はこちらが早い）
+
+管理画面のフォームビルダーで、全ステップ・全フィールド（ラベル / 必須 / 選択肢 / 保存先カラム）を
+一覧・編集できる。
+
+| 手順 | 操作 |
+|---|---|
+| 1 | http://localhost:3000/admin/form_templates を開く |
+| 2 | `admin@example.com` / `Password1234` でログイン（上記 [ログイン情報] と同じ） |
+| 3 | 一覧から「AILINK 申込フォーム」（8ステップ112フィールド）または「BRIDGE_PLUS 申込フォーム」を開く |
+
+※ フォームビルダーでの手動編集はシーダー（`AilinkFormTemplateSeeder` / `BridgePlusFormTemplateSeeder`）
+の再実行で上書きされない（「無ければ作る」冪等投入。マスタ由来の選択肢のみ毎回同期）。
+
 ## セットアップ（ローカルRuby + Docker db のみ）
 
 db だけDockerで立て、Railsはホストのrbenv Rubyで動かす場合:

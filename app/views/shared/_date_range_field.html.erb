@@ -1,0 +1,47 @@
+<%#
+  検索フォームの「日付の期間指定」1項目ぶん（CEO指示 2026-08-20 目視確認:
+  「受注日などのカレンダー式は１つのフィールドでカレンダーを押すと開始と終了を選べるように」）。
+
+  呼び出し方:
+    render "shared/date_range_field", label: "受注日",
+           from_key: :ordered_from, to_key: :ordered_to, search_params: order_search_params
+
+  描画されるものは2組:
+    1. from / to の素の date 入力（= 変更前の画面そのもの）。パラメータの実体はこちらが持つ。
+    2. 期間をまとめて選ぶ1欄（flatpickr）。値は持たず、選択結果を 1. へ書き戻すだけ。
+
+  初期状態は 1. が見えていて 2. が hidden。app/javascript/controllers/date_range_controller.js が
+  connect() できたときだけ入れ替わる。この順序が JS無効・JS読み込み失敗時のフォールバックそのもので、
+  「hiddenにしてからJSで表示」にすると JS が動かない環境で日付検索が一切できなくなるため採らない。
+
+  サーバ側（CustomerSearch / OrderSearch）のパラメータ名は from/to のまま変えていないので、
+  URL直打ち・ページ送りでの条件保持・既存の request spec はそのまま通る。
+%>
+<%
+  from_value = search_params[from_key].presence
+  to_value   = search_params[to_key].presence
+  field_class = "w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm"
+%>
+<div data-controller="date-range">
+  <label class="mb-1 block text-xs font-medium text-slate-500" for="<%= from_key %>"><%= label %></label>
+
+  <div class="flex items-center gap-2" data-date-range-target="manual">
+    <%= date_field_tag from_key, from_value, class: field_class,
+          data: { date_range_target: "from" }, aria: { label: "#{label}（開始）" } %>
+    <span class="text-sm text-slate-400">〜</span>
+    <%= date_field_tag to_key, to_value, class: field_class,
+          data: { date_range_target: "to" }, aria: { label: "#{label}（終了）" } %>
+  </div>
+
+  <div class="relative hidden" data-date-range-target="picker">
+    <%# readonly にして手打ちを塞ぐ。書式が崩れた値が from/to へ流れ込むのを防ぐため
+        （日付を直接打ちたい場合は JS未接続時と同じ date 入力の世界＝上のフォールバックが担当）。 %>
+    <input type="text" readonly placeholder="期間を指定" autocomplete="off"
+           aria-label="<%= label %>（期間）"
+           data-date-range-target="display"
+           class="<%= field_class %> cursor-pointer bg-white pr-8">
+    <button type="button" title="<%= label %>の指定をクリア" aria-label="<%= label %>の指定をクリア"
+            data-date-range-target="clear" data-action="date-range#clear"
+            class="absolute right-1 top-1/2 hidden -translate-y-1/2 rounded px-1.5 text-base leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
+  </div>
+</div>

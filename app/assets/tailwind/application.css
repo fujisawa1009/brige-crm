@@ -1,14 +1,24 @@
 @import "tailwindcss";
 
 /*
+ * Tailwind v4 では @layer components 内で定義したクラスは @apply の対象にできない
+ * （`Cannot apply unknown utility class` でビルドが失敗する）。派生クラス（.btn-primary 等）から
+ * 合成できるよう、基底の .btn / .badge は @utility で定義する。
+ */
+@utility badge {
+  @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors;
+}
+
+/*
  * R6-2 共通UIパーツ化: admin配下で使い回すバッジ/ボタンの見た目を@layer componentsへ集約する。
  * ロジック（どの状態にどの色を割り当てるか）はapp/helpers/admin/badge_helper.rb等のHelperが持ち、
  * ここは配色・形状のクラス定義のみを持つ（ftlog調査の「Helper(ロジック) + CSS(見た目)」方式）。
  */
 @layer components {
-  .badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
-  }
   .badge-blue { @apply bg-blue-100 text-blue-700; }
   .badge-green { @apply bg-green-100 text-green-700; }
   .badge-amber { @apply bg-amber-100 text-amber-700; }
@@ -18,11 +28,101 @@
   .badge-slate { @apply bg-slate-100 text-slate-600; }
   .badge-slate-muted { @apply bg-slate-100 text-slate-500; }
 
-  .btn {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors;
-  }
   .btn-primary { @apply btn bg-indigo-600 text-white hover:bg-indigo-500; }
   /* 削除等の破壊的操作は既存踏襲でoutline赤（bg-red-600の塗りつぶしは未使用のため採用しない）。 */
   .btn-danger { @apply btn border border-red-300 bg-red-50 text-red-600 hover:bg-red-100; }
   .btn-secondary { @apply btn border border-slate-300 text-slate-600 hover:bg-slate-50; }
+}
+
+/*
+ * 共通ページネーション（CEO指示 2026-08-20 タスクC。app/views/shared/_pagination.html.erb）。
+ * .btn / .badge と同じ理由で、派生クラスから @apply できるよう基底の .pagination-link は
+ * @utility で定義する（@layer components 内のクラスは @apply の対象にできない）。
+ * hover 等のバリアントは派生側（@layer components）にだけ書く。
+ */
+@utility pagination-link {
+  @apply inline-flex min-w-9 items-center justify-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors;
+}
+
+@layer components {
+  .pagination { @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between; }
+  .pagination-summary { @apply text-sm text-slate-500; }
+  /* ページ番号が多い・画面が狭いときは折り返す（スマホ幅で横スクロールを出さない）。 */
+  .pagination-pages { @apply flex list-none flex-wrap items-center gap-1; }
+
+  .pagination-page { @apply pagination-link border-slate-300 bg-white text-slate-600 hover:bg-slate-50; }
+  .pagination-page-current { @apply pagination-link border-indigo-600 bg-indigo-600 text-white; }
+  .pagination-page-disabled { @apply pagination-link border-slate-200 bg-white text-slate-300; }
+  .pagination-gap { @apply px-1 text-sm text-slate-400; }
+}
+
+/*
+ * 期間指定カレンダー（CEO指示 2026-08-20「1つのフィールドでカレンダーを押すと開始と終了を選べる」）。
+ * 素の見た目は app/assets/stylesheets/flatpickr.css（ライブラリ同梱CSSをそのまま取り込んだもの）で、
+ * ここはCRM側の配色（indigo / slate）へ寄せる上書きと、カレンダー下部に足す操作列の定義だけを持つ。
+ *
+ * 注意: これらは @layer に入れず素のCSSとして書くこと。CSSカスケードレイヤーの規則で
+ * 「レイヤーに属さない宣言」は「レイヤーに属する宣言」より強いため、@layer components へ入れると
+ * flatpickr.css（レイヤー無し）に負けて上書きが効かない。逆にレイヤー無しで書けば、
+ * flatpickr.css より後ろに読まれる tailwind.css 側のこの記述が勝つ。
+ * また、ここで display を指定しないこと（JS側が .hidden で出し分けるため）。
+ */
+.flatpickr-calendar {
+  @apply rounded-lg border border-slate-200 text-slate-700 shadow-lg;
+}
+
+.flatpickr-day {
+  @apply text-slate-700;
+}
+
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+  @apply border-slate-100 bg-slate-100;
+}
+
+.flatpickr-day.today {
+  @apply border-indigo-300;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+  @apply border-indigo-600 bg-indigo-600 text-white;
+}
+
+.flatpickr-day.inRange,
+.flatpickr-day.inRange:hover {
+  @apply border-indigo-50 bg-indigo-50 text-indigo-900;
+  /* 日セルの隙間を埋めて帯に見せるための影。色は上の bg-indigo-50 と揃える。 */
+  box-shadow: -5px 0 0 var(--color-indigo-50), 5px 0 0 var(--color-indigo-50);
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  @apply text-slate-300;
+}
+
+/*
+ * カレンダー下部の操作列（date_range_controller.js が生成）。
+ * 「この日から / この日まで」は、1日だけ選んだときにその日を開始日と終了日のどちらとして
+ * 扱うかを決めるボタン。変更前は to だけ入力すれば「◯日以前」を絞り込めたので、その手段を残す。
+ */
+.date-range-footer {
+  @apply flex items-center gap-2 border-t border-slate-200 px-3 py-2;
+}
+
+.date-range-side {
+  @apply rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50;
+}
+
+.date-range-side-active {
+  @apply border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-500;
+}
+
+.date-range-clear {
+  @apply ml-auto rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700;
 }

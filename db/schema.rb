@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_040000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -634,8 +634,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
     t.text "google_account_id"
     t.text "google_account_pass"
     t.string "has_facebook", limit: 10
+    t.string "has_facebook_page", limit: 20
     t.string "has_google_business", limit: 10
     t.string "has_instagram", limit: 10
+    t.string "has_line", limit: 20
     t.string "hearing_system", limit: 50
     t.string "industry_keyword", limit: 200
     t.string "instagram_account", limit: 20
@@ -711,6 +713,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_100000) do
     t.datetime "created_at", null: false
     t.uuid "created_by_id"
     t.uuid "customer_id", null: false
+    t.string "discount_option", limit: 50
     t.string "domestic_citation_plan", limit: 50
     t.string "elderly_consent", limit: 5
     t.date "elderly_consent_collected_at"

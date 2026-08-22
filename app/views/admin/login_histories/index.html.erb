@@ -3,7 +3,7 @@
 <div class="flex flex-col gap-6">
   <div>
     <h2 class="text-xl font-bold text-slate-900">ログイン履歴</h2>
-    <p class="text-sm text-slate-500">専用テーブルではなく監査ログ（AuditLog）を認証系イベントで絞り込んだ画面です（直近200件まで）。</p>
+    <p class="text-sm text-slate-500">専用テーブルではなく監査ログ（AuditLog）を認証系イベントで絞り込んだ画面です。</p>
   </div>
 
   <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -21,7 +21,8 @@
       </div>
 
       <div class="col-span-full flex items-center justify-between pt-1">
-        <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@audit_logs.size) %> 件（上限200件）</span>
+        <%# 件数は @pagy.count（絞り込み後の総件数）。従来の「上限200件」表示は上限撤廃に伴い削除した。 %>
+        <span class="text-sm text-slate-500">全 <%= number_with_delimiter(@pagy.count) %> 件</span>
         <div class="flex gap-2">
           <%= link_to "クリア", admin_login_histories_path, class: "btn-secondary" %>
           <%= submit_tag "検索", class: "rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700" %>
@@ -61,4 +62,6 @@
       </tbody>
     </table>
   </div>
+
+  <%= render "shared/pagination", pagy: @pagy %>
 </div>

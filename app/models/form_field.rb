@@ -69,8 +69,12 @@ class FormField < ApplicationRecord
   # 集合idsライター（Order#product_option_ids=。Form::ApplicationsController#product_option_field?
   # ／Form::DynamicFormValidatorが特別扱いする申込フォームの選択オプション枠）のため、
   # Order.column_namesには現れない。ホワイトリストへ個別に加える唯一の例外。
+  # product_initial_fee_id は belongs_to 由来のFKだが、参照先が商材配下の初期費用マスタ
+  # （ProductInitialFee）であり、テナント結線用FK（agency_id等）とは性質が異なる。AILINKフォーム
+  # （P2 初期費用プルダウン）の保存先として許可する。選択肢はシーダーが商材のマスタから複製し、
+  # Form::DynamicFormValidator#association_errors が商材外の初期費用IDを拒否する。
   EXTRA_ALLOWED_COLUMNS = {
-    "order" => %w[product_option_ids]
+    "order" => %w[product_option_ids product_initial_fee_id]
   }.freeze
 
   # SequenceCounterでモデル内部が採番する列（Customer#assign_customer_number／

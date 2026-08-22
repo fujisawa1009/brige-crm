@@ -18,9 +18,9 @@
 | 層 | ファイル | 実態 |
 |---|---|---|
 | トリガー | `app/controllers/admin/customers_controller.rb#export` / `orders_controller.rb#export`（`POST /admin/customers/export`, `/admin/orders/export`。`config/routes.rb` `collection { post :export }`） | 各一覧画面の `button_to "CSVエクスポート"`（`app/views/admin/{customers,orders}/index.html.erb`）から POST → `CsvExport.create!(resource_type: "Customer"/"Order", requested_by: current_user, status: "pending")` → `CsvExportJob.perform_later` → `admin/csv_exports` 一覧へリダイレクト。**画面の検索条件（`params[:q]` / `params[:status]`）は引き継がれない**（全件＝policy_scope 範囲） |
-| ジョブ | `app/jobs/csv_export_job.rb`（Solid Queue、`queue_as :default`） | `EXPORT_TARGETS`（固定 Hash: `"Customer" => {klass:, columns:}`, `"Order" => {klass:, columns:}`）で **エンティティ 2 種と出力列をハードコード**。`Pundit.policy_scope!(user, klass)` で実行者の参照範囲に絞り、`CSV.generate(headers: true)` で列名ヘッダ＋`record.public_send(col)` の生値を出力。`Current.user` を実行者に設定。失敗時は `status: "failed"` + `error_message` |
+| ジョブ | `app/jobs/csv_export_job.rb`（Solid Queue、`queue_as :default`） | `EXPORT_TARGETS`（固定 Hash: `"Customer" => {klass:, columns:}`, `"Order" => {klass:, columns:}`。`columns` は **カラム名 => 日本語見出し** の順序付き Hash）で **エンティティ 2 種と出力列をハードコード**。`Pundit.policy_scope!(user, klass)` で実行者の参照範囲に絞り、`CSV.generate(headers: true)` で **日本語見出し行**（CEO決定 2026-08-20）＋`record.public_send(col)` の生値を出力。`Current.user` を実行者に設定。失敗時は `status: "failed"` + `error_message` |
 | 状態管理 | `app/models/csv_export.rb` ＋ `csv_exports` テーブル | UUID・`resource_type`（`EXPORTABLE_RESOURCE_TYPES = %w[Customer Order]` の inclusion validation）・`status`（pending/completed/failed）・`row_count`・`error_message`・**`file_data`（text 列に CSV 本文をそのまま保持。Active Storage/ファイル保存ではない）**・`requested_by_id`(FK users)。**`filters` 列・`expires_at` 列・定期削除は無い** |
-| ダウンロード | `app/controllers/admin/csv_exports_controller.rb`（index / show） | `show` が `send_data export.file_data, filename: "#{resource_type.underscore}_#{id}.csv", type: "text/csv"`。ファイル名固定・**BOM なし UTF-8**・CSV 標準クォート（必要時のみ）・**CSVインジェクション対策（先頭 `=` `+` `-` `@` のサニタイズ）は無い** |
+| ダウンロード | `app/controllers/admin/csv_exports_controller.rb`（index / show） | `show` が `send_data export.file_data, filename: "#{resource_type.underscore}_#{id}.csv", type: "text/csv; charset=utf-8"`。ファイル名固定・**UTF-8 + BOM**（CEO決定 2026-08-20。BOM の付与は `CsvExportJob::BOM` の1箇所のみ）・CSV 標準クォート（必要時のみ）・**CSVインジェクション対策（先頭 `=` `+` `-` `@` のサニタイズ）は無い** |
 | 認可 | `app/policies/csv_export_policy.rb` | `index?`=true（Scope で自分の分のみ。staff は全件）、`show?`=staff or 本人。レイヤー1（`SystemPermission`）は `admin/csv_exports#index/show` と `admin/customers#export` 等のルート単位。**「この出力定義は誰が出せるか」の定義単位権限は無い**（旧 P4-12 タスク g） |
 | フロント | ERB + Hotwire（決定B） | ボタン 1 個（エンティティ 1: 出力 1）。ポーリング UI は無く、一覧ページで手動リロード（Turbo Streams でのステータス更新は未実装） |
 | テスト | `spec/jobs/csv_export_job_spec.rb` | 代理店ユーザの Customer/Order エクスポートに他代理店行が含まれないこと、`billing_password`（暗号化列）が列に含まれないことを検証済み |
@@ -33,9 +33,9 @@
 
 1. **`resource_type` = エンティティ名 = `EXPORT_TARGETS` のキーが 1:1 で固定**。
    「同じ案件一覧から『管理用フル出力』と『アシスト納品用』『請求用受注データ』を選ぶ」ことが構造上できない。
-2. **列定義（`columns`）が `CsvExportJob` の Ruby 定数に固定**。列の増減・並び替え・ラベル付け（現状はカラム名がそのままヘッダ）・固定値の
+2. **列定義（`columns`）が `CsvExportJob` の Ruby 定数に固定**。列の増減・並び替え・ラベル付け（見出しは 2026-08-20 から日本語。ただし定義場所は同じ Ruby 定数）・固定値の
    埋め込み・関連先の値（`agency.name` 等。現状は `agency_id` の UUID がそのまま出る）はすべてコード修正＋デプロイ。
-3. **出力形式がジョブにハードコード**：UTF-8（**BOM なし**）、Ruby `CSV` 既定（LF 改行・必要時のみクォート）、ファイル名 `{resource_type}_{uuid}.csv` 固定。
+3. **出力形式がジョブにハードコード**：UTF-8（**BOM あり**。CEO決定 2026-08-20 で BOM なし → BOM ありへ変更）、Ruby `CSV` 既定（LF 改行・必要時のみクォート）、ファイル名 `{resource_type}_{uuid}.csv` 固定。
    アシスト側が SJIS/CRLF/独自ファイル名規則を要求しても対応不可（→ タスク h）。CSVインジェクション対策も未実装。
 4. **出力権限の粒度がない**：ルート単位の `SystemPermission`（`admin/customers#export` 等）と `CsvExportPolicy`（本人のみDL）のみで、「この定義は誰が出せるか」を定義単位で制御できない（→ タスク g）。`csv_download_visible` フラグは未接続。
 5. **絞り込みの引継ぎがない**：一覧の検索条件（`q` / `status`）が渡されず常に全件。定義ごとの許可フィルタの宣言も無い（→ タスク f）。
@@ -76,7 +76,7 @@ assist_delivery:                              # profile_key（安定識別子・
   filters: [status, agency_id, ordered_from, ordered_to]   # 許可フィルタの明示 whitelist
   default_filters: { status: "7:作業進行依頼" }              # §6-2 相当を初期適用
   format:
-    encoding: CP932            # UTF-8 BOM / CP932(Windows-31J)。既定 UTF-8 BOM（Excel互換のため R6 で BOM 付きに変更。現行は BOM なし）
+    encoding: CP932            # UTF-8 BOM / CP932(Windows-31J)。既定 UTF-8 BOM（Excel互換。2026-08-20 のCEO決定で現行実装も BOM 付きに変更済み）
     eol: "\r\n"                # 既定 LF（Ruby CSV 現行）。納品用は CRLF 想定
     force_quotes: true         # true / false（Ruby CSV の force_quotes）
     sanitize: true             # CSVインジェクション対策（先頭 = + - @ をクォート/エスケープ。既定 ON）
@@ -144,7 +144,7 @@ DB 化（C）を再検討するトリガー（明文化しておく）：
 | Step | タスク | 内容（Rails版） | 対応 |
 |---|---|---|---|
 | 1 | a, b | 本設計の確定（プロファイル構造 §2・Q-14 決定 §3）。`config/csv_export_profiles.yml`＋`CsvExportProfile` 値オブジェクト（`app/models/csv_export_profile.rb`。ActiveModel）＋レジストリ実装。既存 2 種を `customer_admin` / `order_admin` プロファイルとして定義 | 先行可 |
-| 2 | h | CSV writer 抽象化（`CsvExport::Writer`）：encoding（UTF-8 BOM / CP932。`String#encode("Windows-31J", invalid: :replace, undef: :replace)`）・eol（LF/CRLF。`CSV.generate(row_sep:)`）・force_quotes・sanitize を profile の `format` から適用。既定値は**現行挙動（UTF-8 / LF）に固定し既存 2 種の出力バイト列を不変に保つ**（BOM 付与への変更は業務確認のうえ別途）。併せて `csv_exports.file_data` の text 直保持を継続するか Active Storage へ移すかを判断（`expires_at` + `config/recurring.yml` の定期削除 `CsvExport.prune_expired!` は本 Step で追加） | 先行可 |
+| 2 | h | CSV writer 抽象化（`CsvExport::Writer`）：encoding（UTF-8 BOM / CP932。`String#encode("Windows-31J", invalid: :replace, undef: :replace)`）・eol（LF/CRLF。`CSV.generate(row_sep:)`）・force_quotes・sanitize を profile の `format` から適用。既定値は**現行挙動（UTF-8 BOM / LF）に固定し既存 2 種の出力バイト列を不変に保つ**（2026-08-20 のCEO決定で現行挙動そのものが BOM 付きへ変わった。この Step で writer を作るときの「現行」は BOM 付きを指す）。併せて `csv_exports.file_data` の text 直保持を継続するか Active Storage へ移すかを判断（`expires_at` + `config/recurring.yml` の定期削除 `CsvExport.prune_expired!` は本 Step で追加） | 先行可 |
 | 3 | c | トリガー一般化：`Admin::CsvExportsController#create`（`POST /admin/csv_exports` に `profile_key` + `filters` を受ける）へ集約し、`Admin::{Customers,Orders}Controller#export` はそれを呼ぶ薄いラッパー（または削除してルートを移す。`SystemPermission` の sync に影響するため RoleSeeder の既定マトリクス更新も同時に）。バリデーション＝レジストリ存在＋定義単位権限（Step 6）+ `filters` whitelist | Step 1 後 |
 | 4 | d | 汎用 `CsvExportJob`：`EXPORT_TARGETS` を廃し profile 解決 → `Source`（`policy_scope!` 起点＋filters）→ カタログ＋transform で行生成 → Writer。既存 2 種は同等プロファイルとして移行し、**出力バイト列一致を回帰 spec で担保**（`spec/jobs/csv_export_job_spec.rb` の 3 ケースは維持） | Step 1〜2 後 |
 | 5 | f | 絞り込み引継ぎ：一覧の検索条件を hidden で POST・`csv_exports.filters` に保存・profile の `filters` whitelist 適用＋`default_filters`。ボタンのドロップダウン化（ERB + Turbo Frame） | Step 4 と同時 |
@@ -169,7 +169,15 @@ DB 化（C）を再検討するトリガー（明文化しておく）：
 - **（新規・development-plan Q-47）アシストからの逆方向データ連携**: アシスト側からフォームで情報を送信してもらい、受注番号で受注情報と紐づける仕組みが欲しいという要望が出た。本書は現状「出力（送信）」のみを扱っており、**受信（インポート）**の仕組みは対象外。要否・実装方式（フォーム受信 / API / メール添付手動取込）は R6 着手時に別途検討する。
 - **Q-14**：✅ 仕様決定済み（D-13・2026-07-26）。本書 §3-2 の推奨（config 管理 v1・将来 C へ昇格可能な構造）を採用。Rails版では YAML + 値オブジェクトで実装する。
 - **Q-15**：アシスト納品フォーマット要ヒアリング（§5）。
-- **（新規）BOM 付与**：現行 R4 実装は BOM なし UTF-8。Excel で開く運用が主なら既定を UTF-8 BOM に変えるべきだが、既存出力の互換性（現状は利用者が限定的）を含め R6 着手時に決める。
+- ~~**（新規）BOM 付与**~~：✅ **決着（CEO決定 2026-08-20）**。CEOが画面目視確認中に「顧客一覧のCSVエクスポートでダウンロードすると文字化けしている」と報告。原因は BOM なし UTF-8 を日本語版 Windows の Excel が CP932 と誤認して開くこと。**既定の出力を UTF-8 + BOM に変更**した（`app/jobs/csv_export_job.rb` の `BOM` 定数を生成時に1回だけ前置。`Admin::CsvExportsController#show` は `type: "text/csv; charset=utf-8"`）。CP932 変換は**採らない**（`①`・`髙`・`〜` 等が CP932 に無く、欠落・例外の温床になるため）。回帰は `spec/jobs/csv_export_job_spec.rb` §文字コード と `spec/requests/admin/csv_exports_spec.rb`。
+  - **改行コードは LF のまま**（Excel は LF でも開けるため今回は変更せず）。CRLF 希望が出たら Step h の `eol` で受ける。
+- ~~**（新規）ヘッダの日本語化**~~：✅ **決着（CEO決定 2026-08-20）**。CEO指示「CSVの見出し（1行目）を日本語にして。**全てのCSVエクスポートで同様**」。`CsvExportJob::EXPORT_TARGETS` の `columns` を **カラム名 => 見出し** の順序付き Hash に変え、**見出しの定義をこの1箇所に集約**した（画面ラベル側と二重管理にしない）。
+  - **文言の決め方**: ①旧ジャスミンの案件CSV（CP932・日本語ヘッダ238列。`legacy-research/00-index.md` 項番10 / `11-order-field-mapping.md` §6-2・付録A）で特定できる列は**旧の文言に合わせる** ②特定できない列（UUID の FK 列・`created_at` 等、旧CSVに対応列が無いもの）は**画面ラベルに合わせて新規に命名** ③**ステータス系は必ず修飾付き**（`status-naming-analysis.md` §0-0 の適用ルール表「CSVエクスポートのヘッダ＝修飾付きを維持」）。
+  - **旧準拠**: 顧客番号(旧1)・契約者名または法人名(旧3)・管理者メールアドレス(旧78)・連絡先固定電話番号(旧83)／案件番号(旧2)・受注日(旧33)・契約開始日(旧36)・作業完了日(旧40)・解約日(旧57)。旧の項目名に付く括弧書き（「受注日（申込日）」「作業完了日（納品完了メール送付日）」等）は注釈と判断し**基本語のみ**を採用した。
+  - **新規命名**: 代理店ID・担当営業担当者ID・お申込日・契約日・都道府県・市区郡・町名・作成日時／顧客ID・店舗ID・契約条件ID・プランID。
+  - **旧に合わせなかった列**: `orders.status`。旧CSVは「顧客ステータス」と呼ぶ（付録A 59）が、D-8 の使用禁止語であり新実装の `customers.status`（申込8値）と別物を指してしまうため、**「案件ステータス」**とした。`customers.status` は「申込ステータス」、`orders.contract_status` は「契約ステータス」。
+  - **列の構成・順序は変更していない**（今回は見出し文言のみ）。列構成の旧準拠化は Q-15（アシスト納品用プロファイル）の範囲で Step 1/7 が扱う。回帰は `spec/jobs/csv_export_job_spec.rb` §CSVの見出し（列順・列数の固定を含む）。
+  - **取り込み側（`UserCsvImportJob`）は対象外**：ユーザー一括アップロードのヘッダは `name,email,password,agency_group_id,agency_id,is_active`（英字）のままで、本変更の影響を受けない（顧客/案件エクスポートとは別経路。ダウンロード可能なテンプレートCSVは存在せず、書式は `app/views/admin/users/import.html.erb` に文言で示している）。
 - **（新規）成果物の保存先**：`csv_exports.file_data`（text 列）継続 vs Active Storage。大量行の運用実績が無いため R6 Step 2 で判断。
 - **（新規）`csv_download_visible`（agencies / agency_groups）の意味づけ**：R1 で列だけ実装済み・未接続。定義単位権限（Step 6）で「代理店にエクスポートを許可するか」のフラグとして接続する案を推奨。
 - 将来：P4-16（監査ログ CSV）・P4-20（集計 Excel）は本レジストリの拡張（Writer に xlsx 追加等。gem 選定要）で受けられる。いずれも R6。
@@ -197,3 +205,5 @@ DB 化（C）を再検討するトリガー（明文化しておく）：
 | 2026-07-26 | 初版（設計案）。Laravel現行 4 Job 構成の分析・プロファイル構造・Q-14 比較・実装ステップ・Q-15 切り分け |
 | 2026-08-19 | Rails版改訂（R6・複数プロファイルは未実装）。§1 を Rails 現行実装（`CsvExport`/`CsvExportJob::EXPORT_TARGETS`（Customer/Order）/`Admin::CsvExportsController`/`CsvExportPolicy`）の現状分析に書き換え、Store 未対応・filters/expires_at 無し・BOM/サニタイズ無し・`csv_download_visible` 未接続を差分として明記。§2 を YAML/値オブジェクト/`policy_scope!`/Hotwire に読み替え。§3 の「P2-1 と同型」根拠を R3（フォーム定義は DB・カタログはコード）に合わせて修正。§4 の P4-1 順序制約は R1 実装済みで解消と判定、Step 8（Store）/9（請求用）を新設。§7（R5 D-P8 の位置づけ）を新設 |
 | 2026-08-19 | 2026-08-18 浅賀さん打ち合わせ議事録を反映。§6 に Q-15 の一部確定要件（FAX項目削除・メール対応・受注番号必須紐づけ）とアシストからの逆方向データ連携の新論点（development-plan Q-47）を追記 |
+| 2026-08-20 | **CEO決定: CSV出力の既定を UTF-8 BOM へ変更**（Excelでの文字化け報告への対応）。§1 表のダウンロード行・§3 項3・§4 の format サンプル・§5 Step h・§6 未決事項「BOM 付与」を更新。改行コードは LF 据え置き |
+| 2026-08-20 | **CEO決定: CSVの見出し（1行目）を日本語にする・全エクスポート共通・ステータス系は修飾付き**。`CsvExportJob::EXPORT_TARGETS` の `columns` を「カラム名 => 見出し」の順序付き Hash へ変更し見出しの定義を1箇所に集約。§1 表のジョブ行・§3 項2・§6 未決事項「ヘッダの日本語化」を更新。列の構成・順序は不変 |

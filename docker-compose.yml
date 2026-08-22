@@ -50,7 +50,10 @@ services:
       context: .
       args:
         BUNDLE_WITHOUT: ""
-    command: bin/rails tailwindcss:watch
+    # `[always]` 必須: tailwindcss-rails の watch は既定でTTYが無いと即終了する（compose upは
+    # 非TTYのためコンテナが起動直後に落ち、CSSが更新されなくなる）。always指定でTTY無しでも
+    # 常駐させる（2026-08-20 の「画面が素のHTMLになる」不具合の一因）。
+    command: bin/rails tailwindcss:watch[always]
     environment:
       RAILS_ENV: development
       POSTGRES_HOST: db
@@ -78,6 +81,11 @@ services:
       POSTGRES_PASSWORD: brige_crm_password
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
       BUNDLE_WITHOUT: ""
+      # メール送信は ActionMailer::MailDeliveryJob 経由でこの worker が実行するため、
+      # web と同じ SMTP 接続先が必須。未設定だと development.rb の既定 localhost:1025 に
+      # フォールバックし、raise_delivery_errors=false のため無言で送信失敗する。
+      SMTP_ADDRESS: mailpit
+      SMTP_PORT: 1025
     volumes:
       - .:/rails
     depends_on:

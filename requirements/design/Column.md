@@ -872,6 +872,7 @@ agencies.id = X（代理店CD: AGY-001）
 | `factor_notes` | string(200) | NULL | ファクター回収備考 |
 | `bundled_billing` | string(5) | NULL | おまとめ請求（する / しない） |
 | `bundle_target_order_number` | string(20) | NULL | おまとめ先の案件番号 |
+| `discount_option` | string(50) | NULL | 割引オプション（割引なし / 長期割引（税込11,000円） / 長期割引（税込22,000円）。**実装追加 2026-08-21**・AILINK申込フォームP2 オプション②。Q-46利用規約自動切替がR5で参照） |
 | `finance_division` | string(20) | NULL | 信販区分 |
 | `finance_installer` | string(100) | NULL | 設置先（アシスト信販） |
 | `finance_postal_code` | string(8) | NULL | 設置先郵便番号（信販用） |
@@ -1010,7 +1011,9 @@ agencies.id = X（代理店CD: AGY-001）
 | `facebook_id` | text | NULL | FacebookID。**ENC** |
 | `facebook_pass` | text | NULL | FacebookPASS。**ENC** |
 | `has_facebook` | string(10) | NULL | Facebookアカウントの所持（あり / なし） |
+| `has_facebook_page` | string(20) | NULL | Facebookページの所持（既に保有している / お客さまにて作成予定 / 代行・補助希望。**実装追加 2026-08-21**・AILINK申込フォームP9） |
 | `has_instagram` | string(10) | NULL | Instagramアカウントの所持（あり / なし） |
+| `has_line` | string(20) | NULL | LINEアカウントの所持（既に保有している / お客さまにて作成予定 / 代行・補助希望。**実装追加 2026-08-21**・AILINK申込フォームP9） |
 | `has_google_business` | string(10) | NULL | Googleビジネスアカウントの所持（あり / なし） |
 
 #### GBP（Google ビジネスプロフィール）

@@ -128,4 +128,47 @@ end
   end
 end
 
+# --- AILINK 商材（2026-08-21 CEO指示・浅賀確認用_選択フォーム要件整理.xlsx） -------------------
+# 商材=AILINK／プラン=Brige_plus（1価格固定・P2「プラン: 自動入力」）と解釈（名称は要CEO確認）。
+# 月額は要件シートに未提示のため未設定（nil）。確定後にこの値を更新すること。
+ailink = Product.find_or_create_by!(code: "AILINK") do |p|
+  p.name = "AILINK"
+  p.description = "AILINK 商材（MEO対策サービス・Brige_plusプラン）"
+  p.is_active = true
+end
+
+Plan.find_or_create_by!(product: ailink, code: "AILINK-BRIGE-PLUS") do |plan|
+  plan.name = "Brige_plus"
+  plan.monthly_fee = nil # 【要確認】1価格固定の月額が要件シート未提示
+  plan.sort_order = 1
+  plan.is_active = true
+end
+
+# 初期費用（P2。BRIDGE_PLUSと同一の5値・0円は代理店負担）
+[
+  [ "0円", 0, 1 ],
+  [ "30,000円", 30_000, 2 ],
+  [ "50,000円", 50_000, 3 ],
+  [ "100,000円", 100_000, 4 ],
+  [ "150,000円", 150_000, 5 ]
+].each do |name, amount, sort_order|
+  ProductInitialFee.find_or_create_by!(product: ailink, amount: amount) do |fee|
+    fee.name = name
+    fee.sort_order = sort_order
+    fee.is_active = true
+  end
+end
+
+# 商材オプション（P2 オプション①。デフォルトチェック＝申込フォームの必須チェック群）
+[
+  [ "MEOサービス", 1 ],
+  [ "MEO外部リンク", 2 ],
+  [ "サイテーション", 3 ]
+].each do |name, sort_order|
+  ProductOption.find_or_create_by!(product: ailink, name: name) do |opt|
+    opt.sort_order = sort_order
+    opt.is_active = true
+  end
+end
+
 puts "products seed: products=#{Product.count} plans=#{Plan.count} initial_fees=#{ProductInitialFee.count} options=#{ProductOption.count}"

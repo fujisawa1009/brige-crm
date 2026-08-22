@@ -180,4 +180,13 @@ definitions.each do |group_code, agency_code, name, has_contact, email_count|
   agency.products << bridge_plus unless agency.products.exists?(bridge_plus.id)
 end
 
+# AILINK 商材の販売許可（2026-08-21 新商材追加。BRIDGE_PLUSと同様に全代理店へ付与する暫定運用。
+# 代理店を絞る場合は業務判断＝要CEO確認のうえここを変更する）。
+ailink = Product.find_by(code: "AILINK")
+if ailink
+  Agency.find_each do |agency|
+    agency.products << ailink unless agency.products.exists?(ailink.id)
+  end
+end
+
 puts "agencies seed: total=#{Agency.count} agency_products=#{AgencyProduct.count}"

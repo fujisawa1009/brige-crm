@@ -175,13 +175,13 @@ Q3. 人が画面で選ぶだけで、システムは中身を解釈せず保存�
 | `elderly_consent` | 高齢者同意書 | 3 | ⚠️ 要注視（§5-4） |
 | `business_auth_doc` | 業務権限証明書 | 3 | ✅ 適正 |
 | `yes_no` | はい/いいえ（共通） | 2 | ✅ 適正 |
-| `payment_method` | お支払方法 | 2 | 🔴 **分類の見直しが必要（§5-3）** |
-| `group_key_1` / `group_key_2` | 選択肢グループ1/2 | 各3 | ⚠️ 開発用のダミー。運用開始前に削除するか実データへ置換すること |
+| ~~`payment_method`~~ | お支払方法 | — | ✅ 2026-08-19 **A へ移行完了**（`payment_methods` 専用テーブル。commit `f819fb2`）。OptionGroup 側は廃止し、残存行はシードで自動削除する（§5-3） |
+| ~~`group_key_1` / `group_key_2`~~ | 選択肢グループ1/2 | — | ✅ 2026-08-20 **除去済み**。RSpec の FactoryBot シーケンス（`spec/factories/option_groups.rb`）が生成したキーが実DBへ混入したもので、実データではなかった。ファクトリのキーをテスト専用と分かる名前へ変更し、併せて `BridgePlusFormTemplateSeeder` に残存行の自動削除を実装（`bin/rails db:seed` で消える） |
 
-### 5-3. 🔴 `payment_method` は B → A へ移すべき（要対応）
+### 5-3. ✅ `payment_method` は B → A へ移行済み（2026-08-19 完了）
 
-**現状**: `OptionGroup(key: "payment_method")` の選択肢（預金口座振替 / クレジット）として管理され、
-`orders.payment_method`（`string(50)`）に文字列で保存される。コード定数は無い。
+**移行前の状態**: `OptionGroup(key: "payment_method")` の選択肢（預金口座振替 / クレジット）として管理され、
+`orders.payment_method`（`string(50)`）に文字列で保存されていた。コード定数は無かった。
 
 **問題**: R5 の **D-P12①** で「申込フォームの支払方法3択（口振／クレカ／おまとめ）に応じて、
 **おまとめ選択時はカード登録画面をスキップする**」という**処理分岐**が必要になる（`payment-integration.md` D-P12）。
@@ -191,14 +191,22 @@ Q3. 人が画面で選ぶだけで、システムは中身を解釈せず保存�
 - 管理画面から「クレジット」の表記を変えた瞬間に決済分岐が壊れる（`is_system` 保護が無い）
 - 分岐条件をコードに書くとき、比較対象の文字列がマスタと二重管理になる
 
-**推奨対応（R5 着手時）**:
+**✅ 2026-08-19 実施済み（commit `f819fb2`）。以下は実施内容**:
 1. `payment_methods` 専用テーブルを新設（`SystemManagedStatus` を include）し、`is_system` で保護する
 2. `PaymentMethod::CODE_BANK_TRANSFER` / `CODE_CREDIT` / `CODE_BUNDLED` のコード定数を置く
 3. `orders.payment_method` のバリデーションを `PaymentMethod.exists?(code:)` に変更する
 4. `BridgePlusFormTemplateSeeder` の OptionGroup `payment_method` は廃止し、FormField の choices は
    専用マスタから生成する
 > ※ 簡易案として「OptionGroup のまま `is_system` 相当の保護だけ足す」ことも考えられるが、
-> 汎用テーブルに個別保護を後付けすると B の単純さが崩れるため**推奨しない**。
+> 汎用テーブルに個別保護を後付けすると B の単純さが崩れるため**推奨しない**（採用せず）。
+
+**⚠️ 移行前にシード済みの環境の後始末（2026-08-20 追加対応）**: 上記4は「無ければ作る」投入のため、
+昇格より前に `db:seed` を流した環境では
+(a) 旧 `OptionGroup(key: "payment_method")` が管理画面の選択肢一覧に残り、
+(b) `FormField(payment_method)` の `input_options.choices` が旧ラベル値（`預金口座振替` / `クレジット`）のまま残る、
+という2つのズレが発生する。(b) は保存される値が `PaymentMethod.exists?(code:)` を通らず**申込が保存できなくなる**。
+`BridgePlusFormTemplateSeeder` に (a) の自動削除と (b) のマスタ再同期を実装したので、
+**該当環境は `bin/rails db:seed` を1回流せば解消する**（`MASTER_DERIVED_OPTION_GROUPS` 参照）。
 
 ### 5-4. ⚠️ 要注視（現時点は B のままでよいが、業務確定時に再判定）
 
@@ -234,4 +242,5 @@ Q3. 人が画面で選ぶだけで、システムは中身を解釈せず保存�
 
 | 日付 | 内容 |
 |---|---|
+| 2026-08-20 | §5-2/§5-3 を実装状況に同期。`payment_method` の B→A 移行完了（commit `f819fb2`）と、開発用ダミー `group_key_1/2` の除去完了を記録 |
 | 2026-08-19 | 初版。CEO指示により、専用テーブル（状態・区分コード表）／選択肢マスタ（OptionGroup・OptionValue）／エンティティマスタの3分類と判定フローを定義。現行実装を全件分類し、`payment_method` が R5 の決済分岐（D-P12①）により B→A へ移すべき状態であることを検出（§5-3）。`consent_status`・`elderly_consent` を要注視として記録（§5-4）。開発用ダミー `group_key_1/2` の除去を運用開始前タスクとして記録 |

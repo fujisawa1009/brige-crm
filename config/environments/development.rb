@@ -28,6 +28,12 @@ Rails.application.configure do
   # Change to :null_store to avoid any caching.
   config.cache_store = :memory_store
 
+  # docker compose の worker サービス（bin/jobs）で実際にジョブを処理するため、production と同じ
+  # Solid Queue を development でも使う。接続先は config/database.yml の queue（専用DB）。
+  # これにより db/queue_schema.rb が `bin/rails db:prepare` で読み込まれ、worker が起動できる。
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
+
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 

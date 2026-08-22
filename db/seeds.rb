@@ -3,6 +3,9 @@ SystemPermissionSyncService.call
 RoleSeeder.call
 # 04 R2タスク4: 顧客/案件ステータスマスタの既定値。
 StatusSeeder.call
+# 04 R4追補「リスク・注意」7: 問い合わせ宛先（RecipientGroup / InquiryRecipientRoute）の初期データ。
+# InquiryRecipientRoute は inquiry_statuses に存在するコードしか受け付けないため StatusSeeder の後。
+InquiryRecipientSeeder.call
 # 04 R3残（form-template-mapping.md §9-2 #1）: BRIDGE_PLUS申込フォームの初期テンプレート67フィールド
 # ＋OptionGroup（prefecture/payment_method/yes_no等8種）の投入。全環境で必要な実商材マスタのため
 # development限定ブロックの外に置く。
@@ -12,6 +15,9 @@ BridgePlusFormTemplateSeeder.call
 # 商材・プラン・代理店グループ・代理店の実データマスタ。全環境で必要なため development 限定の外に置く。
 # 実行順序: 商材 → 代理店グループ → 代理店（代理店は group_code / BRIDGE_PLUS 商材へ依存）。
 load Rails.root.join("db/seeds/products.rb")
+# 2026-08-21 CEO指示: AILINK商材の申込フォームテンプレート（P2〜P9・7ステップ）。初期費用プルダウンの
+# 選択肢を ProductInitialFee マスタから複製するため、products.rb（マスタ投入）の後に実行する。
+AilinkFormTemplateSeeder.call
 load Rails.root.join("db/seeds/agency_groups.rb")
 load Rails.root.join("db/seeds/agencies.rb")
 
